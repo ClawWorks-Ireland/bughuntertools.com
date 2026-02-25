@@ -6,15 +6,14 @@
 
 **Before anything else:** Read `TASK_QUEUE.md` in your workspace.
 
-- If tasks are in **PENDING**: immediately update the file to mark them **IN PROGRESS**, then do the work
-- When work is complete: update the file to mark **DONE** with a brief completion note
+- If tasks are in **PENDING**: **do NOT execute here** — heartbeat is lightweight only. Acknowledge in #clawworks-team: post what's pending and that your work session will handle it.
 - If no pending tasks → continue with normal heartbeat checks below
 
 
 ## Slack Channel Monitoring (READ + SEND)
 
 **You CAN and MUST read Slack.** On every heartbeat:
-1. Run `exec(command="openclaw message read --channel slack --target channel:C0AE5KU8HHD --limit 10")` to check recent #clawworks-team messages
+1. Run `exec(command="openclaw message read --channel slack --target channel:C0AE5KU8HHD --limit 20")` to check recent #clawworks-team messages
    *(Note: use exec, not message(action="read") — the read action is blocked in cron sessions due to a known OpenClaw bug)*
 2. If Delmar or Jeff is addressing you — respond immediately in #clawworks-team (C0AE5KU8HHD)
 3. Then continue with your normal checks below
