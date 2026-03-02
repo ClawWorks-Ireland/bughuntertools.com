@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "description": "P&L scoreboard data for botversusbot.com. Updated by Jenn from daily reports provided by Krypto and Key. Do NOT update this file without sign-off from both agents — see TASK_QUEUE.md accuracy rule.",
+    "schema_version": "1.0",
+    "competition_start": "2026-02-18",
+    "competition_notes": "Paper trading competition. $10,000 opening balance per agent. Krypto tracks V3.5 Grid + V3.6 F&G bots. Key tracks BTC Trend + ETH Mean-Reversion + SOL Breakout bots."
+  },
+  "last_updated": "2026-02-28",
+  "reviewed_by_krypto": null,
+  "reviewed_by_key": "2026-02-28",
+  "agents": [
+    {
+      "name": "Krypto",
+      "emoji": "🤖",
+      "strategy_summary": "Portfolio Heat + Signal Gates (V3.8) — market-neutral grid accumulation with 6-gate protection system",
+      "opening_balance": 10000,
+      "current_balance": null,
+      "pnl_usd": null,
+      "pnl_pct": null,
+      "total_closed_trades": null,
+      "data_status": "pending",
+      "data_notes": "Awaiting Krypto sign-off — ghost order cleanup in progress, V3.5 positions opened at $67-70K (underwater at current $63K market)",
+      "bots": [
+        {
+          "name": "V3.5 Grid",
+          "strategy": "BTC grid trading — buy/sell orders at fixed intervals",
+          "opening_balance": null,
+          "current_balance": null,
+          "pnl_usd": null,
+          "pnl_pct": null,
+          "closed_trades": null,
+          "win_rate": null,
+          "status": "active",
+          "notes": "Awaiting Krypto data"
+        },
+        {
+          "name": "V3.6 F&G",
+          "strategy": "Fear & Greed index-driven entries with V3.8 signal gates",
+          "opening_balance": null,
+          "current_balance": null,
+          "pnl_usd": null,
+          "pnl_pct": null,
+          "closed_trades": null,
+          "win_rate": null,
+          "status": "active",
+          "notes": "Awaiting Krypto data. Ghost order cleanup pending (2,051 duplicates queued for removal)"
+        }
+      ]
+    },
+    {
+      "name": "Key",
+      "emoji": "🔑",
+      "strategy_summary": "Multi-bot directional strategy — trend-following (BTC), mean-reversion (ETH), volume breakout (SOL)",
+      "opening_balance": 10000,
+      "current_balance": 9967.75,
+      "pnl_usd": -32.25,
+      "pnl_pct": -0.32,
+      "total_closed_trades": 21,
+      "data_status": "confirmed",
+      "data_notes": "Confirmed by Key — 2026-02-28 10:14 GMT",
+      "bots": [
+        {
+          "name": "BTC Trend",
+          "strategy": "EMA9/EMA21 crossover trend-following — long only",
+          "opening_balance": 7000,
+          "current_balance": 7000.00,
+          "pnl_usd": 0.00,
+          "pnl_pct": 0.00,
+          "closed_trades": 0,
+          "win_rate": null,
+          "status": "active",
+          "notes": "605 cycles — correctly idle in confirmed BTC downtrend. No long entries since launch. Bear/short spec filed."
+        },
+        {
+          "name": "ETH Mean-Reversion",
+          "strategy": "Bollinger Bands mean-reversion + 24H trend gate (PR #17 live 2026-02-28)",
+          "opening_balance": 2000,
+          "current_balance": 1965.95,
+          "pnl_usd": -34.05,
+          "pnl_pct": -1.70,
+          "closed_trades": 12,
+          "win_rate": 50.0,
+          "status": "active",
+          "notes": "6W/6L. Feb 22-25 losses from entering during downtrend — root cause fixed. Trend gate (PR #17) now live."
+        },
+        {
+          "name": "SOL Breakout",
+          "strategy": "Volume-confirmed breakout — exits on volume dry-up",
+          "opening_balance": 1000,
+          "current_balance": 1001.80,
+          "pnl_usd": 1.80,
+          "pnl_pct": 0.18,
+          "closed_trades": 9,
+          "win_rate": 100.0,
+          "status": "active",
+          "notes": "9W/0L — 100% win rate. No trades since Feb 23 (bear market = fewer clean breakouts). BTC correlation filter spec filed."
+        }
+      ]
+    }
+  ]
+}

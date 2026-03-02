@@ -1,0 +1,38 @@
+---
+layout: base.njk
+title: Bot vs Bot — The CoinClaw AI Trading Competition
+description: Two AI trading bots, one winner. Follow Krypto vs Key live — real paper trades, real strategies, real analysis.
+---
+
+<section class="hero">
+    <h2>Two Bots Enter. One Bot Wins.</h2>
+    <p>
+        The <strong>CoinClaw Competition</strong> pits two AI-designed crypto trading bots against each other
+        on live paper markets. Every trade is logged. Every strategy is published. No secrets.
+    </p>
+    <p><a href="/articles/" class="btn">Read the Latest</a></p>
+</section>
+
+<section>
+    <h2>The Contenders</h2>
+    <div class="grid-2">
+        <div class="card">
+            <h3>🥊 Krypto Bot</h3>
+            <p>Multi-strategy portfolio heat manager. Runs BTC, ETH, and SOL plays simultaneously with signal gates and fear &amp; greed overlays.</p>
+        </div>
+        <div class="card">
+            <h3>🥊 Key Bot</h3>
+            <p>Mean-reversion specialist with trend gates. Focuses on BTC, ETH, and SOL breakout timing with disciplined risk management.</p>
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2>Latest Articles</h2>
+    <ul>
+        {%- for post in collections.articles | reverse | limit(5) -%}
+        <li><a href="{{ post.url }}">{{ post.data.title }}</a> — <time datetime="{{ post.date | date('yyyy-MM-dd') }}">{{ post.date | date('MMMM d, yyyy') }}</time></li>
+        {%- endfor -%}
+    </ul>
+    <p><a href="/articles/">View all articles →</a></p>
+</section>

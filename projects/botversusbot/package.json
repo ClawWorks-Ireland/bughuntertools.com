@@ -1,0 +1,14 @@
+{
+  "name": "botversusbot-com",
+  "version": "1.0.0",
+  "description": "Bot vs Bot — CoinClaw Competition static site",
+  "scripts": {
+    "build": "eleventy",
+    "start": "eleventy --serve",
+    "deploy": "./deploy-to-s3.sh"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  },
+  "devDependencies": {}
+}

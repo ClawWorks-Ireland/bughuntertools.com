@@ -9,7 +9,176 @@ An empty PENDING section = no visibility into your plan. Delmar and Jeff should 
 
 ## 📥 PENDING
 
-### [PENDING] 🔴 New Site: botversusbot.com — Coordinate with Kirk on Infrastructure Setup
+### [PENDING] 🔴 Add GA4 Tracking — botversusbot.com
+- **From:** Jeff (Delmar directive — 2026-03-01 20:22 GMT)
+- **Priority:** 🔴 HIGH — Delmar has provided the Measurement ID, ready to go
+- **Added:** 2026-03-01 20:22 GMT
+
+Delmar has set up the GA4 property. Measurement ID: `G-1GBCTYR3XZ`
+
+**Action:**
+1. Open `src/_layouts/base.njk`
+2. Replace the analytics placeholder comment block:
+```html
+<!-- Analytics placeholder — Delmar to add GA tracking ID -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script> -->
+```
+With the full live GA4 snippet:
+```html
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1GBCTYR3XZ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1GBCTYR3XZ');
+</script>
+```
+3. Build + deploy to S3 + CloudFront invalidation (mandatory)
+4. Confirm live in #clawworks-team and post to #jeff
+
+
+
+### [PENDING — awaiting Delmar approval] 🟡 AdSense Integration — bughuntertools.com (tasteful, 1 ad/page)
+- **From:** Jenn (self-initiated from SEO/Ads proposal, 2026-03-01)
+- **Priority:** 🟡 MEDIUM — no spend without approval
+- **Added:** 2026-03-01 14:30 GMT
+- **Waiting on:** Delmar to review SEO+Ads proposal (sent to #jeff) and approve AdSense setup
+- **Notes:** 1 ad per page, sidebar only, limited ads mode. botversusbot.com to wait until DNS is live.
+
+### [PENDING — awaiting product discovery] 🟡 Replace Deprecated Affiliate ASINs
+- **From:** Jenn (self-initiated from SEO/Ads proposal)
+- **Priority:** 🟡 MEDIUM — revenue leakage from dead affiliate links
+- **Added:** 2026-03-01 14:30 GMT
+- **Next action:** Product discovery session March 9 — replace:
+  1. ThinkPad X1 Carbon (ASIN hijacked → phone case) — replace with Gen 13/14
+  2. YubiKey 5C NFC (ASIN 404) — find current Yubico Amazon listing
+  3. Flipper Zero (unavailable on Amazon) — replace with HackRF One or Proxmark3
+
+### [PENDING] 🟢 Meta Description Audit — All bughuntertools.com Articles
+- **From:** Jenn (proactive SEO — from today's proposal)
+- **Priority:** 🟢 LOW — SEO quick win, no approval needed
+- **Added:** 2026-03-01 14:30 GMT
+- **Notes:** Manual pass needed on ~35 articles. Check all have unique, 150-160 char meta descriptions. Some older articles have auto-generated or missing descriptions.
+
+### [DONE] 🔴 URGENT — Fix broken links on botversusbot.com
+- **From:** Jeff (Delmar directive — 2026-03-01 10:16 GMT)
+- **Priority:** 🔴 HIGH — Delmar reported this directly
+- **Added:** 2026-03-01 10:17 GMT
+- **Completed:** 2026-03-01 14:20 GMT
+
+[DONE] Root cause: botversusbot.com CloudFront distribution (E2FW6BCDTTRU0Y) was missing the URL rewrite CloudFront Function that bughuntertools.com uses. Without it, S3+CloudFront returns 403 for directory paths like `/articles/` because it can't find `articles` as a file (needs to look up `articles/index.html`).
+
+**Fix:**
+1. Created `botversusbot-url-rewrite` CloudFront Function (identical logic to `bughuntertools-url-rewrite`)
+2. Published function to LIVE stage
+3. Updated distribution DefaultCacheBehavior to attach function at viewer-request
+4. Full cache invalidation: `I6VJNMA37CVX7SRI43GZ8LR8Y3`
+5. Verified: all 5 reported paths now return HTTP 200 (/, /articles/, /articles/week-1-competition-kickoff/, /articles/week-2-market-crash/, /scoreboard/)
+
+**Kirk note added to #jeff:** Future CloudFront distributions must include the URL rewrite function at setup time — should be part of the infra template.
+
+Posted confirmation to #jeff.
+
+Delmar reports that links on botversusbot.com are not working. Site loads (200 OK) but internal navigation links (e.g. `/articles/`, `/articles/week-1-competition-kickoff/`, `/articles/week-2-market-crash/`, `/scoreboard/`) appear broken.
+
+**Investigate:**
+1. Check if CloudFront has a default root object set for subdirectory paths (common S3+CF issue — `/articles/` won't serve `index.html` without a Lambda@Edge or CloudFront Function, unlike bughuntertools.com)
+2. Compare CloudFront config for botversusbot.com vs bughuntertools.com — check for any missing settings
+3. Fix and redeploy as needed + CloudFront invalidation
+
+Post confirmation to #jeff when resolved.
+
+### [DONE] 🟡 Revenue Proposal — SEO + Ads Strategy for Both Sites (Delmar Request)
+- **From:** Jeff (Delmar directive — 2026-03-01 10:50 GMT)
+- **Priority:** 🟡 MEDIUM — proposal first, no implementation until Delmar approves
+- **Completed:** 2026-03-01 14:30 GMT
+
+[DONE] Full written proposal covering both sites — posted to #jeff (C0AF0VC8AAD). Full document saved at `workspace/drafts/seo-ads-revenue-proposal-2026-03.md`.
+
+**Covered:**
+- SEO keyword opportunities for both sites (Tier 1/2/3 targeting by competition level)
+- On-page quick wins (meta descriptions, internal linking, H2 optimisation, schema)
+- Ad network recommendations: EthicalAds (~$2.50 CPM, apply now, need 50k+/month) + AdSense as interim for bughuntertools.com; AdSense for botversusbot.com
+- Placement philosophy: one ad per page, sidebar/post-article only, never mid-content
+- Revenue projections: $2-4/month now → $125-200/month at 50k pageviews (bughuntertools.com)
+- Affiliate improvements: GA4 click tracking, deprecated ASIN replacements (ThinkPad, YubiKey 5C NFC, Flipper alt)
+- Prioritised action plan: SEO quick wins require no approval; AdSense setup + ASIN replacements need Delmar go-ahead
+
+No implementation until Delmar approves.
+- **From:** Jeff (Delmar directive — 2026-03-01 10:50 GMT)
+- **Priority:** 🟡 MEDIUM — proposal first, no implementation until Delmar approves
+- **Deliverable:** Written proposal posted directly to #jeff
+
+**Delmar's direction:** "I have reconsidered the AI only approach for the 2 websites. Both have good content that makes sense to optimize for SEO as well, and include ad revenue opportunity. But I don't want the sites to be covered in adds like most websites of this type. Adds should be sensible and tasteful. The sites should be optimized for AI, SEO and for human consumption."
+
+**What the proposal must cover — for BOTH sites (bughuntertools.com + botversusbot.com):**
+
+*SEO strategy:*
+- Keyword opportunities for each site
+- On-page improvements (meta descriptions, structured data, internal linking)
+- Quick wins vs longer-term plays
+- No keyword stuffing — quality content enhanced for search, not compromised by it
+
+*Ad strategy — tasteful only:*
+- Which ad networks fit each audience without degrading the experience? (Carbon Ads, Ethical Ads, AdSense with strict rules?)
+- Placement: where ads can sit without overwhelming the reader
+- What to avoid entirely
+- Estimated revenue per 1,000 pageviews for each site
+
+*Affiliate revenue (existing):*
+- What's currently working/not working?
+- Any changes to improve conversion without being pushy?
+
+**Note:** The old "no SEO ever" rule is replaced by this directive. Quality and honesty remain non-negotiable — SEO should enhance the content, not compromise it.
+Post the proposal to #jeff. Delmar approves before any implementation.
+
+### [DONE] 🔴 REMOVE CoinClaw Article from bughuntertools.com
+- **From:** Jeff (Delmar directive — 2026-02-27 17:37 GMT)
+- **Priority:** 🔴 CRITICAL — immediate action required
+
+Delmar's words: "jenn should not be putting CoinClaw articles on bughuntertools website."
+
+bughuntertools.com is security-only. CoinClaw articles belong on botversusbot.com exclusively — not even as a placeholder.
+
+**Action:**
+1. Remove the CoinClaw competition article from bughuntertools.com src (delete the `.njk` file)
+2. Build + deploy to S3 + CloudFront invalidation as normal
+3. Keep the article draft safe — it will be published on botversusbot.com once Kirk has the infrastructure ready
+
+Post confirmation to #jeff when removed.
+
+### [IN PROGRESS — Krypto data pending] 🟡 P&L Scoreboard Page — botversusbot.com (MEDIUM)
+- **From:** Jeff (Delmar directive — 2026-02-28 11:19 GMT)
+- **Priority:** 🟡 MEDIUM — coordinate with Kirk on implementation
+- **Blocked on:** DNS config (Delmar) + Kirk building the template
+
+Delmar wants a dedicated scoreboard page on botversusbot.com showing real P&L — hard to track from Slack reports.
+
+**What the page should show:**
+- Opening balance per bot ($10,000 each, competition start Feb 18)
+- Daily trades per bot (count, wins/losses)
+- Running P&L per bot ($ and %)
+- Overall combined P&L
+- Last updated timestamp
+
+**Bots to track:** Key: BTC Trend, ETH Mean-Reversion, SOL Breakout | Krypto: V3.5 Grid, V3.6 F&G
+
+**Your role:** Design the page layout + column structure. Agree data schema with Kirk (what fields Krypto/Key provide daily). Kirk builds the 11ty template. You test and deploy once ready. Route: `/scoreboard/`
+
+Build now — goes live when Delmar configures DNS.
+
+**⚠️ ACCURACY RULE (Delmar directive — 2026-02-28):**
+Krypto and Key own the numbers. **Do NOT publish a scoreboard update until both have reviewed and confirmed the data is accurate.** Your daily workflow:
+1. Receive the day's data from Krypto (V3.5/V3.6) and Key (BTC/ETH/SOL)
+2. Update `_data/scoreboard.json` with the numbers they provide
+3. Post the proposed update to #clawworks-team tagging @Krypto and @Key for sign-off
+4. Once both confirm accuracy → deploy
+If you don't hear back from one or both within a reasonable window, hold the deploy and flag in #clawworks-team.
+
+**[PARTIAL — 2026-02-28 14:10 GMT]:** Schema + template built and deployed. Key's data confirmed and live. Krypto data pending sign-off — requested in #clawworks-team 14:07 GMT. Scoreboard live at https://d3hpyrdmy6ph5o.cloudfront.net/scoreboard/ (shows ⏳ for Krypto until they confirm). Will redeploy with full data once Krypto signs off.
+
+### [DONE] 🔴 New Site: botversusbot.com — Infrastructure Ready — Coordinate with Kirk on Infrastructure Setup
 - **From:** Jeff (Delmar directive — 2026-02-26 23:05 GMT)
 - **Priority:** 🔴 HIGH — domain is registered, Delmar is waiting to configure DNS
 
@@ -27,42 +196,38 @@ Delmar has registered *botversusbot.com* as the home for all CoinClaw competitio
 - Ping Kirk in #clawworks-team or write to his TASK_QUEUE to kick this off
 - Report back to #jeff when the site is built and ready for Delmar to configure DNS
 
-### [PENDING] Update Website Email — secureclaw@proton.me → info@bughuntertools.com (MEDIUM)
-- **From:** Jeff (Delmar directive — 2026-02-26 22:59 GMT)
-- **Priority:** MEDIUM — do after Article #1 update/publish
+**Update 2026-02-27 14:05 GMT:** Kirk pinged in #clawworks-team with full infra spec. Waiting on Kirk to confirm S3 bucket + CF distribution + 11ty scaffold. Article #1 currently live at https://bughuntertools.com/articles/coinClaw-competition-week-1/ as placeholder until botversusbot.com DNS goes live.
 
-Delmar has set up `info@bughuntertools.com` as a proper catchall mailbox for the domain (IMAP/SMTP via Namecheap Private Email). Replace `secureclaw@proton.me` contact links across the site with `info@bughuntertools.com`.
-
-**New email context:**
-- `info@bughuntertools.com` is the main contact address going forward
-- It's a catchall — you can use aliases like `help@bughuntertools.com`, `content@bughuntertools.com` etc. — all route to the same inbox
-- Peng monitors the inbox; you can use different aliases for different purposes
-
-**What to update:**
-1. All contact links/mailto hrefs currently pointing to `secureclaw@proton.me` → change to `info@bughuntertools.com`
-2. Any "Contact us" or footer email references
-3. Build + deploy + CloudFront invalidation as usual
-
-Deploy after Article #1 update is live (can batch them in the same deploy).
-
-### 🔴 UPDATE + PUBLISH: AI Trading Competition Article #1 — Delmar Approved
+### [DONE] 🔴 UPDATE + PUBLISH: AI Trading Competition Article #1 — Delmar Approved
 - **From:** Jeff (Delmar directive — 2026-02-26 21:59 GMT)
-- **Priority:** 🔴 HIGH — Delmar has reviewed and loves it. Publish after corrections.
+- **Priority:** 🔴 HIGH
+- **Completed:** 2026-02-27 14:05 GMT
 
-*Delmar's words:* "I think the article is amazing. I look forward to reading the updated version with the corrections from key included."
+[DONE] Completed 2026-02-27 14:05 GMT:
+- Updated Key Day 8 section with accurate numbers from Key's correction:
+  - Portfolio: $9,968.15 (-0.32%) — Day 8
+  - SOL Breakout Bot: +0.18%, 9/9 wins (100%) ✅
+  - ETH Mean-Reversion Bot: -1.73%, 3/9 wins (33%) — 24H trend gate fix in progress
+  - BTC Trend Bot: 0 trades in 479+ cycles — correct behaviour in downtrend (not undeployed)
+  - Total: 18 trades, all three bots live
+- Updated "The Two Strategies" Key section — removed "not yet deployed" language, replaced with live bot status
+- Rewrote "On Patience" lesson as "On When to Enter" — now reflects Key's active bots
+- Updated "What We're Watching Next" — Key's ETH fix replaces "Key's first trades"
+- Published to bughuntertools.com (botversusbot.com placeholder pending Kirk's infra)
+- Live URL: https://bughuntertools.com/articles/coinClaw-competition-week-1/
+- Posted to #jeff (C0AF0VC8AAD) for Delmar to read
+- CloudFront invalidation: IEPC5UPL4IHU9RR4VFSJN0NF0A
 
-*One correction required before publishing — Key section is stale:*
+### [DONE] Update Website Email — secureclaw@proton.me → info@bughuntertools.com
+- **From:** Jeff (Delmar directive — 2026-02-26 22:59 GMT)
+- **Priority:** MEDIUM
+- **Completed:** 2026-02-27 14:05 GMT (batched with Article #1 deploy)
 
-The draft says Key's bots "have not been deployed" and shows 0 trades. Key corrected this in #clawworks-team at 14:15 GMT today. Replace the Key Day 8 section with accurate numbers:
-- Portfolio: $9,968.15 / $10,000 (-0.32%) — Day 8
-- SOL Breakout Bot: +0.18%, 9/9 wins (100%) ✅
-- ETH Mean-Reversion Bot: -1.73%, 3/9 wins (33%) — fix in progress (24H trend gate)
-- BTC Trend Bot: 0 trades in 479+ cycles — correct behaviour in downtrend (not "undeployed")
-- Total: 18 trades completed, bots live and running
-
-Also update the "What We're Watching Next" section if needed to reflect that Key IS trading, not about to start.
-
-*After correction:* Publish to bughuntertools.com (or the new domain if registered). Post the live URL to #jeff so Delmar can read the final version.
+[DONE] Completed 2026-02-27 14:05 GMT:
+- Updated `src/securityclaw.njk` — line 46: mailto link + display text
+- Updated `src/privacy.njk` — lines 88 and 106: contact references
+- Deployed in same build as Article #1 — CloudFront invalidation IEPC5UPL4IHU9RR4VFSJN0NF0A
+- All three occurrences of secureclaw@proton.me replaced with info@bughuntertools.com across the live site
 
 ### [DONE] 14:00 Session — Proactive Content Work (2026-02-26)
 - **From:** Jenn (self — proactive)
@@ -199,6 +364,42 @@ During S3 sync with `--delete`, the file `firefox-spidermonkey-wasm-gc-rce.html`
 **Awaiting Peng's response:** If the article was live, it needs to be restored. If Peng has the source/draft, I'll create the .njk file and redeploy immediately. Flagged to #clawworks-team.
 
 **Root issue:** Articles generated by external agents and deployed directly to S3 without local .njk source files will be deleted on next Jenn deploy. Process fix needed — all articles must have a source .njk file checked into the local repo before deploy.
+
+---
+
+### [DONE] 📝 Session Feb 28 2026 — Content Work Session Deliverables
+
+**Completed:** 2026-02-28 ~14:30 GMT
+
+**botversusbot.com**
+1. **P&L Scoreboard — schema + template built and deployed**
+   - Created `_data/scoreboard.json` schema (bot-level breakdown, P&L $/%/trades/win rate, confirmed_by fields)
+   - Built full 11ty Nunjucks template reading from JSON — bot-level breakdown, confirmation badges, pending notices
+   - Added CSS classes: `.pnl-positive`, `.pnl-negative`, `.badge-confirmed`, `.badge-pending`, scoreboard agent/bot/total rows
+   - Key data confirmed and live ($9,967.75 / -0.32% / 21 trades with bot breakdown)
+   - Krypto data showing TBD/⏳ until they sign off — requested in #clawworks-team
+   - CF invalidation: IRJOYSYNXYWWIS7P02WAMDWH4 (initial) + I63RUFCFRETG8D47CRPDZRBI1W (with article)
+   - Live: https://d3hpyrdmy6ph5o.cloudfront.net/scoreboard/
+2. **Article #2: "BTC at $63K and Falling: How Two AI Trading Bots Survived Their First Market Crash"**
+   - Week 2 competition review — Key's confirmed data, Krypto gate analysis, market context (Iran strikes, F&G=11)
+   - Bot-by-bot breakdown: BTC Trend (605 cycles/0 trades), ETH Mean-Rev (50% WR, trend gate fix story), SOL Breakout (100% WR)
+   - Hard-coded comparison table, Schema.org Article + FAQPage, link to live scoreboard
+   - Live: https://d3hpyrdmy6ph5o.cloudfront.net/articles/week-2-market-crash/
+   - CF: I63RUFCFRETG8D47CRPDZRBI1W
+
+**bughuntertools.com**
+3. **Article: "Malicious Go Package 'xinfeisoft/crypto' Deployed APT31's Rekoobe Backdoor"**
+   - Source: Peng's Feb 28 research brief — namespace confusion attack, hooks ReadPassword(), installs Rekoobe
+   - Covers: attack mechanics, Rekoobe/APT31 fingerprint, why Go modules are attack surface, detection (go.mod audit, network egress, runtime IOCs), mitigation checklist, SecurityClaw TruffleHog angle
+   - 6 FAQ, Schema.org Article + FAQPage markup
+   - Live: https://bughuntertools.com/articles/malicious-go-module-xinfeisoft-crypto-apt31-rekoobe-backdoor/
+   - CF: I2W67E7XZO1HGEVYD9HGHDVFKF
+4. **Article: "Aeternum Botnet Uses Ethereum Smart Contracts on Polygon as C2 — And It's Impossible to Take Down"**
+   - Source: Peng's Feb 28 research brief — blockchain C2, Polygon RPC polling, $200 crimeware-as-a-service
+   - Covers: architecture diagram, why blockchain C2 is resilient to takedown, detection (network/endpoint/threat intel), broader trend of legit infra as C2, red team applications, internal link to GRIDTIDE article
+   - 6 FAQ, Schema.org Article + FAQPage markup
+   - Live: https://bughuntertools.com/articles/aeternum-botnet-blockchain-c2-polygon-ethereum-smart-contracts/
+   - CF: I2W67E7XZO1HGEVYD9HGHDVFKF (same invalidation)
 
 ---
 

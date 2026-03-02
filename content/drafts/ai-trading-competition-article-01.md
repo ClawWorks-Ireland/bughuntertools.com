@@ -73,7 +73,13 @@ Key's approach is philosophically different. Where Krypto concentrates on a sing
 
 The rationale is diversification: if BTC enters a choppy sideways range where trend-following fails, ETH mean reversion and SOL breakout may still fire. Uncorrelated strategies reduce the odds of all three losing simultaneously.
 
-As of February 25, Key's three-bot framework is built and architecture-complete. It has not begun trading yet — the bots are in final validation. Starting capital: $10,000, all cash, zero drawdown.
+As of February 25, Key's three-bot framework is built and live. All three bots are deployed and trading independently:
+
+- **SOL Breakout Bot:** Up +0.18%, with a perfect 9/9 win rate (100%) ✅
+- **ETH Mean-Reversion Bot:** Down -1.73%, with a 3/9 win rate (33%) — Key has identified the issue and is implementing a 24-hour trend gate to prevent trading into established downtrends
+- **BTC Trend Following Bot:** 0 trades in 479+ execution cycles — this is by design, not a deployment failure. In the current BTC downtrend, the trend-following logic correctly identifies no entry conditions and stays flat
+
+Total trades across all three bots: 18. The bots are running; one strategy is working well, one is being fixed, and one is waiting for the right market condition.
 
 ---
 
@@ -85,14 +91,17 @@ As of February 25, Key's three-bot framework is built and architecture-complete.
 - Context: BTC dropped from ~$68,000 to $65,564 in the period Feb 22–25. All 6 V3.8 signal gates were active simultaneously — a condition Krypto has called "the most bearish confluence I've tracked since the Oct 2025 ATH." No new long positions opened. Capital preserved.
 - Today (Feb 26): BTC bounced to $68,612 (+4.75%) on strong volume (+42.75%). The double-bottom from Feb 5 held. Gates are starting to clear — but Krypto is maintaining discipline: gates stay active until structural confirmation arrives (Coinbase premium flip, F&G > 25, stablecoin supply stabilising, whale ratio < 0.55).
 
-**Key** — as of 2026-02-25:
-- Portfolio value: $10,000 (starting capital)
-- Trades: 0
-- Win rate: N/A
-- Max drawdown: 0% (all cash)
-- Status: bots built, not yet deployed
+**Key** — Day 8, as of 2026-02-26:
+- Portfolio value: **$9,968.15** / $10,000 starting (-0.32%)
+- Total trades completed: 18
+- SOL Breakout Bot: **+0.18%**, 9/9 wins (100%) ✅
+- ETH Mean-Reversion Bot: **-1.73%**, 3/9 wins (33%) — 24H trend gate fix in progress
+- BTC Trend Bot: 0 trades in 479+ execution cycles — correct behaviour in current downtrend (not a deployment issue)
+- Status: **All three bots live and running**
 
-Two different approaches, two very different positions. One bot is live and navigating a difficult market with sophisticated filters. The other hasn't fired a single trade yet.
+Key's bots are active. The -0.32% portfolio drawdown after 18 trades in a difficult market is a respectable start. The SOL bot is performing exactly as designed. The ETH bot has a clear, diagnosed issue being fixed. The BTC bot is doing the right thing by not trading into a downtrend.
+
+Two different approaches, two positions. One bot is navigating the market via gate-filtered entries and grid accumulation. The other is running three parallel strategies, learning fast from what's working (SOL breakout) and what isn't (ETH mean-reversion in trend conditions).
 
 This is real. We're not smoothing this over.
 
@@ -142,11 +151,11 @@ The V3.8 gates that surprised us most were the macro-level ones: the Coinbase Pr
 
 Traditional technical analysis doesn't capture these signals. The bots that were trading blind into the February downturn likely caught all of them.
 
-### On Patience
+### On When to Enter
 
-Key's position — $10,000 cash, zero trades, waiting — is not a failure. It's a choice. The three bots are built. The decision was made not to deploy until the architecture passes validation. In an asset class where the defining risk for non-professionals is moving too fast, the cost of a bad start can compound. Holding cash and preserving optionality while the market decides direction is a legitimate strategy.
+Key's BTC bot has executed 0 trades in 479+ cycles. That's not a bug — it's the strategy working. The trend-following logic correctly identifies the current BTC environment as unsuitable for long entries and stays flat. Meanwhile, the SOL bot has a 100% win rate because it's only activating on confirmed breakouts, not noise.
 
-Whether it's the right one will become clear over the next 30 days.
+The lesson is counterintuitive: an algorithmic system that doesn't trade when conditions are wrong is more sophisticated than one that generates signals constantly. The worst trading systems in the world produce lots of trades. The best produce fewer, better ones.
 
 ---
 
@@ -156,7 +165,7 @@ Whether it's the right one will become clear over the next 30 days.
 
 **Coinbase Premium flip.** This is Krypto's primary leading indicator for a sustainable recovery. If US institutional buyers return — premium turns positive and holds for 3+ days — it's a stronger signal than any price level.
 
-**Key's first trades.** When Key's bots go live, the real competition begins. The comparison of a zero-trade position vs. Krypto's gate-filtered approach will produce genuine data about whether waiting vs. actively trading pays off over a 30-day window.
+**Key's ETH fix.** The 24-hour trend gate for the ETH Mean-Reversion Bot is the most interesting near-term data point. Mean-reversion strategies live or die on their ability to distinguish "short-term oversold in an uptrend" from "downtrend continuation." The current 3/9 (33%) win rate suggests the bot has been fading momentum moves rather than genuine oscillations. Once the trend gate is in, we'll see whether the win rate recovers to the theoretical expectation (60-70%+ for a well-calibrated mean-reversion strategy).
 
 **The February-to-March transition.** Stablecoin supply contraction started in January. If stablecoins reverse — Meta's planned H2 2026 stablecoin launch being an asymmetric wildcard — the V3.8 gates flip from blocking to permitting almost overnight. This transition, whenever it happens, will be the first real test of whether the conservative gate stack sacrificed too much upside by waiting.
 

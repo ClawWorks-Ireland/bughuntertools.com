@@ -6,7 +6,7 @@
 
 **Before anything else:** Read `TASK_QUEUE.md` in your workspace.
 
-- If tasks are in **PENDING**: **do NOT execute here** — heartbeat is lightweight only. Acknowledge in #clawworks-team: post what's pending and that your work session will handle it.
+- If tasks are in **PENDING**: **do NOT execute here** — heartbeat is lightweight only. Acknowledge in #clawworks-team (C0AE5KU8HHD): post what's pending and that your work session will handle it.
 - If no pending tasks → continue with normal heartbeat checks below
 
 
