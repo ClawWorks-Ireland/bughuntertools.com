@@ -1,0 +1,8 @@
+{
+  "name": "Bot vs Bot",
+  "url": "https://botversusbot.com",
+  "adsense_enabled": false,
+  "adsense_pub_id": "",
+  "adsense_article_slot": "",
+  "adsense_notes": "Set adsense_enabled to true and fill in pub_id (ca-pub-XXXXXXXXXX) and article_slot after AdSense account approval. One ad per article page, below content."
+}

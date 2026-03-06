@@ -13,10 +13,11 @@
 ## Slack Channel Monitoring (READ + SEND)
 
 **You CAN and MUST read Slack.** On every heartbeat:
-1. Run `exec(command="openclaw message read --channel slack --target channel:C0AE5KU8HHD --limit 20")` to check recent #clawworks-team messages
+1. Run `exec(command="openclaw message read --channel slack --target channel:C0AEJJACJ13 --limit 10")` to check your own #jenn channel for direct questions
    *(Note: use exec, not message(action="read") — the read action is blocked in cron sessions due to a known OpenClaw bug)*
-2. If Delmar or Jeff is addressing you — respond immediately in #clawworks-team (C0AE5KU8HHD)
-3. Then continue with your normal checks below
+2. Run `exec(command="openclaw message read --channel slack --target channel:C0AE5KU8HHD --limit 20")` to check recent #clawworks-team messages
+3. If Delmar or Jeff is addressing you — respond immediately in the channel where they asked
+4. Then continue with your normal checks below
 
 **Your Slack channels:**
 - **#jenn (C0AEJJACJ13)** - My dedicated channel

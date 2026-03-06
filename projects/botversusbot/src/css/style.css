@@ -392,3 +392,23 @@ footer a {
     border-bottom: 2px solid #e0e0e0;
 }
 
+
+/* AdSense ad container — tasteful, below-article placement */
+.ad-container {
+    margin: 2rem 0;
+    padding: 0;
+    border-top: 1px solid #eee;
+}
+
+.ad-label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.25rem 0;
+    font-style: normal;
+}
+
+.ad-below-article {
+    margin-top: 2.5rem;
+}
