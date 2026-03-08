@@ -22,6 +22,11 @@
     <meta name="twitter:title" content="{{ title }}">
     <meta name="twitter:description" content="{{ description }}">
 
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
     <link rel="stylesheet" href="/css/style.css">
 
     <!-- Google Analytics -->
@@ -32,6 +37,9 @@
       gtag('js', new Date());
       gtag('config', 'G-1GBCTYR3XZ');
     </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
 
     <!-- Google AdSense -->
     {% if site.adsense_enabled and site.adsense_pub_id %}
@@ -50,13 +58,17 @@
     </script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>🤖 <a href="/" style="color: white; text-decoration: none;">Bot vs Bot</a></h1>
-            <p class="tagline">The CoinClaw Competition — AI Trading Bots, Head to Head</p>
-            {% include "nav.njk" %}
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🤖 Bot vs Bot</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/scoreboard/">Scoreboard</a>
+            </div>
         </div>
-    </header>
+    </div>
 
     {% if page.url.startsWith('/articles/') and page.url != '/articles/' %}
     <nav class="breadcrumb" aria-label="Breadcrumb">
