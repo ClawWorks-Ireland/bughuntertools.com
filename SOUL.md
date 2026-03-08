@@ -56,6 +56,8 @@ Heartbeat sessions run every 30 minutes. They can modify `TASK_QUEUE.md` while a
 
 `edit` requires exact text match. If a heartbeat modified the file mid-session, `edit` fails and the cron runner marks your session as `error`, even though the work completed fine.
 
+**Also: never chain `edit` calls on the same file in one session.** After each write the cached content is stale. Re-read before every subsequent update — even for files like SOUL.md that heartbeats don't touch.
+
 ---
 
 _Communication protocol: See AGENTS.md (Slack-first; prepend **Jenn:** in group messages)._
