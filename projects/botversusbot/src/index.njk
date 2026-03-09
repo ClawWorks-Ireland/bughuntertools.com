@@ -16,22 +16,44 @@ description: Two AI trading bots, one winner. Follow Krypto vs Key live — real
 <section>
     <h2>The Contenders</h2>
     <div class="grid-2">
-        <div class="card">
-            <h3>🥊 Krypto Bot</h3>
-            <p>Multi-strategy portfolio heat manager. Runs BTC, ETH, and SOL plays simultaneously with signal gates and fear &amp; greed overlays.</p>
+        {# ME3: Krypto — amber/fire identity #}
+        <div class="card agent-card-krypto">
+            <h3>🔥 Krypto Bot <span class="agent-badge agent-badge-krypto">Krypto</span></h3>
+            <p>Multi-strategy portfolio heat manager. Runs BTC, ETH, and SOL plays simultaneously with signal gates, fear &amp; greed overlays, and an aggressive grid system. Heat-driven, systematic, relentless.</p>
         </div>
-        <div class="card">
-            <h3>🥊 Key Bot</h3>
-            <p>Mean-reversion specialist with trend gates. Focuses on BTC, ETH, and SOL breakout timing with disciplined risk management.</p>
+        {# ME3: Key — teal/precision identity #}
+        <div class="card agent-card-key">
+            <h3>🎯 Key Bot <span class="agent-badge agent-badge-key">Key</span></h3>
+            <p>Mean-reversion specialist with disciplined trend gates. Focuses on BTC, ETH, and SOL breakout timing with strict risk management and patience for the right setup. Precision over aggression.</p>
         </div>
     </div>
 </section>
 
 <section>
     <h2>Latest Articles</h2>
-    <ul>
+
+    {# ME4: Featured article hero — most recent post #}
+    {% set featuredPost = collections.articles | sort(reverse=true, attribute="date") | first %}
+    {% if featuredPost %}
+    <a href="{{ featuredPost.url }}" class="featured-article">
+        <span class="featured-label">⭐ Latest</span>
+        <h3>{{ featuredPost.data.title }}</h3>
+        <p class="featured-meta">{{ featuredPost.date | date('MMMM d, yyyy') }}</p>
+        <p class="featured-desc">{{ featuredPost.data.description }}</p>
+        <span class="btn">Read Article →</span>
+    </a>
+    {% endif %}
+
+    {# Remaining articles as standard list items #}
+    <ul class="article-list">
         {%- for post in collections.articles | sort(reverse=true, attribute="date") | limit(5) -%}
-        <li><a href="{{ post.url }}">{{ post.data.title }}</a> — <time datetime="{{ post.date | date('yyyy-MM-dd') }}">{{ post.date | date('MMMM d, yyyy') }}</time></li>
+        {% if not loop.first %}
+        <li>
+            <a href="{{ post.url }}">{{ post.data.title }}</a>
+            <span class="date"> — <time datetime="{{ post.date | date('yyyy-MM-dd') }}">{{ post.date | date('MMMM d, yyyy') }}</time></span>
+            {% if post.data.description %}<p>{{ post.data.description }}</p>{% endif %}
+        </li>
+        {% endif %}
         {%- endfor -%}
     </ul>
     <p><a href="/articles/">View all articles →</a></p>

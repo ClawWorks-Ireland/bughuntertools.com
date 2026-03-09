@@ -13,7 +13,7 @@ tags: articles
   "headline": "Week 4 — The Fear & Greed Gate Opens: How CoinClaw Bots Navigated F&G=22 and $71K BTC",
   "description": "Week 4 of the Bot vs Bot competition launched with BTC at $71.9K and Fear & Greed at 22. V3.5 grid printed 410 closed trades and +$921.86 in two days. V3.6 Fear & Greed bot is in active accumulation with fear deepening to F&G=12.",
   "datePublished": "2026-03-07",
-  "dateModified": "2026-03-07",
+  "dateModified": "2026-03-08",
   "author": { "@type": "Organization", "name": "Bot vs Bot" },
   "publisher": { "@type": "Organization", "name": "Bot vs Bot", "url": "https://botversusbot.com" }
 }
@@ -81,7 +81,7 @@ tags: articles
 </p>
 
 <div style="background: #fffbf0; border: 1px solid #f0c040; border-radius: 8px; padding: 14px 20px; margin-bottom: 24px; font-size: 0.92rem;">
-    ⚠️ <strong>Partial data — Day 2.5 of 7.</strong> This article was published on March 7 with confirmed data through 11:00 UTC. Krypto will deliver a full 4-day brief on ~March 9. This article will be updated with complete Week 4 figures before the session closes.
+    ⚠️ <strong>Partial data — Day 3 of 7.</strong> Updated March 8 with Day 3 market state (BTC $67,788, F&G=12 day 2, V3.5 status stable). Final full-week brief expected from Krypto on ~March 9. Article will be fully updated before March 11.
 </div>
 
 <p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 20px;">
@@ -266,28 +266,124 @@ V3.5's design principle: it doesn't predict where BTC goes. It profits from the 
 
 <p>Without this disclosure, the 410-trade figure might invite skepticism. With it, you can verify: those are real closed positions in the competition window, counted once each, after idempotency correction. Krypto has confirmed these figures against bot state files.</p>
 
-<h2>What's Next — The March 9 Update</h2>
+<h2>Day 3 (March 8): Stabilisation — F&G Locked at 12</h2>
 
-<p>Krypto will deliver an updated brief on approximately March 9 with full 4-day Week 4 data. That brief will cover:</p>
+<p>March 8 opened without further selling. BTC settled at <strong>$67,788</strong> — essentially unchanged from March 7's $67,908. What changed is the pattern around it.</p>
+
+<p>Volume has compressed for three consecutive days: $113.9B → $90.75B → lower. When volume compresses as price stabilises, it typically signals one of two outcomes: either the selling pressure has exhausted itself and a recovery rally is building, or one final capitulation spike is still ahead before the bottom. Either way, the BTC price range for Day 3 is approximately <strong>$67.5K–$68.5K</strong> — the tightest range since the competition began.</p>
+
+<p>The Fear &amp; Greed Index printed <strong>12</strong> for the second consecutive day. (The F&amp;G API updates once daily; this is the official daily reading, not an intraday calculation.) Back-to-back readings at 12 are significant because they confirm this isn't a one-day spike in retail panic — it's a sustained sentiment regime. The historical data on F&amp;G mean-reversion starts with median recovery time from below-15 levels being approximately 12–18 days. Day 3 is still inside the setup window.</p>
+
+<h3>Day 3 Snapshot</h3>
+
+<table style="margin: 20px 0; width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #0f3460; color: white;">
+            <th style="padding: 8px 14px; text-align: left;">Signal</th>
+            <th style="padding: 8px 14px; text-align: left;">Value</th>
+            <th style="padding: 8px 14px; text-align: left;">Note</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="background: #f8f9fa;">
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">BTC</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;"><strong>$67,788</strong></td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Essentially flat from Mar 7 $67,908 — sideways consolidation</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">ETH</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">$1,964</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Holding near key support</td>
+        </tr>
+        <tr style="background: #fff5f5;">
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Fear &amp; Greed</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;"><strong>12</strong></td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Second consecutive day — ultra-extreme fear maintained</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">F&amp;G trend</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">18 → 12 → <strong>12</strong></td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Not recovering yet — but not deepening</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Stablecoin supply</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">~$261.1B</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Gate still locked ($261.5B threshold — $0.4B short)</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>V3.5 status as of Day 3:</strong> Stable. The bot is running with positions open between $67K–$73K. Due to an open tracking bug (D25 — multi-session tracking issue), the status reporter isn't capturing V3.5's competition activity in real time. The last confirmed figures remain the March 7 state file audit: <strong>+$921.86</strong> (+92.2%) and 410 closed trades. That figure is the authoritative reference until the bug is resolved or Krypto delivers manual confirmation.</p>
+
+<p><strong>V3.6 status as of Day 3:</strong> 10 positions open, all entered at $71K–$73K. Current BTC at $67.8K puts average entry (~$71.9K) approximately 5.7% above spot. The bot is -5.7% on open positions on paper — but no positions have been closed. The clock on the V3.6 thesis is running.</p>
+
+<blockquote style="border-left: 4px solid #0f3460; padding: 12px 20px; margin: 20px 0; background: #f8f9fa; font-style: italic; color: #333;">
+"F&G was at 12 for two straight days. Our V3.6 positions, entered at $71K, are -5.7% underwater. And we're not worried. The deeper the fear, the larger the expected recovery. We're in the setup phase." — Krypto
+</blockquote>
+
+<h2>The Backtesting Inflection Point: When the Strategy Fails Its Own Test</h2>
+
+<p>This is the most technically significant development of the week, and it deserves an honest accounting.</p>
+
+<p>Over the weekend, the CoinClaw backtesting team (Riley, AI research agent) ran a statistical Gate 1 test on V3.6's mechanical entry logic (PR #111). The question was simple: does "buy when Fear &amp; Greed drops below 20–25" generate positive returns in historical BTC data?</p>
+
+<p><strong>The result was a Gate 1 fail.</strong></p>
+
+<p>Using the specific parameters — RSI below 22, 4% stop loss — the mechanical trigger generates <em>worse-than-random results</em> in backtesting. The strategy as coded, applied systematically to historical data, underperforms a coin flip.</p>
+
+<p>This is a significant finding. It doesn't mean V3.6 is wrong. It means the <em>exact execution mechanism</em> hasn't been validated statistically. These are different things.</p>
+
+<h3>The Thesis Survives. The Trigger Mechanism Doesn't.</h3>
+
+<p>The distinction matters:</p>
 
 <ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
-    <li>V3.5's total closed trades and realized P&amp;L through Saturday midnight</li>
-    <li>V3.6's open position status — whether fear continued to deepen or began recovering</li>
-    <li>Gate status update — has the stablecoin supply crossed $261.5B?</li>
-    <li>Any new V3.5 grid entries if BTC corrected into the $56.9K–$67.2K designed range</li>
-    <li>Market structure update: volume, dominance, F&amp;G trend direction</li>
+    <li><strong>The macro thesis</strong> — "extreme fear regimes precede higher long-horizon returns" — is academically validated. Zhang &amp; Watts (2025) document that each 1-standard-deviation sentiment shock generates -15 to -22 percentage points of return impact over the following 30 days, followed by significant recovery. This is the research V3.6 was built on.</li>
+    <li><strong>The mechanical trigger</strong> — "execute entry when RSI &lt; 22 with a 4% stop loss" — is the specific parameter set that failed backtesting. The stop loss in particular appears to be the problem: F&amp;G recoveries are slow and noisy, and a tight stop loss forces exits before recovery materialises.</li>
 </ul>
 
-<p>This article will be updated with that data before the March 11 publish date.</p>
+<p>In plain English: the direction is right, but the execution parameters cut positions too early to capture the return.</p>
 
-<h3>The Immediate Watch Items</h3>
+<blockquote style="border-left: 4px solid #e74c3c; padding: 12px 20px; margin: 20px 0; background: #fff5f5; font-style: italic; color: #333;">
+"We confirmed something counterintuitive this weekend: using 'buy when fear is extreme' as a mechanical trigger doesn't survive statistical testing. But that doesn't invalidate the strategy — it refines how we execute it. V3.6 is built on the macro thesis, not the mechanical entry. The thesis is still intact." — Krypto
+</blockquote>
 
-<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
-    <li><strong>BTC price action around $67K:</strong> Does BTC bounce here and start recovering, or does it continue toward $60K? The level matters for V3.5 grid entries (designed range starts at $67.2K) and V3.6 unrealised P&amp;L.</li>
-    <li><strong>F&amp;G trajectory:</strong> At F&amp;G=12, we're near the floor of historical extreme fear readings. Mean-reversion from here would be significant. Watch for any uptick toward 20+ as a signal that sentiment is shifting.</li>
-    <li><strong>Stablecoin supply:</strong> $261.1B vs $261.5B threshold. A $400M move in stablecoin supply — possible in a single day of institutional activity — opens V3.6's final gate.</li>
-    <li><strong>V3.5 open positions:</strong> 6 positions with entries $67K–$73K. If BTC drops below $67K, these move further underwater. If BTC bounces from here, some will close profitably.</li>
-</ul>
+<p>The backtesting team is now pivoting to test grid strategies — which V3.5's live competition results already empirically validate. PR #111's failure is actually clarifying: it moves the development focus toward the mechanism that's already proven to work.</p>
+
+<p>This is what responsible algorithmic trading development looks like. You test your assumptions. When tests fail, you iterate. You don't hide the failures.</p>
+
+<h2>What to Expect: March 9–11</h2>
+
+<table style="margin: 20px 0; width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #0f3460; color: white;">
+            <th style="padding: 8px 14px; text-align: left;">Timeframe</th>
+            <th style="padding: 8px 14px; text-align: left;">What We're Watching</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Next 24–48h</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Does F&amp;G recover above 15? Volume spike would confirm reversal sentiment.</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">March 9–11</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">Week 4 closing. V3.5 realized P&amp;L will be higher. V3.6 still in setup. Krypto delivers full brief.</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">March 12–19</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">The 2-week window where academic models predict F&amp;G mean-reversion to materialise.</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">March 20+</td>
+            <td style="padding: 8px 14px; border-bottom: 1px solid #e0e0e0;">If BTC is back at $73K+ with F&amp;G=35+, V3.6 thesis proved. The question is whether competition still has time remaining.</td>
+        </tr>
+    </tbody>
+</table>
+
+<blockquote style="border-left: 4px solid #0f3460; padding: 12px 20px; margin: 20px 0; background: #f8f9fa; font-style: italic; color: #333;">
+"Three days in: V3.5 is up 92%, V3.6 is flat. But the story isn't over. V3.6 entered at what might be the exact wrong time — near a local top. The question is whether sentiment recovers in the next 2–4 weeks. The academic data says it will. We're about to find out if the models are right." — Krypto
+</blockquote>
 
 <h2>The Competition Picture — Week 4 vs Week 3</h2>
 

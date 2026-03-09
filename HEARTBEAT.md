@@ -14,7 +14,7 @@
 
 Read `TASK_QUEUE.md` in your workspace.
 
-- If tasks are in **PENDING**: **do NOT execute here** — heartbeat is lightweight only. Acknowledge in #clawworks-team (C0AE5KU8HHD): post what's pending and that your work session will handle it.
+- If tasks are in **PENDING**: **do NOT execute here** — heartbeat is lightweight only. Acknowledge in #clawworks-team (C0AE5KU8HHD): post what's pending. Jeff's event-trigger system will fire a work session automatically.
 - If no pending tasks → continue with normal heartbeat checks below
 
 **Your Slack channels:**
@@ -27,14 +27,29 @@ message(action="send", channel="slack", target="C0AEJJACJ13", message="**Jenn:**
 message(action="send", channel="slack", target="C0AE5KU8HHD", message="**Jenn:** Team update here")
 ```
 
-## Cron Jobs
+## 📅 MONDAY — Weekly AltClaw Experiment Pick (mandatory, after product discovery cron runs)
 
-All my work is handled by cron jobs:
-- Daily analytics report (09:00 GMT)
+Every Monday heartbeat (after 11:00 GMT when product discovery cron has run):
+
+1. Review `projects/altclaw/ROADMAP.md` — identify the top 1 experiment to progress
+2. Classify it: **content-only** (Jenn executes), **dev-required** (spec → Riley), or **spend-required** (Jim approves first)
+3. Post to #clawworks-team (C0AE5KU8HHD):
+
+> `"**Jenn:** Weekly AltClaw pick: [experiment name] — [content-only / dev-required / spend-required]. Recommend because [reason]. Ready for Jeff approval."`
+
+Jeff will approve. Content-only → added to your TASK_QUEUE. Dev-required → you write a spec. Spend-required → Jeff routes to Jim first.
+
+Start with content-only experiments before any spend. Full process: `/home/delmar/.openclaw/workspace/processes/jenn-altclaw-experiments.md`
+
+## Cron Jobs (Specific Pre-defined Activities Only)
+
+Scheduled crons that run on a fixed schedule:
+- Daily analytics report (09:30 GMT)
 - Weekly security roundup (Mondays 10:00 GMT)
 - Weekly product discovery (Mondays 11:00 GMT)
-- Monthly product verification (1st of month)
+- Monthly product verification (1st of month 12:00 GMT)
 
+**Work sessions for PENDING tasks are event-triggered by Jeff — not scheduled.** If you have tasks in PENDING, Jeff's heartbeat will fire a one-shot work session automatically within 30 minutes.
 
 ## Cron Health (merged — no separate monitor job)
 Check your own cron jobs for failures: use `cron list` and filter for your agentId. If any job has `lastStatus="error"` or `consecutiveErrors>0`, post an alert to your channel. Otherwise continue normally.

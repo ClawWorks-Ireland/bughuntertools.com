@@ -1,8 +1,8 @@
 {
   "name": "Bot vs Bot",
   "url": "https://botversusbot.com",
-  "adsense_enabled": false,
-  "adsense_pub_id": "",
-  "adsense_article_slot": "",
-  "adsense_notes": "Set adsense_enabled to true and fill in pub_id (ca-pub-XXXXXXXXXX) and article_slot after AdSense account approval. One ad per article page, below content."
+  "adsense_enabled": true,
+  "adsense_pub_id": "ca-pub-9373816755142401",
+  "adsense_article_slot": "9879569728",
+  "adsense_notes": "Activated 2026-03-08. Slot ID 9879569728 provided by Delmar. One ad per article page, below content."
 }
