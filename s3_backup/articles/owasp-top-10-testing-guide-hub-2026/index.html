@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A complete guide to testing for every OWASP Top 10 category in 2026. SQL injection, XSS, SSRF, CORS, JWT, security headers, open redirects — with practical scanner checks and fix guidance.">
+    <title>OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/owasp-top-10-testing-guide-hub-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/owasp-top-10-testing-guide-hub-2026/">
+    <meta property="og:title" content="OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026">
+    <meta property="og:description" content="A complete guide to testing for every OWASP Top 10 category in 2026. SQL injection, XSS, SSRF, CORS, JWT, security headers, open redirects — with practical scanner checks and fix guidance.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/owasp-top-10-testing-guide-hub-2026/">
+    <meta name="twitter:title" content="OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026">
+    <meta name="twitter:description" content="A complete guide to testing for every OWASP Top 10 category in 2026. SQL injection, XSS, SSRF, CORS, JWT, security headers, open redirects — with practical scanner checks and fix guidance.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026",
+      "description": "A complete guide to testing for every OWASP Top 10 category in 2026. SQL injection, XSS, SSRF, CORS, JWT, security headers, open redirects — with practical scanner checks and fix guidance.",
+      "url": "https://bughuntertools.com/articles/owasp-top-10-testing-guide-hub-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026",
+      "description": "A complete guide to testing for every OWASP Top 10 category in 2026 with practical scanner checks and fix guidance.",
+      "datePublished": "2026-04-09",
+      "dateModified": "2026-04-09",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the OWASP Top 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The OWASP Top 10 is a standard awareness document for web application security. It represents a broad consensus about the most critical security risks to web applications, updated periodically by the Open Web Application Security Project. The 2021 edition (current as of 2026) covers: A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable Components, A07 Identification and Authentication Failures, A08 Software and Data Integrity Failures, A09 Security Logging and Monitoring Failures, and A10 Server-Side Request Forgery."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can automated scanners find all OWASP Top 10 vulnerabilities?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Automated scanners can reliably detect issues in A03 (Injection), A05 (Security Misconfiguration), A06 (Vulnerable Components), and parts of A02 (Cryptographic Failures like TLS misconfigs). Categories like A04 (Insecure Design) and A09 (Logging Failures) require manual review. Modern AI-assisted scanners like SecurityClaw are closing the gap by combining automated scanning with hypothesis-driven testing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools should I use to test for the OWASP Top 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A comprehensive OWASP Top 10 testing toolkit includes: OWASP ZAP or Burp Suite for web app scanning, Nuclei for template-based vulnerability detection, testssl.sh or sslyze for TLS auditing, and specialized tools for JWT testing, CORS checking, and header analysis. See our Security Scanner Comparison Hub for detailed tool comparisons."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 20px 24px; margin-bottom: 32px; border-radius: 4px;">
+<h2 style="margin-top: 0; font-size: 1.1em;">Key Takeaways</h2>
+<ul style="margin-bottom: 0;">
+<li>The OWASP Top 10 covers 10 vulnerability categories — each requires different testing techniques and tools</li>
+<li>Automated scanners handle injection, misconfiguration, and crypto failures well; access control and design flaws need manual review</li>
+<li>This hub links to deep-dive guides for every testable OWASP category with scanner checks, real examples, and fix guidance</li>
+<li>SecurityClaw now maps automated skills to every OWASP Top 10 category — see the coverage guides below</li>
+</ul>
+</div>
+
+<h1>OWASP Top 10 Testing Guide: How to Find Every Vulnerability Category in 2026</h1>
+
+<p>The OWASP Top 10 is the standard framework for web application security testing. Every penetration test report maps findings to it. Every compliance framework references it. Every security scanner claims to cover it.</p>
+
+<p>But actually testing for each category requires different tools, different techniques, and different levels of expertise. This hub collects every guide we've published on OWASP Top 10 testing — organized by category so you can find exactly what you need.</p>
+
+<hr style="margin: 32px 0;">
+
+<h2>A01: Broken Access Control</h2>
+<p>The #1 category since 2021. Covers IDOR, privilege escalation, CORS misconfigs, and path traversal.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/cors-misconfiguration-security-testing-guide-2026/">CORS Misconfiguration: The Security Header That Breaks Everything When You Get It Wrong</a></h3>
+<p>How CORS misconfigurations enable cross-origin data theft, what scanner checks to run, and how to configure CORS headers correctly.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/open-redirect-vulnerabilities-testing-guide-2026/">Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users</a></h3>
+<p>Open redirects enable phishing and token theft. Here's how to test for them and what your scanner should flag.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/api-security-testing-10-checks-2026/">API Security Testing: The 10 Checks Every API Needs Before Production</a></h3>
+<p>BOLA, broken authentication, excessive data exposure — the 10 API-specific checks that map to OWASP A01 and beyond.</p>
+</div>
+
+<h2>A02: Cryptographic Failures</h2>
+<p>Weak TLS, missing encryption, exposed secrets, and broken crypto implementations.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Security Scanner Should Check in 2026</a></h3>
+<p>TLS misconfigurations remain the #1 cryptographic failure. Protocol versions, cipher suites, certificate chains — what to check and how to fix each issue.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/jwt-security-vulnerabilities-testing-2026/">JWT Security: Common Vulnerabilities and How to Test for Them</a></h3>
+<p>Algorithm confusion, key leakage, missing expiration — the JWT vulnerabilities that scanners miss and how to test for them manually.</p>
+</div>
+
+<h2>A03: Injection</h2>
+<p>SQL injection, XSS, command injection, and other injection flaws. Still the most exploited category.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">Detecting SQL Injection: What Your Security Scanner Should Check in 2026</a></h3>
+<p>Error-based, boolean-based, and time-based SQLi detection. What your scanner should catch and how to fix it.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">Detecting Reflected XSS: What Your Security Scanner Should Check in 2026</a></h3>
+<p>Reflected XSS remains in the OWASP Top 10 because WAFs don't catch context-dependent payloads. Here's what real detection looks like.</p>
+</div>
+
+<h2>A05: Security Misconfiguration</h2>
+<p>Default configs, missing headers, verbose errors, unnecessary features enabled.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/security-headers-complete-guide-2026/">Security Headers: The Complete Guide to HTTP Response Headers That Protect Your Application</a></h3>
+<p>Every security header that matters in 2026 — CSP, HSTS, X-Frame-Options, and more. Configuration examples and testing methods.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/security-misconfigurations-scanners-find-in-wild-2026/">6 Security Misconfigurations That Automated Scanners Actually Find in the Wild</a></h3>
+<p>Real misconfigurations found by automated scanners in production — exposed admin panels, debug endpoints, default credentials, and more.</p>
+</div>
+
+<h2>A07: Identification and Authentication Failures</h2>
+<p>Weak passwords, broken session management, credential stuffing vulnerabilities.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/session-security-testing-cookie-flags-token-rotation-2026/">Session Security Testing: Cookie Flags, Token Rotation, and What Your Scanner Should Check</a></h3>
+<p>Session fixation, missing cookie flags, token predictability — the session management checks that prevent account takeover.</p>
+</div>
+
+<h2>A10: Server-Side Request Forgery (SSRF)</h2>
+<p>SSRF moved into the Top 10 in 2021 and cloud environments make it more dangerous than ever.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">Server-Side Request Forgery: What Your Scanner Should Detect</a></h3>
+<p>SSRF in cloud environments can reach metadata endpoints and internal services. Here's what detection looks like and how to prevent it.</p>
+</div>
+
+<hr style="margin: 32px 0;">
+
+<h2>Full OWASP Coverage Guides</h2>
+<p>These guides map automated scanning capabilities across the entire OWASP Top 10.</p>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">How SecurityClaw Covers the OWASP Top 10: A Complete Mapping</a></h3>
+<p>Every SecurityClaw automated skill mapped to its OWASP Top 10 category. See exactly what's covered and what gaps remain.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw OWASP Top 10 Coverage: What's Covered, What's Not, What's Next</a></h3>
+<p>Current coverage percentages, gap analysis, and the roadmap for reaching full OWASP Top 10 automated coverage.</p>
+</div>
+
+<div class="tool" style="margin-bottom: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+<h3><a href="/articles/web-app-security-testing-checklist-2026/">Web Application Security Testing Checklist for 2026</a></h3>
+<p>The complete testing checklist organized by phase — recon, authentication, injection, configuration, and business logic.</p>
+</div>
+
+<hr style="margin: 32px 0;">
+
+<section style="background: #f8f9fa; padding: 24px; border-radius: 8px; border-left: 4px solid #667eea;">
+<h2 style="margin-top: 0;">Related Hubs</h2>
+<p><a href="/articles/security-scanner-comparison-hub-2026/">Security Scanner Comparison Hub</a> — Tool reviews, pricing, and head-to-head comparisons for every major security scanner.</p>
+<p><a href="/articles/bug-bounty-resource-center-hub-2026/">Bug Bounty Resource Center</a> — Recon workflows, starter kits, and lab setup guides for bug bounty hunters.</p>
+</section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

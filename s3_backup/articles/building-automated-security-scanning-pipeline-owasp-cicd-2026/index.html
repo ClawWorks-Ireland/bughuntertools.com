@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Step-by-step guide to building an automated security scanning pipeline that covers the OWASP Top 10. Covers tool selection, scan orchestration, finding triage, and integration with CI/CD. Practical examples with SecurityClaw, ZAP, and Nuclei.">
+    <title>Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">
+    <meta property="og:title" content="Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD">
+    <meta property="og:description" content="Step-by-step guide to building an automated security scanning pipeline that covers the OWASP Top 10. Covers tool selection, scan orchestration, finding triage, and integration with CI/CD. Practical examples with SecurityClaw, ZAP, and Nuclei.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">
+    <meta name="twitter:title" content="Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD">
+    <meta name="twitter:description" content="Step-by-step guide to building an automated security scanning pipeline that covers the OWASP Top 10. Covers tool selection, scan orchestration, finding triage, and integration with CI/CD. Practical examples with SecurityClaw, ZAP, and Nuclei.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD",
+      "description": "Step-by-step guide to building an automated security scanning pipeline that covers the OWASP Top 10. Covers tool selection, scan orchestration, finding triage, and integration with CI/CD. Practical examples with SecurityClaw, ZAP, and Nuclei.",
+      "url": "https://bughuntertools.com/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD",
+      "description": "Step-by-step guide to building an automated security scanning pipeline that covers the OWASP Top 10.",
+      "datePublished": "2026-04-07",
+      "dateModified": "2026-04-07",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      }
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Build an Automated Security Scanning Pipeline with Full OWASP Coverage",
+      "description": "Step-by-step guide to building an automated security scanning pipeline covering the OWASP Top 10 in CI/CD.",
+      "datePublished": "2026-04-07",
+      "dateModified": "2026-04-07",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Design the pipeline architecture",
+          "text": "Plan a four-layer scanning architecture: static analysis, dependency scanning, dynamic scanning, and configuration auditing."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add static analysis (Layer 1)",
+          "text": "Integrate SAST tools like Semgrep for pre-deploy code analysis covering injection flaws and insecure patterns."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add dependency scanning (Layer 2)",
+          "text": "Run dependency checks with tools like Trivy to catch known vulnerabilities in third-party libraries."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add dynamic scanning (Layer 3)",
+          "text": "Deploy DAST tools like ZAP and Nuclei for post-deploy scanning against running applications."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add configuration auditing (Layer 4)",
+          "text": "Continuously audit infrastructure and application configurations for security misconfigurations."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Set up scan orchestration and triage",
+          "text": "Orchestrate scan execution, deduplicate findings, and establish triage workflows to separate signal from noise."
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+  <h1>Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage in CI/CD</h1>
+
+  <div class="meta">
+    <span>Published: April 7, 2026</span>
+    <span>Reading time: 14 min</span>
+  </div>
+
+  <div class="affiliate-disclosure">
+    <p><em>Some links in this article may be affiliate links. We may earn a commission if you purchase through them, at no extra cost to you.</em></p>
+  </div>
+
+  <div class="intro">
+    <p><strong>Most teams know they should be scanning for security vulnerabilities. Few have a pipeline that actually covers the OWASP Top 10 end-to-end. This guide walks through building an automated security scanning pipeline from scratch — tool selection, scan orchestration, finding triage, and CI/CD integration. No theory. Just the architecture that works.</strong></p>
+  </div>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>SQL injection remains the most exploited injection flaw in web applications</li>
+      <li>Both error-based and boolean-based detection methods are needed for full coverage</li>
+      <li>Reflected XSS requires testing every user-controlled input that appears in responses</li>
+      <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+      <li>SecurityClaw skills map directly to OWASP Top 10 categories for systematic coverage</li>
+    </ul>
+  </div>
+
+
+  <nav class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#architecture">Pipeline Architecture</a></li>
+      <li><a href="#layer-1">Layer 1: Static Analysis (Pre-Deploy)</a></li>
+      <li><a href="#layer-2">Layer 2: Dependency Scanning (Pre-Deploy)</a></li>
+      <li><a href="#layer-3">Layer 3: Dynamic Scanning (Post-Deploy)</a></li>
+      <li><a href="#layer-4">Layer 4: Configuration Auditing (Continuous)</a></li>
+      <li><a href="#orchestration">Scan Orchestration</a></li>
+      <li><a href="#triage">Finding Triage: Separating Signal from Noise</a></li>
+      <li><a href="#cicd">CI/CD Integration Patterns</a></li>
+      <li><a href="#coverage-map">OWASP Coverage Map</a></li>
+      <li><a href="#mistakes">Common Mistakes</a></li>
+      <li><a href="#bottom-line">Bottom Line</a></li>
+    </ol>
+  </nav>
+
+  <section id="architecture">
+    <h2>Pipeline Architecture</h2>
+
+    <p>An effective security scanning pipeline has four layers, each running at a different point in the development lifecycle:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Layer</th>
+          <th style="padding:10px; text-align:left;">When</th>
+          <th style="padding:10px; text-align:left;">What It Catches</th>
+          <th style="padding:10px; text-align:left;">Tools</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">1. Static Analysis</td>
+          <td style="padding:10px;">Every PR</td>
+          <td style="padding:10px;">Hardcoded secrets, insecure patterns, code smells</td>
+          <td style="padding:10px;">Semgrep, Gitleaks, TruffleHog</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">2. Dependency Scanning</td>
+          <td style="padding:10px;">Every PR + daily</td>
+          <td style="padding:10px;">Known CVEs in dependencies</td>
+          <td style="padding:10px;">Trivy, npm audit, pip-audit</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">3. Dynamic Scanning</td>
+          <td style="padding:10px;">Post-deploy to staging</td>
+          <td style="padding:10px;">Runtime vulnerabilities (XSS, SQLi, SSRF, auth flaws)</td>
+          <td style="padding:10px;">ZAP, Nuclei, SecurityClaw</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">4. Config Auditing</td>
+          <td style="padding:10px;">Continuous</td>
+          <td style="padding:10px;">TLS misconfig, missing headers, exposed services</td>
+          <td style="padding:10px;">SecurityClaw, testssl.sh, Mozilla Observatory</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Each layer catches different vulnerability classes. No single layer covers everything. The pipeline's strength comes from layering — what static analysis misses, dynamic scanning catches. What dynamic scanning misses, configuration auditing catches.</p>
+  </section>
+
+  <section id="layer-1">
+    <h2>Layer 1: Static Analysis (Pre-Deploy)</h2>
+
+    <p>Static analysis runs on every pull request before code is merged. It catches issues that are visible in source code without running the application.</p>
+
+    <p><strong>What to scan for:</strong></p>
+    <ul>
+      <li>Hardcoded secrets (API keys, passwords, tokens) — Gitleaks or TruffleHog</li>
+      <li>Insecure code patterns (eval(), innerHTML, SQL string concatenation) — Semgrep</li>
+      <li>Missing input validation on user-facing endpoints — Semgrep custom rules</li>
+      <li>Insecure cryptographic usage (MD5, SHA1 for passwords) — Semgrep</li>
+    </ul>
+
+    <p><strong>Implementation:</strong> Add as a required check on pull requests. The scan should block merge if it finds high-severity issues (hardcoded secrets, SQL injection patterns). Medium-severity issues (missing input validation) should warn but not block.</p>
+
+    <p><strong>OWASP coverage:</strong> A02 (hardcoded keys), A03 (injection patterns in code), A05 (insecure defaults).</p>
+
+    <p><strong>Key principle:</strong> Static analysis has the highest false positive rate of any layer. Tune your rules aggressively — a noisy scanner that developers ignore is worse than no scanner at all. Start with 5-10 high-confidence rules and expand gradually.</p>
+  </section>
+
+  <section id="layer-2">
+    <h2>Layer 2: Dependency Scanning (Pre-Deploy)</h2>
+
+    <p>Dependency scanning checks your third-party libraries against known vulnerability databases. It runs on every PR (to catch new vulnerable dependencies) and daily (to catch newly disclosed CVEs in existing dependencies).</p>
+
+    <p><strong>What to scan:</strong></p>
+    <ul>
+      <li>npm packages — <code>npm audit</code> or Trivy</li>
+      <li>Python packages — <code>pip-audit</code> or Trivy</li>
+      <li>Container images — Trivy</li>
+      <li>OS packages — Trivy</li>
+    </ul>
+
+    <p><strong>Implementation:</strong> Trivy is the most versatile option — it scans npm, pip, Go modules, container images, and OS packages with a single tool. Run it in CI on every PR and as a daily cron job against your deployed images.</p>
+
+    <p><strong>OWASP coverage:</strong> A06 (Vulnerable and Outdated Components) — this is the primary layer for A06.</p>
+
+    <p><strong>Key principle:</strong> Not every CVE is exploitable in your context. A vulnerability in a function you never call is low risk. Prioritize CVEs that affect code paths your application actually uses. Trivy's <code>--ignore-unfixed</code> flag filters out CVEs with no available patch — useful for reducing noise.</p>
+  </section>
+
+  <section id="layer-3">
+    <h2>Layer 3: Dynamic Scanning (Post-Deploy)</h2>
+
+    <p>Dynamic scanning tests the running application by sending requests and analyzing responses. This is where you catch runtime vulnerabilities that static analysis can't see — XSS, SQL injection, SSRF, authentication flaws, and access control issues.</p>
+
+    <p><strong>Tool selection:</strong></p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Tool</th>
+          <th style="padding:10px; text-align:left;">Strength</th>
+          <th style="padding:10px; text-align:left;">Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">OWASP ZAP</td>
+          <td style="padding:10px;">Broad coverage, good spider/crawler</td>
+          <td style="padding:10px;">General web app scanning, CI/CD baseline</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Nuclei</td>
+          <td style="padding:10px;">Template-based, fast, community templates</td>
+          <td style="padding:10px;">Known vulnerability checks, misconfig detection</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">SecurityClaw</td>
+          <td style="padding:10px;">Skill-based, OWASP-mapped, campaign orchestration</td>
+          <td style="padding:10px;">Targeted OWASP coverage, automated campaigns</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Burp Suite Pro</td>
+          <td style="padding:10px;">Deep scanning, excellent crawler</td>
+          <td style="padding:10px;">Manual + automated hybrid testing</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Implementation:</strong> Run dynamic scans against your staging environment after every deployment. Use ZAP for broad coverage (spider + active scan), Nuclei for known vulnerability templates, and SecurityClaw for targeted OWASP skill checks. Don't run active injection scans (XSS, SQLi, SSRF) against production without explicit approval.</p>
+
+    <p><strong>OWASP coverage:</strong> A01 (access control), A03 (injection), A04 (insecure design), A07 (auth failures), A10 (SSRF).</p>
+
+    <p><strong>Key principle:</strong> Dynamic scanning is slow. A full ZAP active scan can take hours. Run a fast baseline scan (passive + spider) on every deploy, and a full active scan on a weekly schedule. This balances coverage with pipeline speed.</p>
+  </section>
+
+  <section id="layer-4">
+    <h2>Layer 4: Configuration Auditing (Continuous)</h2>
+
+    <p>Configuration auditing checks the deployed infrastructure for security misconfigurations — TLS settings, HTTP headers, exposed services, and cloud resource policies. It runs continuously because configurations can change independently of code deployments.</p>
+
+    <p><strong>What to audit:</strong></p>
+    <ul>
+      <li>TLS configuration — protocol versions, cipher suites, certificate validity, HSTS</li>
+      <li>HTTP security headers — CSP, X-Frame-Options, X-Content-Type-Options, SameSite cookies</li>
+      <li>CORS policy — overly permissive origins, credentials with wildcard</li>
+      <li>Exposed services — admin panels, debug endpoints, database interfaces</li>
+      <li>Cloud configuration — S3 bucket policies, IAM permissions, security groups</li>
+    </ul>
+
+    <p><strong>Implementation:</strong> Run SecurityClaw's tls-crypto-auditor, security-header-checker, and apigw-cors-tester on a daily cron. Use Mozilla Observatory for a quick external check. For cloud configuration, use AWS Config rules, Azure Policy, or GCP Organization Policy.</p>
+
+    <p><strong>OWASP coverage:</strong> A02 (TLS), A04 (headers), A05 (misconfiguration).</p>
+
+    <p><strong>Key principle:</strong> Configuration drift is real. A TLS configuration that was correct last month may be insecure today if a certificate expired or a load balancer was reconfigured. Continuous auditing catches drift that point-in-time scans miss.</p>
+  </section>
+
+  <section id="orchestration">
+    <h2>Scan Orchestration</h2>
+
+    <p>Running 4 layers of scanning generates a lot of data. Orchestration is how you manage it without drowning in findings.</p>
+
+    <p><strong>Scan scheduling:</strong></p>
+    <ul>
+      <li>Layer 1 (static) — every PR, blocking merge on high severity</li>
+      <li>Layer 2 (dependencies) — every PR + daily cron</li>
+      <li>Layer 3 (dynamic baseline) — every staging deploy</li>
+      <li>Layer 3 (dynamic full) — weekly scheduled</li>
+      <li>Layer 4 (config audit) — daily cron</li>
+    </ul>
+
+    <p><strong>Result aggregation:</strong> All scan results should flow into a single dashboard or issue tracker. Don't make developers check 4 different tools for findings. Options: DefectDojo (open source), GitHub Security tab (if using GitHub Advanced Security), or a custom aggregation script that creates issues from scan output.</p>
+
+    <p><strong>Deduplication:</strong> Multiple tools will find the same issue. A missing CSP header will be flagged by ZAP, SecurityClaw, and Mozilla Observatory. Deduplicate by (URL + finding type + severity) before creating issues.</p>
+  </section>
+
+  <section id="triage">
+    <h2>Finding Triage: Separating Signal from Noise</h2>
+
+    <p>The hardest part of security scanning isn't running the scans — it's triaging the results. A typical first scan of a web application produces hundreds of findings. Most are low severity, many are false positives, and a few are critical.</p>
+
+    <p><strong>Triage priority:</strong></p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Priority</th>
+          <th style="padding:10px; text-align:left;">Finding Type</th>
+          <th style="padding:10px; text-align:left;">Action</th>
+          <th style="padding:10px; text-align:left;">SLA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#fdf2f2;">
+          <td style="padding:10px;">P0 — Critical</td>
+          <td style="padding:10px;">Hardcoded secrets, SQLi, RCE, SSRF to cloud metadata</td>
+          <td style="padding:10px;">Fix immediately, rotate credentials</td>
+          <td style="padding:10px;">24 hours</td>
+        </tr>
+        <tr style="background:#fef9e7;">
+          <td style="padding:10px;">P1 — High</td>
+          <td style="padding:10px;">XSS, IDOR, auth bypass, missing TLS</td>
+          <td style="padding:10px;">Fix in current sprint</td>
+          <td style="padding:10px;">1 week</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">P2 — Medium</td>
+          <td style="padding:10px;">Missing headers, weak TLS ciphers, CORS misconfig</td>
+          <td style="padding:10px;">Schedule fix</td>
+          <td style="padding:10px;">1 month</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">P3 — Low</td>
+          <td style="padding:10px;">Information disclosure, missing SRI, verbose errors</td>
+          <td style="padding:10px;">Track, fix when convenient</td>
+          <td style="padding:10px;">Quarterly</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>False positive management:</strong> Every scanner produces false positives. The key is to have a documented process for marking findings as false positives so they don't reappear in future scans. Most tools support suppression files or baseline configurations. Maintain these as code alongside your application.</p>
+  </section>
+
+  <section id="cicd">
+    <h2>CI/CD Integration Patterns</h2>
+
+    <p>There are three patterns for integrating security scanning into CI/CD:</p>
+
+    <p><strong>Pattern 1: Gate (blocking)</strong> — The scan runs as a required check. If it finds issues above a severity threshold, the pipeline fails and the deployment is blocked. Best for: Layer 1 (secrets) and Layer 2 (critical CVEs).</p>
+
+    <p><strong>Pattern 2: Report (non-blocking)</strong> — The scan runs and posts results as a comment or dashboard update, but doesn't block the pipeline. Best for: Layer 3 (dynamic scanning) and Layer 4 (config auditing), where false positives are common and blocking would slow development.</p>
+
+    <p><strong>Pattern 3: Async (scheduled)</strong> — The scan runs on a schedule (daily, weekly) independent of deployments. Results are aggregated and triaged separately. Best for: Full active scans (Layer 3) and continuous monitoring (Layer 4).</p>
+
+    <p>Most teams use a combination: Gate for secrets and critical CVEs, Report for dynamic baseline scans, and Async for full active scans.</p>
+  </section>
+
+  <section id="coverage-map">
+    <h2>OWASP Coverage Map</h2>
+
+    <p>Here's how the four layers map to the OWASP Top 10:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">OWASP</th>
+          <th style="padding:10px; text-align:center;">L1 Static</th>
+          <th style="padding:10px; text-align:center;">L2 Deps</th>
+          <th style="padding:10px; text-align:center;">L3 Dynamic</th>
+          <th style="padding:10px; text-align:center;">L4 Config</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">A01 Broken Access Control</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A02 Cryptographic Failures</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A03 Injection</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A04 Insecure Design</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A05 Security Misconfiguration</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A06 Vulnerable Components</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A07 Auth Failures</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A08 Data Integrity</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A09 Logging/Monitoring</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A10 SSRF</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+          <td style="padding:10px; text-align:center;">—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Every OWASP category is covered by at least one layer. Most are covered by two or three. This redundancy is intentional — different layers catch different manifestations of the same vulnerability class.</p>
+  </section>
+
+  <section id="mistakes">
+    <h2>Common Mistakes</h2>
+
+    <p><strong>1. Scanning production with active injection tests.</strong> XSS probes, SQL injection payloads, and SSRF attempts can break production applications. Always run active scans against staging or a dedicated security testing environment.</p>
+
+    <p><strong>2. Blocking CI/CD on every finding.</strong> If your pipeline fails on every medium-severity finding, developers will either disable the scanner or stop caring about the results. Block only on critical and high severity. Report everything else.</p>
+
+    <p><strong>3. Running scans without triaging results.</strong> A scan that produces 500 findings and no one looks at them is worse than no scan — it creates a false sense of security. Assign ownership for triage. If no one is triaging, reduce scan scope until someone is.</p>
+
+    <p><strong>4. Scanning only at deploy time.</strong> New CVEs are disclosed daily. A dependency that was safe yesterday may have a critical CVE today. Run dependency scans on a daily schedule, not just at deploy time.</p>
+
+    <p><strong>5. Not maintaining false positive suppressions.</strong> Every scanner produces false positives. If you don't maintain a suppression file, the same false positives will appear in every scan, burying real findings in noise. Treat suppression files as code — review them, version them, and audit them periodically.</p>
+  </section>
+
+  <section id="bottom-line">
+    <h2>Bottom Line</h2>
+
+    <p>A security scanning pipeline isn't a single tool — it's four layers working together. Static analysis catches code-level issues before merge. Dependency scanning catches known CVEs in libraries. Dynamic scanning catches runtime vulnerabilities in the running application. Configuration auditing catches infrastructure misconfigurations continuously.</p>
+
+    <p>Start with Layer 1 (secrets scanning) and Layer 2 (dependency scanning) — they're the easiest to implement and have the lowest false positive rate. Add Layer 3 (dynamic scanning) once you have a staging environment. Add Layer 4 (config auditing) once you're deploying to production.</p>
+
+    <p>The goal isn't zero findings — it's a process that catches critical issues before they reach production and gives your team a clear path to fix everything else. Build the pipeline, triage the results, and iterate.</p>
+  </section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

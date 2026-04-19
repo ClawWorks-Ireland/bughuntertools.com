@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s guide to the OWASP API Security Top 10 — what each risk means, how attackers exploit it, and exactly how to test for it in 2026.">
+    <title>OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/owasp-api-security-top-10-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/owasp-api-security-top-10-guide-2026/">
+    <meta property="og:title" content="OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies">
+    <meta property="og:description" content="A practitioner&#39;s guide to the OWASP API Security Top 10 — what each risk means, how attackers exploit it, and exactly how to test for it in 2026.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/owasp-api-security-top-10-guide-2026/">
+    <meta name="twitter:title" content="OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies">
+    <meta name="twitter:description" content="A practitioner&#39;s guide to the OWASP API Security Top 10 — what each risk means, how attackers exploit it, and exactly how to test for it in 2026.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies",
+      "description": "A practitioner&#39;s guide to the OWASP API Security Top 10 — what each risk means, how attackers exploit it, and exactly how to test for it in 2026.",
+      "url": "https://bughuntertools.com/articles/owasp-api-security-top-10-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies",
+      "description": "A practitioner's guide to the OWASP API Security Top 10 — what each risk means, how attackers exploit it, and exactly how to test for it in 2026.",
+      "datePublished": "2026-04-12",
+      "dateModified": "2026-04-12",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the OWASP API Security Top 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The OWASP API Security Top 10 is a list of the most critical security risks specific to APIs, maintained by the Open Worldwide Application Security Project. Unlike the general OWASP Top 10 for web applications, the API Security Top 10 focuses on risks unique to API architectures — broken authorization, mass data exposure, rate limiting failures, and server-side request forgery. The current version (2023) reflects the shift toward microservices and API-first architectures."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is the OWASP API Security Top 10 different from the regular OWASP Top 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The regular OWASP Top 10 covers web application risks broadly — injection, XSS, misconfiguration. The API Security Top 10 focuses specifically on API-layer risks: broken object-level authorization (BOLA), broken function-level authorization, unrestricted resource consumption, and unsafe API consumption. Many API risks don't appear in the web Top 10 because they're architectural rather than implementation bugs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools can test for OWASP API Security Top 10 risks?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Burp Suite Professional with its API scanning extensions, OWASP ZAP with OpenAPI import, Postman security tests, and specialized tools like Akto and APIsec can test for API-specific risks. For authorization testing (BOLA/BFLA), manual testing with tools like Autorize (Burp extension) is often more effective than automated scanners. SecurityClaw includes API-specific skills for automated BOLA and injection testing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is BOLA and why is it the number one API risk?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "BOLA (Broken Object Level Authorization) is when an API lets authenticated users access objects belonging to other users by manipulating object IDs in requests. It's the #1 API risk because it's extremely common — most APIs use predictable IDs (integers, UUIDs) and many developers forget to verify that the requesting user actually owns the requested object. Automated scanners struggle to detect it because they need to understand business logic context."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "OWASP API Security Top 10 in 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>OWASP API Security Top 10 in 2026: Every Risk Explained With Testing Strategies</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>The OWASP API Security Top 10 targets risks specific to API architectures — authorization flaws, data exposure, and resource abuse that traditional web scanners miss.</li>
+<li>BOLA (Broken Object Level Authorization) remains the #1 API risk and is notoriously hard to detect with automated tools — manual testing with business logic context is essential.</li>
+<li>API3 (Broken Object Property Level Authorization) and API5 (Broken Function Level Authorization) are authorization variants that require different testing approaches.</li>
+<li>Rate limiting (API4) and unrestricted resource consumption are operational risks that need load testing, not just security scanning.</li>
+<li>Server-Side Request Forgery (API7) moved into the API Top 10 reflecting the rise of microservice architectures where APIs call other APIs.</li>
+<li>Most teams need a combination of automated scanning (ZAP, Burp), manual authorization testing (Autorize), and API-specific tools (Akto, Postman security tests).</li>
+</ul>
+</div>
+
+<p>The OWASP Top 10 for web applications gets all the attention. But if your architecture is API-first — and in 2026, most are — the <strong>OWASP API Security Top 10</strong> is the list that actually maps to your attack surface.</p>
+
+<p>APIs have different failure modes than traditional web apps. Authorization bugs that would never exist in a server-rendered application are endemic in REST and GraphQL APIs. Data exposure happens not through XSS but through overly verbose response payloads. Rate limiting failures that a web app handles with CAPTCHA become critical when bots can hit your endpoints at thousands of requests per second.</p>
+
+<p>This guide walks through every risk in the OWASP API Security Top 10 (2023 edition, still current in 2026), explains what it looks like in real code, and gives you concrete testing strategies for each one.</p>
+
+<h2>API1:2023 — Broken Object Level Authorization (BOLA)</h2>
+
+<p>BOLA is the single most common API vulnerability. It happens when an API endpoint accepts an object identifier from the client and doesn't verify that the authenticated user has permission to access that specific object.</p>
+
+<h3>What it looks like</h3>
+
+<pre><code>GET /api/v1/orders/12345
+Authorization: Bearer &lt;user-A-token&gt;</code></pre>
+
+<p>If user A can retrieve user B's order by changing <code>12345</code> to <code>12346</code>, that's BOLA. The API authenticates the user (they have a valid token) but doesn't authorize the specific object access.</p>
+
+<h3>Why it's #1</h3>
+
+<p>Every API that uses object IDs in URLs or request bodies is potentially vulnerable. Developers often implement authentication middleware but forget per-object authorization checks. The attack requires zero sophistication — just increment an ID.</p>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Manual testing:</strong> Create two test accounts. Authenticate as user A, capture requests, replace object IDs with objects belonging to user B. The Burp Suite Autorize extension automates this pattern.</li>
+<li><strong>Automated:</strong> Tools like Akto can detect BOLA patterns if you provide OpenAPI specs with authentication context. OWASP ZAP's API scan can catch obvious cases but struggles with business logic authorization.</li>
+<li><strong>Code review:</strong> Search for database queries that use user-supplied IDs without a WHERE clause filtering by the authenticated user's ID or role.</li>
+</ul>
+
+<h2>API2:2023 — Broken Authentication</h2>
+
+<p>API authentication mechanisms are often implemented incorrectly, allowing attackers to compromise tokens, exploit implementation flaws, or bypass authentication entirely.</p>
+
+<h3>Common patterns</h3>
+
+<ul>
+<li>Weak JWT signing (using <code>HS256</code> with a guessable secret, or accepting <code>none</code> algorithm)</li>
+<li>No token expiration or excessively long-lived tokens</li>
+<li>API keys transmitted in URLs (logged in server access logs, browser history, proxy logs)</li>
+<li>Password reset endpoints that don't rate-limit or use predictable tokens</li>
+<li>Missing authentication on internal-facing endpoints that become externally accessible</li>
+</ul>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>JWT testing:</strong> Use <a href="/articles/jwt-security-vulnerabilities-testing-2026/">our JWT security testing guide</a> — test for algorithm confusion, weak secrets (hashcat against HS256 tokens), missing expiration, and signature stripping.</li>
+<li><strong>Credential stuffing:</strong> Test rate limiting on login endpoints. Can you make 1000 login attempts in a minute?</li>
+<li><strong>Token lifecycle:</strong> Verify tokens expire, refresh tokens rotate, and revoked tokens are actually rejected.</li>
+</ul>
+
+<h2>API3:2023 — Broken Object Property Level Authorization</h2>
+
+<p>This risk covers two related problems: <strong>excessive data exposure</strong> (the API returns more properties than the client needs) and <strong>mass assignment</strong> (the API accepts more properties than it should).</p>
+
+<h3>Excessive data exposure example</h3>
+
+<pre><code>GET /api/v1/users/me
+Response: {
+  "id": 123,
+  "name": "Alice",
+  "email": "alice@example.com",
+  "role": "user",
+  "ssn": "XXX-XX-XXXX",        // shouldn't be here
+  "internal_notes": "VIP",      // shouldn't be here
+  "password_hash": "bcrypt..."  // definitely shouldn't be here
+}</code></pre>
+
+<h3>Mass assignment example</h3>
+
+<pre><code>PUT /api/v1/users/me
+Body: { "name": "Alice", "role": "admin" }  // role shouldn't be writable</code></pre>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Data exposure:</strong> Inspect every API response for fields that shouldn't be visible to the requesting user. Compare responses between admin and regular user roles.</li>
+<li><strong>Mass assignment:</strong> Add unexpected fields to PUT/PATCH/POST requests — <code>role</code>, <code>is_admin</code>, <code>balance</code>, <code>verified</code>. Check if the API silently accepts and persists them.</li>
+<li><strong>Automated:</strong> Burp Suite's content discovery and parameter mining can identify hidden fields. Postman collection tests can validate response schemas against expected field lists.</li>
+</ul>
+
+<h2>API4:2023 — Unrestricted Resource Consumption</h2>
+
+<p>APIs that don't limit resource consumption are vulnerable to denial of service, brute force attacks, and cost-based attacks (running up cloud bills by triggering expensive operations).</p>
+
+<h3>What to test</h3>
+
+<ul>
+<li><strong>Rate limiting:</strong> Does the API enforce request limits per user/IP? Test with a simple loop — if you can make 10,000 requests without being throttled, there's no rate limiting.</li>
+<li><strong>Payload size:</strong> Send a 100MB JSON body. Does the API reject it or try to parse it?</li>
+<li><strong>Query complexity:</strong> For GraphQL APIs, send deeply nested queries. For REST APIs with filtering, send queries that would trigger full table scans.</li>
+<li><strong>Pagination:</strong> Request <code>?limit=1000000</code>. Does the API cap it or return a million records?</li>
+<li><strong>File uploads:</strong> Upload a 10GB file. Is there a size limit enforced server-side?</li>
+</ul>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Load testing:</strong> Tools like k6, Artillery, or Locust can simulate high request volumes. This is operational testing, not traditional security scanning.</li>
+<li><strong>GraphQL:</strong> Use graphql-cop or InQL (Burp extension) to test for query depth and complexity limits.</li>
+<li><strong>Cost analysis:</strong> Identify endpoints that trigger expensive operations (email sending, PDF generation, external API calls) and test if they're rate-limited independently.</li>
+</ul>
+
+<h2>API5:2023 — Broken Function Level Authorization</h2>
+
+<p>BFLA is the function-level cousin of BOLA. Instead of accessing another user's objects, the attacker accesses administrative functions they shouldn't have access to.</p>
+
+<h3>What it looks like</h3>
+
+<pre><code># Regular user discovers admin endpoint
+DELETE /api/v1/admin/users/456
+Authorization: Bearer &lt;regular-user-token&gt;
+
+# Or HTTP method tampering
+GET /api/v1/users/456     → 200 OK (allowed)
+DELETE /api/v1/users/456  → 200 OK (shouldn't be allowed)</code></pre>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Endpoint discovery:</strong> Use the OpenAPI/Swagger spec (if available) to identify all endpoints, then test each one with tokens from different privilege levels.</li>
+<li><strong>Method tampering:</strong> For every GET endpoint, try PUT, POST, DELETE, PATCH. Many frameworks route these to different handlers with different (or missing) authorization checks.</li>
+<li><strong>Path manipulation:</strong> Try <code>/api/v1/admin/users</code>, <code>/api/internal/users</code>, <code>/api/v2/users</code> — hidden or versioned endpoints often lack authorization.</li>
+</ul>
+
+<h2>API6:2023 — Unrestricted Access to Sensitive Business Flows</h2>
+
+<p>Some API endpoints implement business flows that can cause harm when used excessively — even if each individual request is legitimate. Ticket scalping, automated account creation, and coupon abuse are examples.</p>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Business logic review:</strong> Identify flows that have real-world value (purchasing, referral bonuses, free tier abuse) and test if they can be automated at scale.</li>
+<li><strong>Bot detection:</strong> Test if the API distinguishes between human and automated access. CAPTCHA on web forms doesn't help if the API endpoint is directly accessible.</li>
+<li><strong>Rate limiting per flow:</strong> Even if global rate limiting exists, test if business-critical flows have their own stricter limits.</li>
+</ul>
+
+<h2>API7:2023 — Server Side Request Forgery (SSRF)</h2>
+
+<p>SSRF in APIs is increasingly common because microservice architectures have APIs calling other APIs. Any endpoint that accepts a URL or hostname as input is a potential SSRF vector.</p>
+
+<h3>Common API SSRF patterns</h3>
+
+<ul>
+<li>Webhook registration endpoints that fetch a user-supplied URL</li>
+<li>File import from URL (PDF generation, image processing)</li>
+<li>API gateway configurations that proxy requests based on user input</li>
+</ul>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Internal network probing:</strong> Supply URLs pointing to <code>http://169.254.169.254</code> (cloud metadata), <code>http://localhost:PORT</code>, and internal hostnames.</li>
+<li><strong>Protocol smuggling:</strong> Try <code>file:///etc/passwd</code>, <code>gopher://</code>, <code>dict://</code> protocols.</li>
+<li><strong>DNS rebinding:</strong> Use a DNS rebinding service to bypass allowlist checks that only validate at DNS resolution time.</li>
+<li>See our <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">SSRF deep dive</a> for comprehensive testing techniques.</li>
+</ul>
+
+<h2>API8:2023 — Security Misconfiguration</h2>
+
+<p>API-specific misconfigurations that don't appear in traditional web app testing:</p>
+
+<ul>
+<li><strong>CORS:</strong> Overly permissive <code>Access-Control-Allow-Origin</code> headers (wildcards with credentials). See our <a href="/articles/cors-misconfiguration-security-testing-guide-2026/">CORS misconfiguration guide</a>.</li>
+<li><strong>HTTP methods:</strong> Unnecessary methods enabled (TRACE, OPTIONS returning too much info).</li>
+<li><strong>Error messages:</strong> Stack traces, database errors, or internal paths leaked in API error responses.</li>
+<li><strong>Default credentials:</strong> API management platforms (Kong, Tyk, API Gateway) with default admin credentials.</li>
+<li><strong>Missing security headers:</strong> API responses missing <code>X-Content-Type-Options</code>, <code>Cache-Control</code> for sensitive data. See our <a href="/articles/security-headers-complete-guide-2026/">security headers guide</a>.</li>
+</ul>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Automated scanning:</strong> OWASP ZAP and Nuclei both have templates for common API misconfigurations.</li>
+<li><strong>Header analysis:</strong> Check every API response for missing security headers and information leakage.</li>
+<li><strong>Error triggering:</strong> Send malformed requests, invalid content types, and oversized payloads to trigger error handling paths.</li>
+</ul>
+
+<h2>API9:2023 — Improper Inventory Management</h2>
+
+<p>Organizations lose track of which API versions and endpoints are deployed. Old API versions with known vulnerabilities remain accessible. Internal APIs get exposed externally. Documentation falls out of sync with reality.</p>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Version enumeration:</strong> If the current API is <code>/api/v3/</code>, test <code>/api/v1/</code> and <code>/api/v2/</code>. Older versions often lack security fixes applied to the current version.</li>
+<li><strong>Subdomain enumeration:</strong> Use <a href="/articles/subdomain-enumeration-tools-2026/">subdomain enumeration tools</a> to discover API hosts — <code>api-staging.example.com</code>, <code>api-internal.example.com</code>, <code>api-dev.example.com</code>.</li>
+<li><strong>Documentation diff:</strong> Compare the published API documentation against actual endpoint behavior. Undocumented endpoints are often unprotected.</li>
+</ul>
+
+<h2>API10:2023 — Unsafe Consumption of Third-Party APIs</h2>
+
+<p>Your API trusts data from third-party APIs without validation. If a third-party API is compromised or returns unexpected data, your API becomes vulnerable.</p>
+
+<h3>Common patterns</h3>
+
+<ul>
+<li>Trusting third-party webhook payloads without signature verification</li>
+<li>Using third-party API responses in database queries without sanitization</li>
+<li>Following redirects from third-party APIs without URL validation</li>
+<li>Deserializing third-party responses without schema validation</li>
+</ul>
+
+<h3>Testing strategy</h3>
+
+<ul>
+<li><strong>Input validation:</strong> If you can control or intercept third-party API responses (via proxy), inject SQL, XSS, and command injection payloads in the response data.</li>
+<li><strong>Webhook spoofing:</strong> Send fake webhook payloads to your API's webhook endpoints. Are they accepted without signature verification?</li>
+<li><strong>Dependency mapping:</strong> Document all third-party API dependencies and assess what happens if each one returns malicious data.</li>
+</ul>
+
+<h2>Putting It All Together: An API Security Testing Workflow</h2>
+
+<p>Testing for the full API Security Top 10 requires a layered approach:</p>
+
+<ol>
+<li><strong>Reconnaissance:</strong> Gather OpenAPI specs, enumerate endpoints, identify API versions. Use your <a href="/articles/bug-bounty-recon-workflow-2026/">recon workflow</a>.</li>
+<li><strong>Automated scanning:</strong> Run OWASP ZAP or Burp Suite against the API with authentication configured. This catches API8 (misconfiguration), parts of API2 (authentication), and some API7 (SSRF) issues.</li>
+<li><strong>Authorization testing:</strong> Manually test BOLA (API1), BFLA (API5), and property-level authorization (API3) using multi-account testing. Autorize (Burp extension) helps scale this.</li>
+<li><strong>Business logic testing:</strong> Review API6 (sensitive business flows) and API10 (unsafe consumption) through threat modeling and manual testing.</li>
+<li><strong>Operational testing:</strong> Test API4 (resource consumption) with load testing tools. This is often skipped but critical for APIs exposed to the internet.</li>
+<li><strong>Inventory audit:</strong> Check API9 by enumerating old versions, staging environments, and undocumented endpoints.</li>
+</ol>
+
+<h2>Tools for API Security Testing in 2026</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Best For</th><th>API Top 10 Coverage</th><th>Cost</th></tr>
+</thead>
+<tbody>
+<tr><td>Burp Suite Pro + Autorize</td><td>BOLA/BFLA testing</td><td>API1, API2, API3, API5, API7, API8</td><td>$449/yr per user</td></tr>
+<tr><td>OWASP ZAP</td><td>Automated API scanning</td><td>API2, API7, API8</td><td>Free</td></tr>
+<tr><td>Akto</td><td>API-specific security testing</td><td>API1, API2, API3, API5, API9</td><td>Free tier available</td></tr>
+<tr><td>Postman</td><td>API functional + security tests</td><td>API2, API3, API4</td><td>Free tier available</td></tr>
+<tr><td>Nuclei</td><td>Template-based API scanning</td><td>API2, API7, API8</td><td>Free</td></tr>
+<tr><td>k6 / Artillery</td><td>Rate limiting and resource testing</td><td>API4, API6</td><td>Free / Freemium</td></tr>
+<tr><td>SecurityClaw</td><td>Automated skill-based API testing</td><td>API1, API2, API7, API8</td><td>Platform access</td></tr>
+</tbody>
+</table>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Is the OWASP API Security Top 10 the same as the OWASP Top 10?</h3>
+<p>No. The OWASP Top 10 covers general web application risks (injection, XSS, misconfiguration). The API Security Top 10 focuses on risks specific to API architectures — authorization flaws, data exposure patterns, and resource consumption issues that are unique to APIs. There's some overlap (SSRF, misconfiguration) but the API list addresses problems that don't exist in traditional server-rendered web applications.</p>
+
+<h3>How often is the OWASP API Security Top 10 updated?</h3>
+<p>The first version was released in 2019, and the current version (2023) is the second edition. Updates happen roughly every 3-4 years based on real-world API breach data and community input. The 2023 edition is still current in 2026.</p>
+
+<h3>Can automated scanners detect all OWASP API Security Top 10 risks?</h3>
+<p>No. Automated scanners are effective for API2 (authentication flaws), API7 (SSRF), and API8 (misconfiguration). But the authorization risks — API1 (BOLA), API3 (property-level authorization), and API5 (BFLA) — require business logic context that automated tools can't fully understand. API4 (resource consumption) needs load testing tools, not security scanners. A realistic API security program combines automated scanning with manual authorization testing and operational testing.</p>
+
+<h3>What's the difference between BOLA and BFLA?</h3>
+<p>BOLA (API1) is about accessing <em>objects</em> you shouldn't — viewing another user's order, downloading another user's file. BFLA (API5) is about accessing <em>functions</em> you shouldn't — calling admin endpoints, using DELETE when you should only have GET access. BOLA is horizontal privilege escalation (same role, different user's data). BFLA is often vertical privilege escalation (regular user accessing admin functions).</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical guide to finding broken access control vulnerabilities in web applications. Covers IDOR, privilege escalation, horizontal and vertical access control bypasses, forced browsing, and writing high-impact reports.">
+    <title>Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/broken-access-control-hunting-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/broken-access-control-hunting-guide-2026/">
+    <meta property="og:title" content="Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties">
+    <meta property="og:description" content="A practical guide to finding broken access control vulnerabilities in web applications. Covers IDOR, privilege escalation, horizontal and vertical access control bypasses, forced browsing, and writing high-impact reports.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/broken-access-control-hunting-guide-2026/">
+    <meta name="twitter:title" content="Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties">
+    <meta name="twitter:description" content="A practical guide to finding broken access control vulnerabilities in web applications. Covers IDOR, privilege escalation, horizontal and vertical access control bypasses, forced browsing, and writing high-impact reports.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties",
+      "description": "A practical guide to finding broken access control vulnerabilities in web applications. Covers IDOR, privilege escalation, horizontal and vertical access control bypasses, forced browsing, and writing high-impact reports.",
+      "url": "https://bughuntertools.com/articles/broken-access-control-hunting-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties",
+      "description": "A practical guide to finding broken access control vulnerabilities in web applications. Covers IDOR, privilege escalation, horizontal and vertical access control bypasses, forced browsing, and writing high-impact reports.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/images/logos/altclaw-logo-512.png"
+        }
+      },
+      "datePublished": "2026-04-15",
+      "dateModified": "2026-04-15"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is broken access control?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Broken access control occurs when an application fails to properly enforce restrictions on what authenticated users are allowed to do. Attackers can exploit these flaws to access other users' data, perform unauthorized actions, or escalate privileges to admin-level access."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is broken access control OWASP #1?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Broken access control moved to the #1 position in the OWASP Top 10 (2021) because it is the most commonly found vulnerability category in real-world applications. Over 94% of applications tested had some form of broken access control, and automated scanners cannot reliably detect authorization logic flaws."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools are used to test for broken access control?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Burp Suite with the Autorize extension is the primary tool for testing access control. You also need multiple test accounts at different privilege levels, a proxy to intercept and replay requests, and manual testing methodology since scanners cannot detect most authorization flaws."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much do broken access control bugs pay in bug bounties?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Broken access control bugs typically pay between $500 and $50,000+ depending on impact. Vertical privilege escalation (user to admin) and mass data exposure through IDOR often qualify for critical severity. Horizontal access control bypasses affecting sensitive data typically pay $2,000-$15,000."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>Broken Access Control Hunting Guide: How to Find Authorization Flaws That Pay Top Bounties</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Broken access control is OWASP #1 — the most common vulnerability class in production applications, and scanners cannot reliably detect it</li>
+<li>Every endpoint that takes a user identifier (ID, UUID, email, username) is a potential IDOR target — test horizontal and vertical access on all of them</li>
+<li>The Autorize Burp extension automates the tedious part: replaying every request with a lower-privileged session to find enforcement gaps</li>
+<li>Forced browsing, parameter manipulation, HTTP method switching, and path traversal in URL structures are the four core techniques</li>
+<li>Multi-step workflows (checkout, account settings, admin panels) are where access control is most likely to break — developers enforce on the first step but forget subsequent ones</li>
+</ul>
+</div>
+
+<h2>Why Broken Access Control Dominates Bug Bounty Payouts</h2>
+
+<p>Broken access control has been the #1 vulnerability category in the OWASP Top 10 since 2021, and it's not close. Over 94% of applications tested have some form of access control failure. The reason it persists: authorization logic is application-specific, so there's no generic scanner rule that catches it. Every access control check is custom code, and developers miss enforcement points constantly.</p>
+
+<p>For bug bounty hunters, this is the highest-value hunting ground. Authorization flaws almost always have direct business impact — accessing other users' data, performing admin actions, or bypassing payment flows. Programs pay top dollar because these bugs are hard to find with automation and easy to exploit.</p>
+
+<h2>Understanding Access Control Models</h2>
+
+<p>Before hunting, you need to understand what you're testing against. Applications implement access control in three layers:</p>
+
+<h3>Vertical Access Control</h3>
+<p>Restricts functions by role. A regular user shouldn't access admin endpoints. A viewer shouldn't be able to edit. When vertical access control breaks, you get privilege escalation — a regular user performing admin actions.</p>
+
+<h3>Horizontal Access Control</h3>
+<p>Restricts data by ownership. User A shouldn't access User B's records. When horizontal access control breaks, you get IDOR — accessing or modifying another user's data by changing an identifier in the request.</p>
+
+<h3>Context-Dependent Access Control</h3>
+<p>Restricts actions based on application state. You shouldn't be able to modify an order after it's been shipped. You shouldn't be able to apply a discount code twice. When context-dependent access control breaks, you get business logic flaws — often the highest-paying bugs.</p>
+
+<h2>Setting Up Your Testing Environment</h2>
+
+<p>Effective access control testing requires multiple accounts. Create at minimum:</p>
+
+<ul>
+<li><strong>Admin account</strong> — highest privilege level available</li>
+<li><strong>Regular user account A</strong> — standard user</li>
+<li><strong>Regular user account B</strong> — second standard user (for horizontal testing)</li>
+<li><strong>Low-privilege account</strong> — viewer, guest, or free-tier user</li>
+<li><strong>Unauthenticated session</strong> — no cookies, no tokens</li>
+</ul>
+
+<h3>Burp Suite + Autorize Setup</h3>
+
+<p>Install the Autorize extension from the BApp Store. Configure it with your low-privilege user's session cookie. As you browse the application with your admin or regular account, Autorize automatically replays every request with the low-privilege session and flags responses that return the same data — indicating missing access control.</p>
+
+<pre><code># Autorize configuration steps:
+# 1. Log in as low-privilege user, copy the session cookie
+# 2. In Autorize tab → Configuration → paste the cookie header
+# 3. Set "Authorization Enforcement Status" filters
+# 4. Browse the app as admin — Autorize tests each request automatically
+# 5. Review "Bypassed!" entries — these are your findings</code></pre>
+
+<h2>Core Hunting Techniques</h2>
+
+<h3>1. IDOR — Parameter Manipulation</h3>
+
+<p>The most common broken access control variant. Any request containing a user-controlled identifier is a target:</p>
+
+<pre><code># Numeric IDs — increment/decrement
+GET /api/users/1337/profile → GET /api/users/1338/profile
+
+# UUIDs — harvest from other endpoints, public profiles, or API responses
+GET /api/documents/550e8400-e29b-41d4-a716-446655440000
+
+# Email-based lookups
+GET /api/account?email=victim@example.com
+
+# Encoded IDs — decode, modify, re-encode
+GET /api/order/base64({"id":42,"user":7}) → base64({"id":42,"user":8})</code></pre>
+
+<p>Don't just test GET requests. POST, PUT, PATCH, and DELETE operations with modified IDs often have weaker enforcement because developers assume "if they can view it, they can edit it" — but the view endpoint might be the only one with proper checks.</p>
+
+<h3>2. Forced Browsing</h3>
+
+<p>Access pages or API endpoints directly without navigating through the intended flow:</p>
+
+<pre><code># Admin panels
+/admin
+/admin/dashboard
+/internal/users
+/api/admin/settings
+/management/console
+
+# Debug/diagnostic endpoints
+/debug
+/actuator (Spring Boot)
+/elmah.axd (.NET)
+/_debug_toolbar (Django)
+
+# API versioning bypasses
+/api/v1/admin/users (blocked)
+/api/v2/admin/users (might not have same restrictions)
+/api/internal/admin/users</code></pre>
+
+<h3>3. HTTP Method Switching</h3>
+
+<p>Access control might be enforced for one HTTP method but not others:</p>
+
+<pre><code># Original request (blocked)
+DELETE /api/users/42 → 403 Forbidden
+
+# Try different methods
+POST /api/users/42 with {"_method": "DELETE"}
+GET /api/users/42?_method=DELETE
+PATCH /api/users/42 with {"active": false}
+
+# Method override headers
+X-HTTP-Method-Override: DELETE
+X-Method-Override: DELETE
+X-HTTP-Method: DELETE</code></pre>
+
+<h3>4. Path Traversal in URL Structures</h3>
+
+<p>Bypass path-based access control with URL manipulation:</p>
+
+<pre><code># Direct path (blocked)
+GET /admin/users → 403
+
+# Path traversal bypasses
+GET /admin/./users
+GET /./admin/users
+GET /admin%2fusers
+GET /ADMIN/users (case sensitivity)
+GET /admin/users;.css (path parameter injection)
+GET /admin/users%00 (null byte — legacy systems)
+GET //admin/users (double slash)</code></pre>
+
+<h3>5. Multi-Step Workflow Bypass</h3>
+
+<p>Applications often enforce access control on step 1 of a workflow but skip checks on subsequent steps:</p>
+
+<pre><code># Step 1: View order (access control enforced) ✓
+GET /orders/42 → 403 for non-owner
+
+# Step 2: Modify order (access control missing) ✗
+PUT /orders/42/address → 200 OK (no ownership check!)
+
+# Step 3: Cancel order (access control missing) ✗
+POST /orders/42/cancel → 200 OK</code></pre>
+
+<p>Map every multi-step workflow in the application: checkout flows, account settings changes, document approval chains, invitation systems. Test each step independently with a different user's session.</p>
+
+<h3>6. Referer/Origin Header Manipulation</h3>
+
+<p>Some applications use the Referer header as an access control mechanism:</p>
+
+<pre><code># Request blocked without proper Referer
+GET /admin/users → 403
+
+# Add Referer header
+GET /admin/users
+Referer: https://target.com/admin/dashboard
+→ 200 OK</code></pre>
+
+<h2>API-Specific Access Control Testing</h2>
+
+<p>Modern applications expose most functionality through APIs, and API access control is consistently weaker than UI access control:</p>
+
+<ul>
+<li><strong>GraphQL</strong> — query for fields your role shouldn't access. Introspection often reveals admin-only mutations you can call directly</li>
+<li><strong>REST APIs</strong> — test every CRUD operation with every role. Developers often protect the list endpoint but not the individual resource endpoint</li>
+<li><strong>Batch/bulk endpoints</strong> — <code>/api/users/batch?ids=1,2,3,4,5</code> might bypass per-resource checks</li>
+<li><strong>Export endpoints</strong> — <code>/api/reports/export</code> often returns all data regardless of the requesting user's scope</li>
+<li><strong>Webhook/callback endpoints</strong> — internal endpoints exposed for integrations often lack authentication entirely</li>
+</ul>
+
+<h2>Common Bypass Patterns</h2>
+
+<h3>Role Parameter Injection</h3>
+<pre><code># Registration or profile update with role parameter
+POST /api/register
+{"username":"attacker","password":"pass","role":"admin"}
+
+# Mass assignment — add fields the UI doesn't expose
+PUT /api/profile
+{"name":"attacker","isAdmin":true,"permissions":["admin.all"]}</code></pre>
+
+<h3>JWT Claim Manipulation</h3>
+<pre><code># Decode JWT, modify role claim, re-sign with none algorithm
+# Header: {"alg":"none","typ":"JWT"}
+# Payload: {"sub":"1337","role":"admin","iat":1713200000}
+# Signature: (empty)</code></pre>
+
+<h3>Token Scope Escalation</h3>
+<pre><code># OAuth token issued for read scope used for write operations
+# Token: scope=read
+POST /api/users/42/delete → Check if scope is actually enforced</code></pre>
+
+<h2>Writing High-Impact Reports</h2>
+
+<p>Access control bugs need clear impact demonstration. Structure your report:</p>
+
+<ol>
+<li><strong>Title</strong>: Specific action + specific impact. "IDOR in /api/users/{id}/billing allows any authenticated user to view other users' payment methods"</li>
+<li><strong>Steps to reproduce</strong>: Include exact requests with both the authorized and unauthorized sessions</li>
+<li><strong>Impact</strong>: Quantify — how many users affected? What data exposed? Can it be automated for mass exploitation?</li>
+<li><strong>Proof</strong>: Show the response containing another user's data. Redact PII but make the access clear</li>
+</ol>
+
+<p>Severity mapping for access control bugs:</p>
+<ul>
+<li><strong>Critical</strong>: Admin access, mass data exposure, payment/financial data access, account takeover chain</li>
+<li><strong>High</strong>: Access to other users' PII, ability to modify other users' data, privilege escalation to elevated role</li>
+<li><strong>Medium</strong>: Access to non-sensitive data of other users, limited scope horizontal bypass</li>
+<li><strong>Low</strong>: Information disclosure through enumeration, access to public-equivalent data through unintended path</li>
+</ul>
+
+<h2>Automation Strategy</h2>
+
+<p>While access control testing is fundamentally manual, you can automate the repetitive parts:</p>
+
+<ol>
+<li><strong>Autorize</strong> — passive testing as you browse. Catches the low-hanging fruit automatically</li>
+<li><strong>Custom Burp macros</strong> — replay specific request sequences with different sessions</li>
+<li><strong>Auth matrix</strong> — build a spreadsheet mapping every endpoint × every role. Systematically test each cell</li>
+<li><strong>Nuclei templates</strong> — for forced browsing checks against known admin paths</li>
+</ol>
+
+<p>The manual work that can't be automated: understanding the application's business logic, identifying which resources belong to which users, and recognizing when a response that "looks normal" actually contains data from the wrong user.</p>
+
+<h2>Checklist: Broken Access Control Testing</h2>
+
+<ul>
+<li>☐ Create accounts at every privilege level (admin, user, viewer, unauthenticated)</li>
+<li>☐ Set up Autorize with low-privilege session</li>
+<li>☐ Test every endpoint with every role (auth matrix)</li>
+<li>☐ Modify all user-controlled identifiers (IDs, UUIDs, emails) in every request</li>
+<li>☐ Test all HTTP methods on restricted endpoints</li>
+<li>☐ Try forced browsing to admin/internal paths</li>
+<li>☐ Test multi-step workflows — check each step independently</li>
+<li>☐ Look for mass assignment in registration/profile update</li>
+<li>☐ Test API endpoints separately from UI (different enforcement)</li>
+<li>☐ Check JWT/token claims for role manipulation</li>
+<li>☐ Test export/bulk/batch endpoints for scope bypass</li>
+<li>☐ Verify Referer/Origin-based controls can be bypassed</li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

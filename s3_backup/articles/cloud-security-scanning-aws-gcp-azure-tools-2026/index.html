@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s comparison of the best cloud security scanning tools in 2026 — ScoutSuite, Prowler, CloudSploit, Trivy, Checkov, AWS Inspector, and GCP Security Command Center.">
+    <title>Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">
+    <meta property="og:title" content="Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared">
+    <meta property="og:description" content="A practitioner&#39;s comparison of the best cloud security scanning tools in 2026 — ScoutSuite, Prowler, CloudSploit, Trivy, Checkov, AWS Inspector, and GCP Security Command Center.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">
+    <meta name="twitter:title" content="Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared">
+    <meta name="twitter:description" content="A practitioner&#39;s comparison of the best cloud security scanning tools in 2026 — ScoutSuite, Prowler, CloudSploit, Trivy, Checkov, AWS Inspector, and GCP Security Command Center.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared",
+      "description": "A practitioner&#39;s comparison of the best cloud security scanning tools in 2026 — ScoutSuite, Prowler, CloudSploit, Trivy, Checkov, AWS Inspector, and GCP Security Command Center.",
+      "url": "https://bughuntertools.com/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared",
+      "description": "A practitioner's comparison of the best cloud security scanning tools in 2026 — ScoutSuite, Prowler, CloudSploit, Trivy, Checkov, AWS Inspector, and GCP Security Command Center.",
+      "datePublished": "2026-04-10",
+      "dateModified": "2026-04-10",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is cloud security scanning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cloud security scanning is the automated process of auditing cloud infrastructure configurations, permissions, and resources for security misconfigurations, compliance violations, and vulnerabilities. It covers IAM policies, network rules, storage permissions, encryption settings, logging configurations, and more across AWS, GCP, and Azure environments."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best cloud security scanning tool in 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "There is no single best tool. Prowler is the strongest choice for AWS-focused environments with its 400+ checks. ScoutSuite excels at multi-cloud auditing. Trivy has expanded beyond container scanning to cover IaC and cloud misconfigurations. For organizations already invested in a cloud provider, the native tools (AWS Inspector, GCP Security Command Center, Microsoft Defender for Cloud) offer the deepest integration. Most mature security programs combine a native tool with an open-source multi-cloud scanner."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are cloud-native security tools enough or do I need third-party scanners?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cloud-native tools like AWS Inspector and GCP Security Command Center provide excellent coverage within their own platform but have blind spots. They don't scan across cloud providers, may miss IaC misconfigurations before deployment, and can have limited customization. Third-party tools like Prowler, ScoutSuite, and Checkov fill these gaps with multi-cloud support, CI/CD integration, and custom policy frameworks."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How often should I run cloud security scans?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run IaC scans (Checkov, Trivy) on every pull request — they're fast and catch misconfigurations before deployment. Run runtime cloud scans (Prowler, ScoutSuite) at least daily for production environments. Enable continuous monitoring through cloud-native tools (AWS Config, GCP Security Command Center) for real-time drift detection. The goal is layered scanning: pre-deployment, post-deployment, and continuous."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can SecurityClaw help with cloud security scanning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SecurityClaw complements cloud security scanners by testing the application layer that sits on top of cloud infrastructure. While Prowler checks if your S3 bucket is public, SecurityClaw tests whether the web application hosted on that infrastructure has SSRF vulnerabilities that could access cloud metadata endpoints, or IDOR flaws that expose cloud-stored data. The combination of infrastructure scanning and application-layer testing provides comprehensive coverage."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Cloud Security Scanning 2026", "item": "https://bughuntertools.com/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<div class="affiliate-disclosure" style="background: #1a1a2e; padding: 12px 16px; border-radius: 6px; margin-bottom: 24px; font-size: 0.85rem; color: #888;">
+  📋 This article contains affiliate links. If you purchase through these links, we may earn a small commission at no extra cost to you.
+</div>
+
+<header>
+  <p style="color: #777; font-size: 0.9rem; margin-bottom: 8px;">Published April 10, 2026 · 20 min read</p>
+  <h1>Cloud Security Scanning in 2026: AWS, GCP, and Azure Tools Compared</h1>
+  <p class="intro" style="font-size: 1.15rem; color: #ccc; margin-bottom: 32px;"><strong>Your cloud infrastructure is only as secure as its configuration.</strong> A single misconfigured S3 bucket, an overly permissive IAM role, or an unencrypted database can undo months of application security work. Cloud security scanning tools audit these configurations automatically — but the landscape is fragmented across open-source scanners, cloud-native services, and commercial platforms. This guide compares every major tool, shows you where each one fits, and explains how to build a layered scanning strategy.</p>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>No single tool covers everything — layer IaC scanning (Checkov, Trivy) with runtime auditing (Prowler, ScoutSuite) and continuous monitoring (cloud-native tools)</li>
+      <li>Prowler leads for AWS with 400+ checks; ScoutSuite is the strongest multi-cloud open-source option</li>
+      <li>Cloud-native tools (AWS Inspector, GCP SCC, Microsoft Defender) offer the deepest integration but don't work across providers</li>
+      <li>Shift-left by scanning Terraform and CloudFormation templates in CI/CD — Checkov catches misconfigurations before they reach production</li>
+      <li>SecurityClaw complements infrastructure scanners by testing the application layer for SSRF, IDOR, and other flaws that exploit cloud misconfigurations</li>
+    </ul>
+  </div>
+
+</header>
+
+<nav class="toc" style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin-bottom: 32px;">
+  <strong>Contents</strong>
+  <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+    <li><a href="#why-cloud-security-scanning" style="color: #4fc3f7;">Why Cloud Security Scanning Matters in 2026</a></li>
+    <li><a href="#scanning-categories" style="color: #4fc3f7;">Three Categories of Cloud Security Scanning</a></li>
+    <li><a href="#tool-comparison" style="color: #4fc3f7;">Tool Comparison Table</a></li>
+    <li><a href="#prowler" style="color: #4fc3f7;">Prowler — The AWS Security Powerhouse</a></li>
+    <li><a href="#scoutsuite" style="color: #4fc3f7;">ScoutSuite — Multi-Cloud Auditing</a></li>
+    <li><a href="#cloudsploit" style="color: #4fc3f7;">CloudSploit — Lightweight and Accessible</a></li>
+    <li><a href="#trivy" style="color: #4fc3f7;">Trivy — From Containers to Cloud</a></li>
+    <li><a href="#checkov" style="color: #4fc3f7;">Checkov — IaC Security Before Deployment</a></li>
+    <li><a href="#aws-inspector" style="color: #4fc3f7;">AWS Inspector — Native AWS Scanning</a></li>
+    <li><a href="#gcp-scc" style="color: #4fc3f7;">GCP Security Command Center</a></li>
+    <li><a href="#azure-defender" style="color: #4fc3f7;">Microsoft Defender for Cloud</a></li>
+    <li><a href="#securityclaw" style="color: #4fc3f7;">SecurityClaw: Bridging Infrastructure and Application Security</a></li>
+    <li><a href="#building-strategy" style="color: #4fc3f7;">Building a Layered Scanning Strategy</a></li>
+    <li><a href="#faq" style="color: #4fc3f7;">FAQ</a></li>
+  </ol>
+</nav>
+
+<section id="why-cloud-security-scanning">
+<h2>Why Cloud Security Scanning Matters in 2026</h2>
+
+<p>Cloud misconfigurations are the leading cause of data breaches in cloud environments. Not zero-days, not sophisticated exploits — misconfigurations. A 2025 IBM report found that <strong>82% of cloud breaches</strong> involved at least one misconfiguration as a contributing factor. Public S3 buckets, overly permissive IAM roles, unencrypted databases, and disabled logging are the mundane mistakes that lead to headline-making incidents.</p>
+
+<p>The problem is scale. A single AWS account can have thousands of resources across dozens of services, each with its own configuration surface. Multiply that by multi-account strategies, multi-cloud deployments, and infrastructure-as-code pipelines deploying changes hourly, and manual review becomes impossible. You need automated scanning.</p>
+
+<p>Cloud security scanning tools fall into three categories, and understanding the distinction is critical to building effective coverage. Most organizations need tools from all three.</p>
+</section>
+
+<section id="scanning-categories">
+<h2>Three Categories of Cloud Security Scanning</h2>
+
+<p><strong>1. Infrastructure-as-Code (IaC) Scanning</strong> — Scans Terraform, CloudFormation, Kubernetes manifests, and other IaC templates <em>before deployment</em>. Catches misconfigurations in the pull request, before they reach production. Tools: Checkov, Trivy, tfsec.</p>
+
+<p><strong>2. Runtime Cloud Auditing</strong> — Connects to your live cloud accounts via API and audits the actual state of deployed resources. Finds drift from intended configuration, resources created outside IaC, and misconfigurations that IaC scanning missed. Tools: Prowler, ScoutSuite, CloudSploit.</p>
+
+<p><strong>3. Continuous Cloud-Native Monitoring</strong> — Built-in services from cloud providers that monitor configurations in real time. Deepest integration with the provider's ecosystem but limited to a single cloud. Tools: AWS Inspector + AWS Config, GCP Security Command Center, Microsoft Defender for Cloud.</p>
+
+<p>The layered approach: scan IaC in CI/CD (shift-left), audit runtime configurations daily (catch drift), and enable continuous monitoring for real-time alerts. Each layer catches what the others miss.</p>
+</section>
+
+<section id="tool-comparison">
+<h2>Tool Comparison Table</h2>
+
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+<thead>
+<tr style="background: #1a1a2e; color: #fff;">
+  <th style="padding: 10px; text-align: left;">Tool</th>
+  <th style="padding: 10px; text-align: left;">Type</th>
+  <th style="padding: 10px; text-align: left;">AWS</th>
+  <th style="padding: 10px; text-align: left;">GCP</th>
+  <th style="padding: 10px; text-align: left;">Azure</th>
+  <th style="padding: 10px; text-align: left;">IaC</th>
+  <th style="padding: 10px; text-align: left;">License</th>
+  <th style="padding: 10px; text-align: left;">Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom: 1px solid #333;">
+  <td style="padding: 10px;"><strong>Prowler</strong></td>
+  <td style="padding: 10px;">Runtime</td>
+  <td style="padding: 10px;">✅ 400+</td>
+  <td style="padding: 10px;">✅ 70+</td>
+  <td style="padding: 10px;">✅ 30+</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">Apache 2.0</td>
+  <td style="padding: 10px;">AWS-heavy environments</td>
+</tr>
+<tr style="border-bottom: 1px solid #333; background: #0d0d1a;">
+  <td style="padding: 10px;"><strong>ScoutSuite</strong></td>
+  <td style="padding: 10px;">Runtime</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">GPL 2.0</td>
+  <td style="padding: 10px;">Multi-cloud auditing</td>
+</tr>
+<tr style="border-bottom: 1px solid #333;">
+  <td style="padding: 10px;"><strong>CloudSploit</strong></td>
+  <td style="padding: 10px;">Runtime</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">GPL 3.0</td>
+  <td style="padding: 10px;">Quick assessments</td>
+</tr>
+<tr style="border-bottom: 1px solid #333; background: #0d0d1a;">
+  <td style="padding: 10px;"><strong>Trivy</strong></td>
+  <td style="padding: 10px;">IaC + Runtime</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">Apache 2.0</td>
+  <td style="padding: 10px;">Container + cloud unified</td>
+</tr>
+<tr style="border-bottom: 1px solid #333;">
+  <td style="padding: 10px;"><strong>Checkov</strong></td>
+  <td style="padding: 10px;">IaC</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">Apache 2.0</td>
+  <td style="padding: 10px;">CI/CD pipeline scanning</td>
+</tr>
+<tr style="border-bottom: 1px solid #333; background: #0d0d1a;">
+  <td style="padding: 10px;"><strong>AWS Inspector</strong></td>
+  <td style="padding: 10px;">Native</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">Commercial</td>
+  <td style="padding: 10px;">AWS vulnerability scanning</td>
+</tr>
+<tr style="border-bottom: 1px solid #333;">
+  <td style="padding: 10px;"><strong>GCP SCC</strong></td>
+  <td style="padding: 10px;">Native</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">Commercial</td>
+  <td style="padding: 10px;">GCP-native monitoring</td>
+</tr>
+<tr style="border-bottom: 1px solid #333; background: #0d0d1a;">
+  <td style="padding: 10px;"><strong>Defender for Cloud</strong></td>
+  <td style="padding: 10px;">Native</td>
+  <td style="padding: 10px;">Partial</td>
+  <td style="padding: 10px;">Partial</td>
+  <td style="padding: 10px;">✅</td>
+  <td style="padding: 10px;">❌</td>
+  <td style="padding: 10px;">Commercial</td>
+  <td style="padding: 10px;">Azure + hybrid environments</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="prowler">
+<h2>Prowler — The AWS Security Powerhouse</h2>
+
+<p><a href="https://github.com/prowler-cloud/prowler" rel="noopener noreferrer">Prowler</a> is the most comprehensive open-source cloud security scanner for AWS, with over 400 checks covering CIS benchmarks, PCI-DSS, HIPAA, GDPR, SOC2, and AWS Well-Architected Framework security pillar. It's the tool most AWS security teams reach for first.</p>
+
+<h3>What Prowler Checks</h3>
+
+<p>Prowler's checks span the full AWS surface: IAM policies and access keys, S3 bucket configurations, security group rules, CloudTrail and CloudWatch logging, RDS encryption, Lambda function permissions, EKS cluster security, and dozens more services. Each check maps to a specific compliance framework requirement, making audit reporting straightforward.</p>
+
+<h3>Running Prowler</h3>
+
+<pre><code># Install
+pip install prowler
+
+# Full AWS scan
+prowler aws
+
+# Specific compliance framework
+prowler aws --compliance cis_2.0_aws
+
+# Specific services only
+prowler aws --services s3 iam ec2
+
+# Output to HTML report
+prowler aws -M html</code></pre>
+
+<p>A full scan of a moderately sized AWS account takes 15-30 minutes. Prowler uses read-only API calls — it never modifies your infrastructure.</p>
+
+<h3>Strengths and Limitations</h3>
+
+<p>Prowler's AWS coverage is unmatched in the open-source space. The compliance mapping is production-ready — auditors accept Prowler reports. The HTML dashboard makes findings accessible to non-technical stakeholders. Multi-account scanning via AWS Organizations support means you can audit your entire AWS estate from a single run.</p>
+
+<p>The limitation: while Prowler added GCP and Azure support in v3+, the check count for those providers is significantly lower (70+ for GCP, 30+ for Azure vs. 400+ for AWS). If you're primarily GCP or Azure, ScoutSuite may be a better fit.</p>
+</section>
+
+<section id="scoutsuite">
+<h2>ScoutSuite — Multi-Cloud Auditing</h2>
+
+<p><a href="https://github.com/nccgroup/ScoutSuite" rel="noopener noreferrer">ScoutSuite</a>, maintained by NCC Group, is the strongest open-source option for organizations running workloads across multiple cloud providers. It provides consistent auditing across AWS, GCP, Azure, Alibaba Cloud, and Oracle Cloud with a unified reporting format.</p>
+
+<h3>Running ScoutSuite</h3>
+
+<pre><code># Install
+pip install scoutsuite
+
+# Scan AWS
+scout aws
+
+# Scan GCP
+scout gcp --user-account
+
+# Scan Azure
+scout azure --cli</code></pre>
+
+<p>ScoutSuite generates an interactive HTML report that groups findings by service and severity. The report is self-contained — a single HTML file you can share with stakeholders or archive for compliance.</p>
+
+<h3>Why ScoutSuite for Multi-Cloud</h3>
+
+<p>The key advantage is consistency. When you audit AWS with Prowler and GCP with a different tool, you get different report formats, different severity scales, and different check categories. ScoutSuite normalizes everything. A "high severity" finding means the same thing whether it's an AWS S3 bucket or a GCP Cloud Storage bucket. For security teams managing multi-cloud environments, this consistency reduces cognitive overhead and simplifies reporting.</p>
+
+<p>ScoutSuite's check depth per provider is shallower than Prowler's AWS coverage, but the breadth across providers is unmatched in the open-source space.</p>
+</section>
+
+<section id="cloudsploit">
+<h2>CloudSploit — Lightweight and Accessible</h2>
+
+<p><a href="https://github.com/aquasecurity/cloudsploit" rel="noopener noreferrer">CloudSploit</a> (now maintained by Aqua Security) is a Node.js-based cloud security scanner that prioritizes simplicity. It supports AWS, Azure, GCP, and Oracle Cloud with a plugin-based architecture that makes it easy to add custom checks.</p>
+
+<h3>Running CloudSploit</h3>
+
+<pre><code># Clone and install
+git clone https://github.com/aquasecurity/cloudsploit.git
+cd cloudsploit && npm install
+
+# Scan AWS
+node index.js --cloud aws --console
+
+# Scan with JSON output
+node index.js --cloud aws --json output.json</code></pre>
+
+<p>CloudSploit is the lightest-weight option in this comparison. It's a good choice for quick assessments, one-off audits, or environments where installing Python dependencies is impractical. The plugin architecture means you can write custom checks in JavaScript without understanding the full codebase.</p>
+
+<p>The trade-off: fewer built-in checks than Prowler or ScoutSuite, and the reporting is more basic. For ongoing security programs, you'll likely outgrow CloudSploit and move to Prowler or ScoutSuite.</p>
+</section>
+
+<section id="trivy">
+<h2>Trivy — From Containers to Cloud</h2>
+
+<p><a href="https://github.com/aquasecurity/trivy" rel="noopener noreferrer">Trivy</a> started as a container vulnerability scanner and has evolved into a comprehensive security scanner covering containers, filesystems, IaC templates, and cloud infrastructure. This breadth makes it uniquely valuable — one tool for multiple scanning needs.</p>
+
+<h3>Trivy's Cloud Scanning Capabilities</h3>
+
+<pre><code># Scan Terraform files
+trivy config ./terraform/
+
+# Scan CloudFormation templates
+trivy config ./cloudformation/
+
+# Scan Kubernetes manifests
+trivy config ./k8s/
+
+# Scan live AWS account
+trivy aws --region us-east-1
+
+# Scan with specific compliance framework
+trivy aws --compliance aws-cis-1.4</code></pre>
+
+<p>Trivy's IaC scanning covers Terraform, CloudFormation, Helm charts, Kubernetes manifests, and Dockerfiles. The runtime AWS scanning (added in Trivy 0.31+) audits live resources similar to Prowler, though with fewer checks.</p>
+
+<h3>The Unified Scanner Advantage</h3>
+
+<p>If your team already uses Trivy for container scanning (and many do — it's the most popular container scanner), adding IaC and cloud scanning requires zero additional tooling. One binary, one CI/CD integration, one report format. This reduces tool sprawl and simplifies your security pipeline. The trade-off is that Trivy's cloud-specific checks are less comprehensive than dedicated tools like Prowler, but for teams that value simplicity, the unified approach is compelling.</p>
+</section>
+
+<section id="checkov">
+<h2>Checkov — IaC Security Before Deployment</h2>
+
+<p><a href="https://github.com/bridgecrewio/checkov" rel="noopener noreferrer">Checkov</a> (by Bridgecrew/Palo Alto Networks) is the leading IaC security scanner. It scans Terraform, CloudFormation, Kubernetes, Helm, ARM templates, Serverless framework, and Bicep files for misconfigurations before they're deployed. This is the shift-left tool in your cloud security stack.</p>
+
+<h3>Running Checkov</h3>
+
+<pre><code># Install
+pip install checkov
+
+# Scan a Terraform directory
+checkov -d ./terraform/
+
+# Scan a specific file
+checkov -f main.tf
+
+# Scan CloudFormation
+checkov -f template.yaml --framework cloudformation
+
+# Output as JUnit XML (for CI/CD)
+checkov -d ./terraform/ -o junitxml > results.xml</code></pre>
+
+<h3>CI/CD Integration</h3>
+
+<p>Checkov's primary value is in CI/CD pipelines. Add it as a step in your GitHub Actions, GitLab CI, or Jenkins pipeline, and it blocks pull requests that introduce misconfigurations. A developer creating an S3 bucket without encryption gets immediate feedback — before the misconfiguration reaches any environment.</p>
+
+<pre><code># GitHub Actions example
+- name: Run Checkov
+  uses: bridgecrewio/checkov-action@master
+  with:
+    directory: terraform/
+    framework: terraform
+    soft_fail: false</code></pre>
+
+<p>Checkov has 1,000+ built-in policies covering AWS, GCP, and Azure resources. Custom policies can be written in Python or YAML. The <code>--check</code> and <code>--skip-check</code> flags let you tune which policies apply to your environment, reducing noise from checks that don't match your security posture.</p>
+
+<p>The limitation: Checkov only scans IaC templates. It doesn't audit live cloud resources. Resources created manually through the console, or configurations that drifted after deployment, are invisible to Checkov. That's why you need runtime auditing (Prowler/ScoutSuite) alongside IaC scanning.</p>
+</section>
+
+<section id="aws-inspector">
+<h2>AWS Inspector — Native AWS Scanning</h2>
+
+<p>AWS Inspector is Amazon's managed vulnerability scanning service. It automatically discovers and scans EC2 instances, container images in ECR, and Lambda functions for software vulnerabilities and network exposure. Inspector v2 (the current version) runs continuously — no manual scan triggers needed.</p>
+
+<h3>What Inspector Covers</h3>
+
+<p>Inspector focuses on two areas: <strong>software vulnerabilities</strong> (CVEs in installed packages, container image layers, and Lambda dependencies) and <strong>network reachability</strong> (identifying EC2 instances and containers reachable from the internet with open ports). It integrates with AWS Security Hub for centralized findings and supports EventBridge for automated remediation workflows.</p>
+
+<h3>Inspector vs. Open-Source Tools</h3>
+
+<p>Inspector's advantage is zero-configuration continuous scanning. Enable it once and it automatically discovers new resources and scans them. No cron jobs, no credential management, no infrastructure to maintain. The findings integrate natively with AWS Security Hub, EventBridge, and Organizations.</p>
+
+<p>The limitation: Inspector scans for <em>vulnerabilities</em> (CVEs, network exposure) but not <em>misconfigurations</em> (S3 bucket policies, IAM permissions, encryption settings). For configuration auditing, you still need Prowler, AWS Config rules, or Security Hub's security standards. Inspector and Prowler are complementary, not competing.</p>
+</section>
+
+<section id="gcp-scc">
+<h2>GCP Security Command Center</h2>
+
+<p>Security Command Center (SCC) is Google Cloud's built-in security and risk management platform. The Standard tier (free) provides asset inventory and basic misconfiguration detection. The Premium tier adds vulnerability scanning, threat detection, and compliance reporting.</p>
+
+<h3>SCC Capabilities</h3>
+
+<p><strong>Security Health Analytics</strong> (Premium) automatically scans GCP resources for misconfigurations — public Cloud Storage buckets, overly permissive firewall rules, unencrypted disks, disabled audit logging, and more. Findings map to CIS benchmarks and PCI-DSS requirements.</p>
+
+<p><strong>Web Security Scanner</strong> (Premium) crawls and scans web applications deployed on App Engine, GKE, and Compute Engine for OWASP Top 10 vulnerabilities. This is unusual for a cloud-native tool — most focus exclusively on infrastructure configuration.</p>
+
+<p><strong>Event Threat Detection</strong> (Premium) monitors Cloud Audit Logs for suspicious activity — brute-force attacks, cryptomining, data exfiltration patterns, and anomalous IAM grants.</p>
+
+<h3>SCC vs. Open-Source Tools</h3>
+
+<p>SCC's integration depth with GCP is unmatched. It sees resources that API-based scanners might miss, correlates findings with threat intelligence, and provides remediation guidance specific to GCP services. The Standard tier's asset inventory alone is valuable — it answers "what do we have deployed?" before you even start scanning.</p>
+
+<p>The limitation: SCC is GCP-only. If you run workloads on AWS or Azure alongside GCP, you need additional tools for those environments. The Premium tier pricing is also significant — it's based on resource consumption, which can be expensive for large deployments.</p>
+</section>
+
+<section id="azure-defender">
+<h2>Microsoft Defender for Cloud</h2>
+
+<p>Microsoft Defender for Cloud (formerly Azure Security Center) is Azure's integrated cloud security posture management (CSPM) and workload protection platform. The free tier provides basic CSPM with Secure Score and security recommendations. The paid plans add advanced threat protection, vulnerability scanning, and multi-cloud support.</p>
+
+<h3>Defender Capabilities</h3>
+
+<p><strong>Secure Score</strong> provides a single metric (0-100%) representing your security posture, with prioritized recommendations to improve it. Each recommendation maps to a specific misconfiguration and includes step-by-step remediation guidance.</p>
+
+<p><strong>Regulatory Compliance Dashboard</strong> maps your Azure configuration against CIS, PCI-DSS, ISO 27001, SOC 2, and other frameworks. Audit-ready reports can be exported directly.</p>
+
+<p><strong>Multi-Cloud Connectors</strong> (paid) extend Defender's CSPM to AWS and GCP accounts. This is notable — Defender is the only cloud-native tool that provides cross-cloud visibility from a single dashboard. The AWS and GCP coverage is less comprehensive than native tools, but the unified view is valuable for organizations with Azure as their primary cloud.</p>
+
+<h3>Defender vs. Open-Source Tools</h3>
+
+<p>Defender's Secure Score gamification is effective at driving remediation — security teams can track improvement over time and prioritize the highest-impact fixes. The multi-cloud support, while not as deep as dedicated tools, provides a single pane of glass. The limitation: the most valuable features require paid plans, and the pricing model (per-resource, per-plan) can be complex to predict.</p>
+</section>
+
+<section id="securityclaw">
+<h2>SecurityClaw: Bridging Infrastructure and Application Security</h2>
+
+<p>All the tools above scan <em>infrastructure</em> — cloud configurations, IaC templates, network rules. But infrastructure security is only half the picture. The applications running on that infrastructure have their own vulnerabilities, and those vulnerabilities often interact with cloud misconfigurations in dangerous ways.</p>
+
+<p>Consider this scenario: Prowler confirms your S3 buckets are properly configured with private access. But the web application has an <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">SSRF vulnerability</a> that lets an attacker reach the EC2 metadata endpoint at <code>169.254.169.254</code>, steal IAM role credentials, and access those "properly configured" S3 buckets with the application's own permissions. Infrastructure scanning sees no issue. Application scanning finds the SSRF.</p>
+
+<p><a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw</a> fills this gap. It tests the application layer for vulnerabilities that exploit cloud infrastructure — SSRF to cloud metadata, <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQL injection</a> against cloud-hosted databases, IDOR flaws exposing cloud-stored data, and authentication bypasses on cloud-deployed APIs. The combination of infrastructure scanning (Prowler/ScoutSuite) and application scanning (SecurityClaw) provides the comprehensive coverage that neither achieves alone.</p>
+
+<h3>Practical Integration</h3>
+
+<p>A layered approach using SecurityClaw alongside cloud scanners:</p>
+
+<ol>
+  <li><strong>IaC scanning</strong> (Checkov) catches misconfigurations in pull requests</li>
+  <li><strong>Runtime auditing</strong> (Prowler) catches drift and manual changes daily</li>
+  <li><strong>Application scanning</strong> (SecurityClaw) tests the app layer for cloud-exploitable vulnerabilities</li>
+  <li><strong>Continuous monitoring</strong> (cloud-native tools) provides real-time alerts</li>
+</ol>
+
+<p>Each layer catches what the others miss. Checkov prevents misconfigurations from deploying. Prowler finds the ones that slip through. SecurityClaw finds application flaws that make even correct configurations exploitable. Cloud-native monitoring catches changes in real time.</p>
+</section>
+
+<section id="building-strategy">
+<h2>Building a Layered Scanning Strategy</h2>
+
+<p>Here's a practical framework for implementing cloud security scanning based on your environment:</p>
+
+<h3>AWS-Primary Organizations</h3>
+
+<ol>
+  <li><strong>CI/CD</strong>: Checkov on every PR for Terraform/CloudFormation</li>
+  <li><strong>Daily audit</strong>: Prowler with CIS benchmark compliance</li>
+  <li><strong>Continuous</strong>: AWS Inspector for vulnerability scanning, AWS Config for drift detection</li>
+  <li><strong>Application</strong>: SecurityClaw for web app and API testing</li>
+</ol>
+
+<h3>Multi-Cloud Organizations</h3>
+
+<ol>
+  <li><strong>CI/CD</strong>: Checkov (supports all major IaC frameworks)</li>
+  <li><strong>Daily audit</strong>: ScoutSuite for consistent cross-cloud reporting</li>
+  <li><strong>Continuous</strong>: Cloud-native tools per provider (Inspector, SCC, Defender)</li>
+  <li><strong>Application</strong>: SecurityClaw for the application layer</li>
+</ol>
+
+<h3>Small Teams / Startups</h3>
+
+<ol>
+  <li><strong>CI/CD</strong>: Trivy (covers IaC + containers in one tool)</li>
+  <li><strong>Weekly audit</strong>: Prowler or ScoutSuite (depending on primary cloud)</li>
+  <li><strong>Application</strong>: SecurityClaw or manual testing with <a href="/articles/owasp-zap-vs-burp-suite-2026/">ZAP/Burp Suite</a></li>
+</ol>
+
+<h3>Common Pitfalls</h3>
+
+<p><strong>1. Scanning without remediation.</strong> A scan that produces 500 findings and no action is worse than no scan — it creates a false sense of security. Prioritize findings by severity and exploitability. Fix critical and high findings within 48 hours. Track remediation metrics.</p>
+
+<p><strong>2. Ignoring IaC scanning.</strong> If you only scan runtime, you're playing catch-up. Every misconfiguration that reaches production was preventable in the pull request. Shift left with Checkov or Trivy.</p>
+
+<p><strong>3. Single-layer scanning.</strong> IaC scanning alone misses drift and manual changes. Runtime scanning alone misses application-layer vulnerabilities. Cloud-native tools alone miss cross-cloud issues. Layer your tools.</p>
+
+<p><strong>4. Alert fatigue.</strong> Too many low-severity findings drown out critical ones. Tune your scanners — suppress checks that don't apply to your environment, set severity thresholds for alerts, and route findings to the right teams. A focused scan with 20 actionable findings beats a comprehensive scan with 2,000 findings that nobody reads.</p>
+
+<p><strong>5. Forgetting the application layer.</strong> Infrastructure scanning tools don't test your application code. An S3 bucket can be perfectly configured and still leak data through an <a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">application vulnerability</a>. Always pair infrastructure scanning with application security testing.</p>
+</section>
+
+<section id="faq">
+<h2>Frequently Asked Questions</h2>
+
+<h3>What is cloud security scanning?</h3>
+<p>Cloud security scanning is the automated process of auditing cloud infrastructure configurations, permissions, and resources for security misconfigurations, compliance violations, and vulnerabilities. It covers IAM policies, network rules, storage permissions, encryption settings, logging configurations, and more across AWS, GCP, and Azure environments.</p>
+
+<h3>What is the best cloud security scanning tool in 2026?</h3>
+<p>There is no single best tool. Prowler is the strongest choice for AWS-focused environments with its 400+ checks. ScoutSuite excels at multi-cloud auditing. Trivy has expanded beyond container scanning to cover IaC and cloud misconfigurations. For organizations already invested in a cloud provider, the native tools (AWS Inspector, GCP Security Command Center, Microsoft Defender for Cloud) offer the deepest integration. Most mature security programs combine a native tool with an open-source multi-cloud scanner.</p>
+
+<h3>Are cloud-native security tools enough or do I need third-party scanners?</h3>
+<p>Cloud-native tools provide excellent coverage within their own platform but have blind spots. They don't scan across cloud providers, may miss IaC misconfigurations before deployment, and can have limited customization. Third-party tools like Prowler, ScoutSuite, and Checkov fill these gaps with multi-cloud support, CI/CD integration, and custom policy frameworks.</p>
+
+<h3>How often should I run cloud security scans?</h3>
+<p>Run IaC scans (Checkov, Trivy) on every pull request — they're fast and catch misconfigurations before deployment. Run runtime cloud scans (Prowler, ScoutSuite) at least daily for production environments. Enable continuous monitoring through cloud-native tools (AWS Config, GCP Security Command Center) for real-time drift detection.</p>
+
+<h3>Can SecurityClaw help with cloud security scanning?</h3>
+<p>SecurityClaw complements cloud security scanners by testing the application layer that sits on top of cloud infrastructure. While Prowler checks if your S3 bucket is public, SecurityClaw tests whether the web application hosted on that infrastructure has SSRF vulnerabilities that could access cloud metadata endpoints, or IDOR flaws that expose cloud-stored data. The combination of infrastructure scanning and application-layer testing provides comprehensive coverage.</p>
+</section>
+
+<div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #333;">
+  <h3>Related Articles</h3>
+  <ul>
+    <li><a href="/articles/security-testing-tools-2026/">Security Testing Tools in 2026: The Complete Guide</a></li>
+    <li><a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">Building an Automated Security Scanning Pipeline</a></li>
+    <li><a href="/articles/automated-penetration-testing-guide-2026/">Automated Penetration Testing Guide 2026</a></li>
+    <li><a href="/articles/security-scanner-comparison-hub-2026/">Security Scanner Comparison Hub</a></li>
+    <li><a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw OWASP Top 10 Coverage in 2026</a></li>
+  </ul>
+</div>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three malicious Packagist packages targeting Laravel developers install a persistent PHP RAT at app boot, exfiltrating .env secrets and database credentials to a C2 on port 2096. Windows, macOS, Linux.">
+    <title>PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/fake-laravel-packagist-php-rat-supply-chain-attack-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/fake-laravel-packagist-php-rat-supply-chain-attack-2026/">
+    <meta property="og:title" content="PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor">
+    <meta property="og:description" content="Three malicious Packagist packages targeting Laravel developers install a persistent PHP RAT at app boot, exfiltrating .env secrets and database credentials to a C2 on port 2096. Windows, macOS, Linux.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/fake-laravel-packagist-php-rat-supply-chain-attack-2026/">
+    <meta name="twitter:title" content="PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor">
+    <meta name="twitter:description" content="Three malicious Packagist packages targeting Laravel developers install a persistent PHP RAT at app boot, exfiltrating .env secrets and database credentials to a C2 on port 2096. Windows, macOS, Linux.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "name": "PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor",
+      "description": "Three malicious Packagist packages targeting Laravel developers install a persistent PHP RAT at app boot, exfiltrating .env secrets and database credentials to a C2 on port 2096. Windows, macOS, Linux.",
+      "url": "https://bughuntertools.com/articles/fake-laravel-packagist-php-rat-supply-chain-attack-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<article class="article-content">
+
+<header class="article-header">
+  <div class="article-meta">
+    <span class="tag tag-critical">⚠️ Supply Chain</span>
+    <span class="tag">PHP / Composer / Laravel</span>
+    <time datetime="2026-03-05">March 5, 2026</time>
+  </div>
+  <h1>PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor</h1>
+  <p class="article-lead">Three malicious packages published to Packagist — the PHP/Composer ecosystem's primary registry — install a persistent remote access trojan the moment a Laravel application boots. The RAT runs in the same process as your web application, giving attackers access to your environment variables, database credentials, and API keys before your first HTTP request is handled. The packages were still live on Packagist as of March 4, 2026.</p>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+      <li>Package manager ecosystems remain a primary vector for malware distribution</li>
+      <li>Attackers increasingly use legitimate services as command-and-control infrastructure</li>
+      <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+    </ul>
+  </div>
+
+</header>
+
+<section>
+<h2>The Packages</h2>
+<p>Security researchers identified three malicious packages published by the Packagist user <code>nhattuanbl</code>:</p>
+
+<ul>
+  <li><strong>nhattuanbl/lara-helper</strong> — 37 downloads — contains the RAT payload in <code>src/helper.php</code></li>
+  <li><strong>nhattuanbl/simple-queue</strong> — 29 downloads — malicious package loading lara-helper as a dependency</li>
+  <li><strong>nhattuanbl/lara-swagger</strong> — 49 downloads — visually clean code, but loads <code>nhattuanbl/lara-helper</code> as a Composer dependency, inheriting the payload</li>
+</ul>
+
+<p>The same author published at least three other packages with clean, legitimate code prior to the malicious push. This is a credibility-building technique: establish a presence on the registry with functional tools before weaponising a dependency or publishing a trojanised package. Developers who searched for this author's packages and found real working code had no initial reason to treat new packages from the same namespace as suspicious.</p>
+
+<p>The download counts are small — but Composer package installs propagate. A single compromised project pulled into CI/CD, a starter template, or a shared internal Laravel scaffolding means every application built on top of it is also compromised.</p>
+</section>
+
+<section>
+<h2>What the Payload Does</h2>
+<p>The RAT implementation lives in <code>src/helper.php</code> inside <code>lara-helper</code>. It's registered as a Laravel Service Provider, which means it runs at application boot — before any routes, middleware, or application code execute. From the first moment your Laravel application starts, the attacker has a foothold in the same PHP process.</p>
+
+<p><strong>C2 connection:</strong> The RAT connects to <code>helper.leuleu[.]net</code> on <strong>port 2096</strong> via TCP using PHP's <code>stream_socket_client()</code>. The C2 hostname and path are encoded in the payload to slow static analysis. The connection is currently non-responsive — the C2 appears to be down as of March 4 — but the RAT retries every 15 seconds. Any change to the domain's DNS resolution or C2 infrastructure reactivates every installed instance.</p>
+
+<p><strong>Command capabilities:</strong></p>
+<ul>
+  <li><code>cmd</code> — Execute arbitrary shell commands</li>
+  <li><code>powershell</code> — Execute PowerShell (Windows targets)</li>
+  <li><code>run</code> — Execute commands in background (non-blocking)</li>
+  <li><code>screenshot</code> — Capture screen (where supported)</li>
+  <li><code>download</code> / <code>upload</code> — File transfer to/from attacker</li>
+  <li><code>stop</code> — Terminate the RAT process</li>
+  <li><code>heartbeat</code> — 60-second ping to maintain C2 registration</li>
+</ul>
+
+<p><strong>Shell fallback chain:</strong> The RAT doesn't assume a specific execution function is available. It tries them in order: <code>popen</code> → <code>proc_open</code> → <code>exec</code> → <code>shell_exec</code> → <code>system</code> → <code>passthru</code>. PHP hardening configurations that disable individual functions (e.g., disabling <code>exec</code> and <code>shell_exec</code> in <code>php.ini</code>) are not sufficient mitigation — the RAT will fall back to whatever function remains available.</p>
+
+<p><strong>Obfuscation:</strong> Control flow is obfuscated. Domain names and API paths are encoded. Variable and function names are randomised. This isn't sophisticated anti-analysis — it's one step above plaintext, and clearly written for deployment speed rather than long-term evasion. Static analysis is slowed but not blocked.</p>
+
+<p><strong>Cross-platform:</strong> The RAT runs on Windows (using PowerShell for execution), macOS, and Linux — anywhere PHP runs. This is typical of PHP-based malware: the runtime handles the platform abstraction.</p>
+</section>
+
+<section>
+<h2>Why Running in the Same Process as Your App Matters</h2>
+<p>The Service Provider registration pattern is the critical design choice here. Laravel's service providers are the application bootstrap layer — they run before routing, before middleware, before anything your application logic does. A Service Provider registered in <code>composer.json</code> or <code>config/app.php</code> runs with every application invocation: every web request, every queue worker, every Artisan command.</p>
+
+<p>This means the RAT process has full access to:</p>
+<ul>
+  <li>The <strong><code>.env</code> file</strong> — database credentials, API keys, mail server credentials, payment processor keys, OAuth secrets, encryption keys</li>
+  <li>The <strong>application's database connection</strong> — direct access to all application data through the same credentials the app uses</li>
+  <li>The <strong>application cache and session store</strong> — including any session data or temporary tokens in Redis/Memcached</li>
+  <li>The <strong>filesystem</strong> — all files readable by the web server user, including application source code, uploaded files, and log data</li>
+  <li>The <strong>network</strong> — the ability to make outbound connections to any host the server can reach</li>
+</ul>
+
+<p>From an attacker's perspective, this is ideal placement. The RAT isn't running as a separate process that might get killed by process monitoring or trigger resource alerts. It's embedded in your application — and it has everything your application has.</p>
+</section>
+
+<section>
+<h2>The Composer Ecosystem Attack Surface</h2>
+<p>Packagist is the canonical registry for PHP Composer packages. Unlike npm (which has a formal security team) or PyPI (which has invested significantly in malware detection), Packagist historically operated closer to a "publish and trust the community" model. Recent investments have improved automated scanning, but the ecosystem remains high-trust — developers expect <code>composer require vendor/package</code> to give them working, safe code.</p>
+
+<p>The specific technique used here — credibility building before weaponisation — is the same pattern seen in the npm supply chain attacks covered in the StegaBin campaign. The North Korea-linked npm packages studied in that campaign also established presence with functional code before deploying malicious payloads. This pattern defeats naive "only install packages from established authors" guidance. The attack surface isn't new-package-from-unknown-author — it's any package that hasn't been independently verified.</p>
+
+<p>Laravel's Service Provider pattern is particularly attractive as an attack vector because:</p>
+<ul>
+  <li>Providers run automatically — there's no explicit invocation for an attacker to trigger</li>
+  <li>Developers routinely add provider registrations to <code>config/app.php</code> without examining what the provider does</li>
+  <li>Providers are expected to do side-effectful things (register bindings, set up event listeners, establish connections) — so outbound network connections from boot aren't inherently anomalous</li>
+</ul>
+
+<p>SecurityClaw's <code>supply-chain-scanner</code> skill is specifically designed to detect this class of threat. A supply chain audit that checks for encoded strings, unusual network socket calls, and backdoor command patterns in Service Provider code would flag the <code>lara-helper</code> payload before it reaches production.</p>
+</section>
+
+<section>
+<h2>Detection and Remediation</h2>
+<p><strong>If you have any of these packages installed, treat your application as compromised.</strong> The C2 being currently non-responsive doesn't mean it was never responsive — and it can become responsive again at any time.</p>
+
+<p><strong>Immediate steps:</strong></p>
+<ol>
+  <li><strong>Remove the packages:</strong> <code>composer remove nhattuanbl/lara-helper nhattuanbl/simple-queue nhattuanbl/lara-swagger</code> and remove any Service Provider registrations from <code>config/app.php</code></li>
+  <li><strong>Rotate all credentials exposed in <code>.env</code>:</strong> Database passwords, API keys, OAuth secrets, mail credentials, encryption keys. Assume all values in <code>.env</code> were read and exfiltrated. This applies even if the C2 was non-responsive — the payload may have been storing data for later retrieval</li>
+  <li><strong>Audit network egress logs</strong> for outbound connections to <code>helper.leuleu[.]net</code> or port 2096 from your application servers. Even a failed TCP connection attempt confirms the RAT executed</li>
+  <li><strong>Audit your Composer dependency tree</strong> for other packages from the <code>nhattuanbl</code> namespace or packages that list <code>nhattuanbl/lara-helper</code> as a dependency</li>
+  <li><strong>Check your database</strong> for any anomalous records, backdoor accounts, or data modifications in the window since the package was installed</li>
+  <li><strong>Review application logs</strong> for unusual commands or file access patterns from the web server user</li>
+</ol>
+
+<p><strong>Ongoing supply chain hygiene:</strong></p>
+<ul>
+  <li>Lock dependency versions in <code>composer.lock</code> and commit the lockfile — don't allow <code>composer update</code> in production without a review step</li>
+  <li>Use <code>composer audit</code> (available since Composer 2.4) to check for known-malicious packages in your dependency tree</li>
+  <li>Review Service Providers registered by third-party packages before installation. A Service Provider that makes outbound network connections is a red flag unless documented and expected</li>
+  <li>Consider <a href="https://socket.dev" rel="nofollow">Socket.dev</a> or equivalent tools for automated malicious package detection in your CI pipeline</li>
+  <li>Restrict PHP functions in production environments — even if not sufficient to prevent this RAT, disabling <code>exec</code>, <code>shell_exec</code>, <code>system</code>, and <code>passthru</code> in <code>php.ini</code> raises the attacker's bar for arbitrary command execution</li>
+</ul>
+
+<p>For developers who want to understand the tooling for auditing dependency trees and detecting malicious code patterns, <a href="https://www.amazon.com/dp/1718501129?tag=altclaw-20" rel="nofollow">Black Hat Python 2nd Edition</a> provides practical Python tooling for building custom security analysis scripts — including the kind of static analysis checks that would catch encoded socket calls in dependency code.</p>
+</section>
+
+<section>
+<h2>The Three-Package Approach: Dependency Chain as Attack Vector</h2>
+<p>The most interesting technical choice in this campaign is the use of <code>lara-swagger</code> — a package with apparently clean code — to pull in <code>lara-helper</code> as a Composer dependency. This creates a two-hop attack chain.</p>
+
+<p>A developer who audits <code>lara-swagger</code>'s code sees nothing suspicious. The malicious code is in a dependency they didn't explicitly choose to install and may not have read. Composer's dependency resolution installs it automatically.</p>
+
+<p>This mirrors a well-documented npm attack pattern: publish a clean, useful package (e.g., a Swagger UI helper for Laravel), include a malicious package as a dependency, and let the dependency system do the installation. The developer is auditing the wrong package.</p>
+
+<p>The implication for supply chain security is that auditing only directly declared dependencies is insufficient. You need to audit the full resolved dependency tree — including transitive dependencies. For a typical Laravel application this can be dozens of packages deep. Automated tooling for this audit is non-optional at any meaningful scale.</p>
+
+<p>The <a href="https://www.amazon.com/dp/1118026470?tag=altclaw-20" rel="nofollow">Web Application Hacker's Handbook</a> and broader web application security literature covers the trust assumptions that make supply chain attacks effective — understanding why developers trust package registries is the prerequisite for understanding how these campaigns exploit that trust.</p>
+</section>
+
+<section class="faq-section">
+<h2>FAQ</h2>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">Which Composer packages are malicious in this campaign?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">Three packages published by nhattuanbl on Packagist: nhattuanbl/lara-helper (RAT payload in src/helper.php), nhattuanbl/simple-queue (pulls in lara-helper), and nhattuanbl/lara-swagger (clean code but lists lara-helper as a Composer dependency). All three were still listed on Packagist as of March 4, 2026. Remove all three if installed.</p>
+  </div>
+</div>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">What does the PHP RAT in lara-helper do?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">It registers as a Laravel Service Provider, runs at application boot, and connects to a C2 server at helper.leuleu[.]net on port 2096. Capabilities include arbitrary command execution (cmd, powershell, run), file download/upload, screenshot capture, and heartbeat registration. It uses a fallback chain of PHP execution functions (popen, proc_open, exec, shell_exec, system, passthru) to survive PHP hardening configurations.</p>
+  </div>
+</div>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">If the C2 is down, am I still at risk?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">Yes. The C2 being currently non-responsive doesn't mean it wasn't previously active, and it can be reactivated at any time via DNS changes. Treat any installation as a confirmed compromise: remove the packages and rotate all credentials in your .env file immediately. Audit network logs for any historical outbound connections to port 2096.</p>
+  </div>
+</div>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">Does this only affect Laravel applications?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">The packages are designed for Laravel (using the Laravel Service Provider registration pattern), but the underlying PHP RAT could in principle be adapted for any PHP framework. If you're using Composer in a non-Laravel PHP project and installed any of these packages, review your dependency registration mechanism — the payload may still execute if the helper.php file is included anywhere in your bootstrap process.</p>
+  </div>
+</div>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">How can I check if my application installed these packages?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">Run: composer show nhattuanbl/lara-helper, composer show nhattuanbl/simple-queue, composer show nhattuanbl/lara-swagger. If any return package information rather than an error, the package is installed. Also search your composer.lock file for "nhattuanbl" to catch transitive dependency installations. Check config/app.php for any Service Provider registrations from these packages.</p>
+  </div>
+</div>
+
+<div class="faq-item" itemscope itemtype="https://schema.org/Question">
+  <h3 itemprop="name">What is the best way to protect against supply chain attacks in Composer?</h3>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <p itemprop="text">Commit composer.lock and review changes carefully. Use composer audit to check against known-malicious package databases. Audit Service Provider code in any third-party packages before installation. Use tools like Socket.dev in your CI pipeline for automated malicious package detection. Restrict PHP execution functions in production (exec, shell_exec, system, passthru) in php.ini as a defence-in-depth measure. Never run composer update in production without a code review step.</p>
+  </div>
+</div>
+</section>
+
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/north-korea-stegabin-npm-pastebin-steganography-c2/">North Korea's StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</a></li>
+    <li><a href="/articles/malicious-go-module-xinfeisoft-crypto-apt31-rekoobe/">Malicious Go Package 'xinfeisoft/crypto' Deployed APT31's Rekoobe Backdoor</a></li>
+    <li><a href="/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</a></li>
+    <li><a href="/demos/securityclaw-npm-audit-supply-chain-demo-2026/">15 Vulnerabilities in Your package.json. 2 Seconds to Find Them.</a></li>
+    <li><a href="/demos/securityclaw-supply-chain-scanner-demo-2026/">We Planted 7 Threats in a package.json. SecurityClaw Found All of Them in 0.19 Seconds.</a></li>
+  </ul>
+</section>
+</article>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages Hiding a Cross-Platform Backdoor",
+      "description": "Three malicious Packagist packages targeting Laravel developers install a persistent PHP RAT at app boot, exfiltrating .env secrets and database credentials to a C2 on port 2096. Windows, macOS, Linux.",
+      "datePublished": "2026-03-05",
+      "dateModified": "2026-03-05",
+      "author": { "@type": "Organization", "name": "BugHunterTools" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Which Composer packages are malicious in this campaign?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Three packages by nhattuanbl on Packagist: lara-helper (RAT payload), simple-queue (pulls in lara-helper), and lara-swagger (clean code but loads lara-helper as a dependency). All three were listed on Packagist as of March 4, 2026." }
+        },
+        {
+          "@type": "Question",
+          "name": "If the C2 is down, am I still at risk?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. The C2 being non-responsive doesn't mean it was never active or can't be reactivated. Treat any installation as confirmed compromise and rotate all credentials immediately." }
+        },
+        {
+          "@type": "Question",
+          "name": "How can I check if my application installed these packages?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Run composer show nhattuanbl/lara-helper, composer show nhattuanbl/simple-queue, composer show nhattuanbl/lara-swagger. Also search composer.lock for nhattuanbl. Check config/app.php for any related Service Provider registrations." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

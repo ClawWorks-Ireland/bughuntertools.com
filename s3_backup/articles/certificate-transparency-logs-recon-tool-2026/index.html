@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Certificate Transparency logs expose every SSL certificate ever issued for a domain. That means subdomains, wildcard certs, unexpected CAs, and expiring certificates — all from a single passive query. Here&#39;s how to use them.">
+    <title>Certificate Transparency Logs: The Recon Tool You&#39;re Probably Not Using</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/certificate-transparency-logs-recon-tool-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/certificate-transparency-logs-recon-tool-2026/">
+    <meta property="og:title" content="Certificate Transparency Logs: The Recon Tool You&#39;re Probably Not Using">
+    <meta property="og:description" content="Certificate Transparency logs expose every SSL certificate ever issued for a domain. That means subdomains, wildcard certs, unexpected CAs, and expiring certificates — all from a single passive query. Here&#39;s how to use them.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/certificate-transparency-logs-recon-tool-2026/">
+    <meta name="twitter:title" content="Certificate Transparency Logs: The Recon Tool You&#39;re Probably Not Using">
+    <meta name="twitter:description" content="Certificate Transparency logs expose every SSL certificate ever issued for a domain. That means subdomains, wildcard certs, unexpected CAs, and expiring certificates — all from a single passive query. Here&#39;s how to use them.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Certificate Transparency Logs: The Recon Tool You&#39;re Probably Not Using",
+      "description": "Certificate Transparency logs expose every SSL certificate ever issued for a domain. That means subdomains, wildcard certs, unexpected CAs, and expiring certificates — all from a single passive query. Here&#39;s how to use them.",
+      "url": "https://bughuntertools.com/articles/certificate-transparency-logs-recon-tool-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Certificate Transparency Logs: The Recon Tool You&#39;re Probably Not Using</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Certificate Transparency Logs: The Recon Tool You're Probably Not Using",
+  "description": "Certificate Transparency logs expose every SSL certificate ever issued for a domain — subdomains, wildcard certs, unexpected CAs, and expiring certificates from a single passive query.",
+  "datePublished": "2026-04-08",
+  "dateModified": "2026-04-08",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Certificate Transparency logs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Certificate Transparency (CT) logs are publicly accessible, append-only records of every SSL/TLS certificate issued by participating Certificate Authorities. When a CA issues a certificate for a domain, it must log that certificate to one or more CT logs. Anyone can query these logs to see every certificate ever issued for any domain — including subdomains, wildcard certificates, and the issuing CA."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do attackers use Certificate Transparency logs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Attackers query CT logs to discover subdomains that aren't publicly linked or listed in DNS records. Internal staging servers, development environments, admin panels, and API endpoints often have SSL certificates issued for them — and those certificates appear in CT logs. This passive reconnaissance technique requires zero interaction with the target and leaves no trace in the target's logs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is crt.sh and how does it work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "crt.sh is a free web interface and API maintained by Sectigo that aggregates Certificate Transparency log data. You can query it with a domain name and it returns every certificate ever issued for that domain and its subdomains. The JSON API endpoint (crt.sh/?q=example.com&output=json) returns structured data including common names, issuer names, and expiry dates — making it ideal for automated tooling."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What security issues can CT log monitoring detect?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CT log monitoring can detect: (1) wildcard certificates that expand the attack surface, (2) expired certificates that cause service disruptions and trust warnings, (3) certificates expiring within 30 days that need renewal, (4) certificates issued by unexpected or untrusted Certificate Authorities which may indicate compromise or unauthorized issuance, and (5) previously unknown subdomains that reveal hidden attack surface."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is querying CT logs legal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Certificate Transparency logs are public by design — that's the entire point of the CT framework. RFC 6962 established CT logs as publicly auditable records. Querying crt.sh or any CT log aggregator is passive reconnaissance that involves no interaction with the target's infrastructure. It's equivalent to reading a public directory."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+<div class="affiliate-disclosure" style="background: #1a1a2e; padding: 12px 16px; border-radius: 6px; margin-bottom: 24px; font-size: 0.85rem; color: #888;">
+  📋 This article contains affiliate links. If you purchase through these links, we may earn a small commission at no extra cost to you.
+</div>
+
+<header>
+  <p style="color: #777; font-size: 0.9rem; margin-bottom: 8px;">Published April 8, 2026 · 10 min read</p>
+  <h1>Certificate Transparency Logs: The Recon Tool You're Probably Not Using</h1>
+  <p class="intro" style="font-size: 1.15rem; color: #ccc; margin-bottom: 32px;"><strong>Every SSL certificate ever issued for a domain is logged in a public, searchable database.</strong> That includes certificates for internal staging servers, development environments, admin panels, and API endpoints that were never meant to be discovered. If you're doing recon and you're not querying CT logs, you're leaving subdomains on the table.</p>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+      <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+      <li>Automated scanning catches common patterns but manual testing finds logic flaws</li>
+    </ul>
+  </div>
+
+</header>
+
+<nav class="toc" style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin-bottom: 32px;">
+  <strong>Contents</strong>
+  <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+    <li><a href="#what-are-ct-logs" style="color: #4fc3f7;">What Certificate Transparency Logs Are</a></li>
+    <li><a href="#why-recon" style="color: #4fc3f7;">Why CT Logs Matter for Recon</a></li>
+    <li><a href="#crtsh" style="color: #4fc3f7;">Using crt.sh for Subdomain Discovery</a></li>
+    <li><a href="#what-to-look-for" style="color: #4fc3f7;">What to Look For in CT Log Results</a></li>
+    <li><a href="#automated-monitoring" style="color: #4fc3f7;">Automated CT Log Monitoring</a></li>
+    <li><a href="#attacker-perspective" style="color: #4fc3f7;">How Attackers Use CT Logs</a></li>
+    <li><a href="#defensive-use" style="color: #4fc3f7;">Defensive CT Log Monitoring</a></li>
+    <li><a href="#tools" style="color: #4fc3f7;">Tools and Resources</a></li>
+  </ol>
+</nav>
+
+<section id="what-are-ct-logs">
+<h2>What Certificate Transparency Logs Are</h2>
+
+<p>Certificate Transparency is a framework defined in <a href="https://www.rfc-editor.org/rfc/rfc6962" rel="noopener">RFC 6962</a> that requires Certificate Authorities to publicly log every SSL/TLS certificate they issue. The logs are append-only — certificates can be added but never removed or modified.</p>
+
+<p>The system was created after several high-profile CA compromises. In 2011, a Dutch CA called DigiNotar was breached and attackers issued fraudulent certificates for google.com, *.google.com, and hundreds of other domains. The certificates were valid, trusted by browsers, and completely invisible to the domain owners. CT logs exist to make that kind of attack detectable.</p>
+
+<p>Since 2018, all major browsers require CT compliance for new certificates. If a CA issues a certificate without logging it to at least two CT logs, Chrome and Safari will show a trust warning. This means that in practice, every publicly trusted certificate issued since 2018 is in the CT logs.</p>
+
+<p>The key insight for security practitioners: <strong>CT logs are a complete, searchable inventory of every SSL certificate ever issued for any domain.</strong> That includes certificates for subdomains that the organization may not want publicly known.</p>
+</section>
+
+<section id="why-recon">
+<h2>Why CT Logs Matter for Recon</h2>
+
+<p>Traditional subdomain enumeration relies on DNS brute-forcing (trying common subdomain names), DNS zone transfers (rarely work), search engine dorking, or passive DNS databases. All of these have gaps.</p>
+
+<p>CT logs fill those gaps because they capture subdomains that:</p>
+
+<ul>
+  <li><strong>Don't resolve in DNS anymore</strong> — a staging server that was decommissioned but the certificate is still logged</li>
+  <li><strong>Use non-obvious names</strong> — <code>jenkins-internal.example.com</code> won't show up in a wordlist brute-force, but it will show up in CT logs if someone requested a certificate for it</li>
+  <li><strong>Are behind a WAF or CDN</strong> — the certificate reveals the subdomain even if the DNS points to a CDN that blocks direct enumeration</li>
+  <li><strong>Were only briefly active</strong> — a test environment that existed for two weeks still has its certificate permanently logged</li>
+</ul>
+
+<p>CT log queries are also completely passive. You're reading a public database — there's no interaction with the target's infrastructure, no packets sent to their servers, and no entries in their access logs. It's the quietest recon technique available.</p>
+</section>
+
+<section id="crtsh">
+<h2>Using crt.sh for Subdomain Discovery</h2>
+
+<p><a href="https://crt.sh" rel="noopener">crt.sh</a> is the most widely used CT log aggregator. It's maintained by Sectigo (formerly Comodo) and provides both a web interface and a JSON API.</p>
+
+<p>The simplest query is a domain search. Visit <code>https://crt.sh/?q=example.com</code> in a browser, or use the JSON API for automation:</p>
+
+<pre><code>curl -s "https://crt.sh/?q=example.com&output=json" | jq '.[].common_name' | sort -u</code></pre>
+
+<p>This returns every unique common name (CN) from certificates issued for <code>example.com</code> and its subdomains. A typical result might include:</p>
+
+<pre><code>example.com
+www.example.com
+mail.example.com
+staging.example.com
+api.example.com
+dev-api.example.com
+jenkins.internal.example.com
+*.example.com</code></pre>
+
+<p>That last entry — <code>*.example.com</code> — is a wildcard certificate. It means someone requested a certificate that covers every possible subdomain. Wildcard certificates are common, but they're also a signal worth investigating.</p>
+
+<p>For a more detailed query that includes issuer information and expiry dates:</p>
+
+<pre><code>curl -s "https://crt.sh/?q=example.com&output=json" | \
+  jq -r '.[] | [.common_name, .issuer_name, .not_after] | @tsv' | \
+  sort -u</code></pre>
+
+<p>This gives you the subdomain, who issued the certificate, and when it expires — three data points that each tell a story.</p>
+</section>
+
+<section id="what-to-look-for">
+<h2>What to Look For in CT Log Results</h2>
+
+<p>Raw CT log data is noisy. A large organization might have thousands of certificate entries. Here's what matters:</p>
+
+<h3>Wildcard Certificates</h3>
+<p>A wildcard certificate (<code>*.example.com</code>) covers every subdomain at that level. From a security perspective, wildcards expand the attack surface — if the private key is compromised, every subdomain is affected. They also suggest the organization has many subdomains, which means more potential targets.</p>
+
+<h3>Expired Certificates</h3>
+<p>An expired certificate for <code>staging.example.com</code> tells you two things: that subdomain existed at some point, and the organization may not be actively managing it. Expired certificates on active services cause browser warnings and may indicate neglected infrastructure — exactly the kind of target that's likely to have unpatched vulnerabilities.</p>
+
+<h3>Certificates Expiring Soon</h3>
+<p>Certificates expiring within 30 days that haven't been renewed suggest manual certificate management (no automated renewal via Let's Encrypt or similar). Manual processes are error-prone — these services may have other operational gaps.</p>
+
+<h3>Unexpected Certificate Authorities</h3>
+<p>If an organization primarily uses Let's Encrypt but one subdomain has a certificate from an unfamiliar CA, that's worth investigating. It could be a legitimate exception (a third-party service), or it could indicate unauthorized certificate issuance. The list of well-known trusted CAs includes Let's Encrypt, DigiCert, Sectigo, GlobalSign, GoDaddy, Amazon, Google Trust Services, Cloudflare, and Entrust.</p>
+
+<h3>Internal-Looking Subdomains</h3>
+<p>Names like <code>jenkins.internal.example.com</code>, <code>grafana.example.com</code>, <code>admin-panel.example.com</code>, or <code>vpn.example.com</code> reveal internal infrastructure. These are high-value targets for further investigation — they often run management interfaces with weaker security controls than public-facing services.</p>
+</section>
+
+<section id="automated-monitoring">
+<h2>Automated CT Log Monitoring</h2>
+
+<p>Manual crt.sh queries work for one-off recon, but continuous monitoring is where CT logs become a defensive tool. SecurityClaw's <code>certificate-transparency-monitor</code> skill (PR #812, merged April 7, 2026) automates this entire workflow.</p>
+
+<p>The skill queries crt.sh for a target domain and produces structured findings across four categories:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+  <thead>
+    <tr style="background: #2c3e50; color: white;">
+      <th style="padding: 12px; text-align: left;">Finding Type</th>
+      <th style="padding: 12px; text-align: left;">Severity</th>
+      <th style="padding: 12px; text-align: left;">What It Means</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid #333;">
+      <td style="padding: 12px;"><code>WILDCARD_CERT</code></td>
+      <td style="padding: 12px; color: #4caf50;">LOW</td>
+      <td style="padding: 12px;">Wildcard certificate detected — expanded attack surface</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #333;">
+      <td style="padding: 12px;"><code>EXPIRING_CERT</code></td>
+      <td style="padding: 12px; color: #ff9800;">MEDIUM</td>
+      <td style="padding: 12px;">Certificate expires within 30 days — renewal needed</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #333;">
+      <td style="padding: 12px;"><code>UNEXPECTED_CA</code></td>
+      <td style="padding: 12px; color: #ff9800;">MEDIUM</td>
+      <td style="padding: 12px;">Certificate issued by non-standard CA — investigate</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #333;">
+      <td style="padding: 12px;"><code>EXPIRED_CERT</code></td>
+      <td style="padding: 12px; color: #f44336;">HIGH</td>
+      <td style="padding: 12px;">Certificate has expired — service may be neglected</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The skill also extracts and deduplicates all subdomains, providing a clean subdomain list that feeds into the next phase of recon — DNS resolution, port scanning, and service enumeration.</p>
+
+<p>This maps to OWASP A02 (Cryptographic Failures) — specifically the detection of weak or misconfigured certificate infrastructure. It's tagged as passive recon, meaning it can run without any interaction with the target.</p>
+</section>
+
+<section id="attacker-perspective">
+<h2>How Attackers Use CT Logs</h2>
+
+<p>CT logs are a standard part of the attacker recon playbook. Here's the typical workflow:</p>
+
+<p><strong>Step 1: Subdomain harvesting.</strong> Query crt.sh for the target domain. Extract all unique common names. This often reveals 10-100x more subdomains than DNS brute-forcing alone.</p>
+
+<p><strong>Step 2: DNS resolution.</strong> Resolve each discovered subdomain to check which ones are still active. Subdomains that resolve to internal IP ranges (10.x.x.x, 172.16.x.x, 192.168.x.x) are particularly interesting — they may be accessible via SSRF or if the attacker gains internal network access.</p>
+
+<p><strong>Step 3: Service fingerprinting.</strong> For active subdomains, identify what's running. A subdomain like <code>grafana.example.com</code> tells you exactly what to expect. Port scan and fingerprint the services.</p>
+
+<p><strong>Step 4: Targeted exploitation.</strong> Internal tools (Jenkins, Grafana, Kibana, admin panels) often have weaker authentication, default credentials, or known vulnerabilities. The CT log gave the attacker the subdomain; the rest is standard exploitation.</p>
+
+<p>The entire CT log query phase is invisible to the target. No packets, no logs, no alerts. By the time the attacker starts DNS resolution (step 2), they already know exactly which subdomains to target.</p>
+
+<p>Real-world examples of CT log-assisted attacks include the discovery of internal admin panels during bug bounty programs, identification of forgotten staging environments running outdated software, and enumeration of API endpoints that weren't documented in public-facing materials.</p>
+</section>
+
+<section id="defensive-use">
+<h2>Defensive CT Log Monitoring</h2>
+
+<p>The same technique that helps attackers find your subdomains can help you find them first. Defensive CT log monitoring serves three purposes:</p>
+
+<p><strong>1. Shadow IT detection.</strong> When a developer spins up a service and requests a certificate for <code>my-test-app.yourcompany.com</code>, that certificate appears in CT logs — even if the service was never registered with IT. Monitoring CT logs catches unauthorized services that DNS monitoring might miss.</p>
+
+<p><strong>2. Certificate hygiene.</strong> Expired certificates cause service disruptions and erode user trust. Certificates expiring within 30 days need attention. Automated CT monitoring catches these before they become incidents.</p>
+
+<p><strong>3. Unauthorized certificate issuance.</strong> If someone obtains a certificate for your domain from a CA you don't use, that's a red flag. It could indicate a domain validation bypass, a compromised CA, or a phishing campaign using a lookalike domain. CT monitoring detects this.</p>
+
+<p>For organizations running bug bounty programs, proactive CT log monitoring is especially important. Every subdomain in your CT logs is a subdomain that bug bounty hunters will find. Better to find and secure them yourself first.</p>
+</section>
+
+<section id="tools">
+<h2>Tools and Resources</h2>
+
+<p>CT log querying is well-supported across the security tooling ecosystem:</p>
+
+<ul>
+  <li><strong><a href="https://crt.sh" rel="noopener">crt.sh</a></strong> — Free web interface and JSON API. The standard starting point for CT log queries.</li>
+  <li><strong><a href="https://developers.facebook.com/tools/ct/" rel="noopener">Facebook CT Monitor</a></strong> — Facebook's certificate transparency monitoring tool. Useful for monitoring specific domains over time.</li>
+  <li><strong><a href="https://censys.io" rel="noopener">Censys</a></strong> — Internet-wide scanning platform that includes CT log data alongside port scan and service fingerprint data.</li>
+  <li><strong><a href="https://github.com/projectdiscovery/subfinder" rel="noopener">subfinder</a></strong> — Passive subdomain enumeration tool that includes crt.sh as one of its data sources.</li>
+  <li><strong>SecurityClaw certificate-transparency-monitor</strong> — Automated skill that queries crt.sh and produces structured findings (wildcard certs, expiring certs, unexpected CAs). Integrates with SecurityClaw's campaign runner for continuous monitoring.</li>
+</ul>
+
+<p>For practitioners building their own CT monitoring pipeline, the crt.sh JSON API is the simplest integration point. A basic monitoring script that runs daily, compares results against a known subdomain baseline, and alerts on new discoveries takes about 50 lines of Python.</p>
+
+<p>For deeper reading on certificate security and cryptographic failures:</p>
+
+<ul>
+  <li><a href="https://www.amazon.com/dp/B005LVQA9S?tag=altclaw-20" rel="noopener">The Web Application Hacker's Handbook</a> — covers certificate validation and TLS security in the context of web application testing</li>
+  <li><a href="https://www.amazon.com/dp/1718501129?tag=altclaw-20" rel="noopener">Black Hat Python</a> — includes practical examples of SSL/TLS interception and certificate manipulation</li>
+</ul>
+
+<p>CT logs are one of the few recon techniques that's simultaneously useful for attackers and defenders, completely passive, completely legal, and completely free. If you're not using them, you're leaving information on the table that your adversaries are already collecting.</p>
+</section>
+
+<div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #333;">
+  <h3>Related Articles</h3>
+  <ul>
+    <li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow in 2026: From Scope to First Finding</a></li>
+    <li><a href="/articles/web-app-security-testing-checklist-2026/">Web Application Security Testing Checklist for 2026</a></li>
+    <li><a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw OWASP Top 10 Coverage in 2026</a></li>
+    <li><a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Security Scanner Should Check in 2026</a></li>
+  </ul>
+</div>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

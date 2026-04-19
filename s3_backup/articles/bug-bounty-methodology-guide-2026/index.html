@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A complete bug bounty methodology for 2026. Covers scope analysis, reconnaissance, vulnerability discovery, exploitation, reporting, and the workflow patterns that separate paid hunters from hobbyists.">
+    <title>Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bug-bounty-methodology-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bug-bounty-methodology-guide-2026/">
+    <meta property="og:title" content="Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout">
+    <meta property="og:description" content="A complete bug bounty methodology for 2026. Covers scope analysis, reconnaissance, vulnerability discovery, exploitation, reporting, and the workflow patterns that separate paid hunters from hobbyists.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bug-bounty-methodology-guide-2026/">
+    <meta name="twitter:title" content="Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout">
+    <meta name="twitter:description" content="A complete bug bounty methodology for 2026. Covers scope analysis, reconnaissance, vulnerability discovery, exploitation, reporting, and the workflow patterns that separate paid hunters from hobbyists.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout",
+      "description": "A complete bug bounty methodology for 2026. Covers scope analysis, reconnaissance, vulnerability discovery, exploitation, reporting, and the workflow patterns that separate paid hunters from hobbyists.",
+      "url": "https://bughuntertools.com/articles/bug-bounty-methodology-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout",
+  "description": "A complete bug bounty methodology for 2026 covering scope analysis, reconnaissance, vulnerability discovery, exploitation, and reporting.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a bug bounty methodology?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A bug bounty methodology is a repeatable framework for finding security vulnerabilities in a target application. It typically includes scope analysis, reconnaissance, vulnerability discovery, exploitation, and reporting — executed in a structured order so you don't miss attack surface or waste time on out-of-scope targets."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does it take to find your first bug bounty vulnerability?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most hunters spend 2-8 weeks of consistent effort before their first valid finding. The timeline depends on the target's complexity, your existing security knowledge, and how much time you invest in recon. Hunters who follow a structured methodology typically find bugs faster than those who jump straight to testing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I specialize in one vulnerability type or test for everything?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Start broad to understand the full attack surface, then specialize. Hunters who go deep on one or two vulnerability classes — like IDOR, SSRF, or authentication bypasses — tend to find more bugs than generalists. Pick a class that matches the targets you hunt and build expertise there."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between bug bounty methodology and penetration testing methodology?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Penetration testing follows a defined scope, timeline, and deliverable format set by the client. Bug bounty hunting is open-ended — you choose your targets, set your own schedule, and get paid per valid finding. Bug bounty methodology tends to be more recon-heavy and opportunistic, while pentest methodology is more systematic and compliance-driven."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do top bug bounty hunters organize their workflow?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Top hunters maintain a personal toolkit of automated recon scripts, keep detailed notes on every target they test, track which vulnerability classes they've checked per target, and revisit targets when new features launch or scope changes. Most use a combination of Burp Suite or Caido for manual testing and custom automation for recon and content discovery."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Execute a Bug Bounty Methodology",
+  "description": "Step-by-step framework for finding vulnerabilities in bug bounty programs, from scope analysis through payout.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Analyze the Program Scope",
+      "text": "Read the program policy completely. Identify in-scope domains, applications, and vulnerability types. Note exclusions, rate limits, and testing restrictions. Choose targets where your skills match the attack surface."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Perform Reconnaissance",
+      "text": "Map the target's attack surface using subdomain enumeration, port scanning, technology fingerprinting, and content discovery. Build a complete picture of what exists before you start testing."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Discover Vulnerabilities",
+      "text": "Test each component systematically against your vulnerability checklist. Start with authentication and authorization flaws, then move to injection points, business logic issues, and configuration errors."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Validate and Exploit",
+      "text": "Confirm each finding is exploitable and demonstrate real security impact. Build a proof of concept that shows the worst-case scenario without causing damage to the target."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Report and Follow Up",
+      "text": "Write a clear report with reproduction steps, impact assessment, and remediation advice. Submit through the program's official channel and respond promptly to triager questions."
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Bug Bounty Methodology Guide 2026", "item": "https://bughuntertools.com/articles/bug-bounty-methodology-guide-2026/" }
+  ]
+}
+</script>
+
+<article>
+<h1>Bug Bounty Methodology in 2026: A Step-by-Step Framework From Recon to Payout</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>A repeatable methodology beats random testing — structure your workflow into five phases: scope, recon, discovery, exploitation, and reporting</li>
+<li>Recon is where most bugs are won or lost — hunters who spend 60-70% of their time on reconnaissance find more unique vulnerabilities</li>
+<li>Specialize in 2-3 vulnerability classes rather than testing for everything — depth beats breadth in competitive programs</li>
+<li>Track your testing coverage per target so you know what you've checked and what you haven't</li>
+<li>Revisit targets after scope changes, new feature launches, and acquisition announcements — fresh attack surface is where the easy bugs live</li>
+</ul>
+</div>
+
+<p>The difference between a bug bounty hunter who earns consistently and one who submits dozens of N/A reports isn't talent — it's methodology. Hunters with a structured, repeatable process find more bugs, write better reports, and waste less time on dead ends.</p>
+
+<p>This guide walks through a complete bug bounty methodology for 2026. It covers every phase from choosing a program to collecting your payout, with the specific tools, techniques, and decision points that matter at each step.</p>
+
+<h2>Phase 1: Program Selection and Scope Analysis</h2>
+
+<p>Your methodology starts before you touch a single tool. Choosing the right program and understanding its scope determines whether you spend your time productively or burn hours on targets that don't match your skills.</p>
+
+<h3>Choosing a Program</h3>
+
+<p>Not all programs are equal. Consider these factors:</p>
+
+<ul>
+<li><strong>Attack surface size</strong> — Programs with large scope (many domains, APIs, mobile apps) give you more places to look. Smaller scope means more competition on fewer targets.</li>
+<li><strong>Response time</strong> — Check the program's average time to first response and time to bounty on platforms like HackerOne and Bugcrowd. Programs that take 90+ days to triage aren't worth your time unless the payouts are exceptional.</li>
+<li><strong>Technology stack</strong> — If you're strong at testing APIs, pick programs with documented API endpoints. If you know mobile security, target programs with iOS and Android apps in scope.</li>
+<li><strong>Payout history</strong> — Programs that have paid bounties recently are actively triaging. Programs with no payouts in months may have paused or have an overwhelmed security team.</li>
+</ul>
+
+<h3>Reading the Scope</h3>
+
+<p>Read the entire program policy before you start. Pay attention to:</p>
+
+<ul>
+<li><strong>In-scope assets</strong> — Exact domains, wildcard domains (*.example.com), API endpoints, mobile apps, and specific application features</li>
+<li><strong>Out-of-scope assets</strong> — Staging environments, third-party services, specific subdomains, and vulnerability types the program doesn't accept</li>
+<li><strong>Testing restrictions</strong> — Rate limits, prohibited testing methods (no DoS, no social engineering), and required testing accounts</li>
+<li><strong>Severity definitions</strong> — How the program defines critical, high, medium, and low — this directly affects your payout</li>
+</ul>
+
+<h2>Phase 2: Reconnaissance</h2>
+
+<p>Recon is the foundation of every successful bug bounty hunt. The goal is to build a complete map of the target's attack surface before you start testing. Hunters who skip recon test a fraction of what's available and compete with everyone else on the obvious endpoints.</p>
+
+<h3>Subdomain Enumeration</h3>
+
+<p>For wildcard scope programs, subdomain enumeration is your first move. Use multiple sources to build a comprehensive list:</p>
+
+<ul>
+<li><strong>Passive sources</strong> — Certificate Transparency logs (crt.sh), DNS datasets (SecurityTrails, Shodan), and web archives (Wayback Machine)</li>
+<li><strong>Active enumeration</strong> — DNS brute-forcing with tools like <code>subfinder</code>, <code>amass</code>, and <code>knockpy</code></li>
+<li><strong>Permutation scanning</strong> — Generate subdomain variations with <code>altdns</code> or <code>gotator</code> to find subdomains that passive sources miss</li>
+</ul>
+
+<p>For a deep dive into this phase, see our <a href="/articles/subdomain-enumeration-tools-2026/">Subdomain Enumeration Tools guide</a>.</p>
+
+<h3>Port Scanning and Service Discovery</h3>
+
+<p>Don't assume everything runs on ports 80 and 443. Scan discovered hosts for open ports and identify running services:</p>
+
+<ul>
+<li><code>nmap</code> for comprehensive port scanning with service version detection</li>
+<li><code>masscan</code> for fast initial sweeps across large IP ranges</li>
+<li><code>httpx</code> to probe discovered hosts and identify live web services, status codes, and technologies</li>
+</ul>
+
+<h3>Technology Fingerprinting</h3>
+
+<p>Knowing what technology a target runs tells you which vulnerabilities to test for:</p>
+
+<ul>
+<li><strong>Web frameworks</strong> — Rails, Django, Spring, Express, Laravel each have known vulnerability patterns</li>
+<li><strong>CMS platforms</strong> — WordPress, Drupal, and Joomla have well-documented attack surfaces</li>
+<li><strong>JavaScript libraries</strong> — Outdated frontend libraries can indicate outdated backend dependencies</li>
+<li><strong>Server headers</strong> — Server type, version, and custom headers reveal infrastructure details</li>
+</ul>
+
+<p>Tools like <code>Wappalyzer</code>, <code>whatweb</code>, and Burp Suite's passive scanner handle this automatically.</p>
+
+<h3>Content Discovery</h3>
+
+<p>Find hidden endpoints, admin panels, backup files, and API documentation that aren't linked from the main application:</p>
+
+<ul>
+<li><strong>Directory brute-forcing</strong> — <code>ffuf</code>, <code>gobuster</code>, or <code>feroxbuster</code> with targeted wordlists</li>
+<li><strong>JavaScript analysis</strong> — Extract API endpoints, internal paths, and secrets from JavaScript files using <code>LinkFinder</code> or <code>JSParser</code></li>
+<li><strong>Wayback Machine</strong> — Check archived versions for endpoints that still exist but are no longer linked</li>
+<li><strong>Google dorking</strong> — Use <code>site:target.com filetype:pdf</code>, <code>inurl:admin</code>, and similar queries to find indexed content</li>
+</ul>
+
+<h2>Phase 3: Vulnerability Discovery</h2>
+
+<p>With your recon complete, you have a map of the target's attack surface. Now you test it systematically. The key word is <em>systematically</em> — random clicking and payload spraying is how you miss bugs and waste time.</p>
+
+<h3>Build a Testing Checklist</h3>
+
+<p>For each component you've discovered, work through a checklist of vulnerability classes. Prioritize based on the target's technology and your expertise:</p>
+
+<ol>
+<li><strong>Authentication flaws</strong> — Weak password policies, missing MFA, session fixation, credential stuffing protections</li>
+<li><strong>Authorization flaws (IDOR)</strong> — Change user IDs, object references, and role parameters in every request. This is the single most common high-severity bug class in bug bounty.</li>
+<li><strong>Injection vulnerabilities</strong> — SQL injection, XSS (reflected, stored, DOM-based), command injection, template injection</li>
+<li><strong>Business logic flaws</strong> — Race conditions, price manipulation, coupon abuse, workflow bypasses</li>
+<li><strong>SSRF</strong> — Any parameter that accepts a URL or hostname is a potential SSRF vector</li>
+<li><strong>File upload vulnerabilities</strong> — Unrestricted file types, path traversal in filenames, metadata injection</li>
+<li><strong>API-specific issues</strong> — Mass assignment, broken object-level authorization, excessive data exposure, rate limiting gaps</li>
+</ol>
+
+<p>For the full OWASP-aligned checklist, see our <a href="/articles/web-app-security-testing-checklist-2026/">Web Application Security Testing Checklist</a>.</p>
+
+<h3>Manual vs. Automated Testing</h3>
+
+<p>The best methodology combines both:</p>
+
+<ul>
+<li><strong>Automated scanning</strong> catches low-hanging fruit — missing headers, known CVEs, basic injection points. Run <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei</a> or a DAST scanner against your target list.</li>
+<li><strong>Manual testing</strong> finds the bugs that pay well — business logic flaws, complex authorization bypasses, and chained vulnerabilities that no scanner can detect.</li>
+</ul>
+
+<p>Use automation to cover breadth. Use manual testing to go deep on the components that matter most.</p>
+
+<h2>Phase 4: Validation and Exploitation</h2>
+
+<p>Finding a potential vulnerability is only half the work. You need to confirm it's exploitable and demonstrate real impact — otherwise your report gets closed as informative.</p>
+
+<h3>Proof of Concept Development</h3>
+
+<ul>
+<li><strong>Reproduce reliably</strong> — If you can't reproduce it consistently, the triager can't either. Document exact steps, prerequisites, and environment details.</li>
+<li><strong>Demonstrate worst-case impact</strong> — Don't just show the vulnerability exists. Show what an attacker could do with it. Account takeover? Data exfiltration? Privilege escalation?</li>
+<li><strong>Stay in scope</strong> — Prove impact without causing damage. Read data, don't modify it. Access your own test accounts, not other users'. Never exfiltrate real user data.</li>
+</ul>
+
+<h3>Chaining Vulnerabilities</h3>
+
+<p>Individual low-severity findings can chain into high-severity exploits. Common chains:</p>
+
+<ul>
+<li>Open redirect + OAuth misconfiguration = account takeover</li>
+<li>SSRF + cloud metadata endpoint = AWS credential theft</li>
+<li>XSS + CSRF token extraction = authenticated action as victim</li>
+<li>IDOR + PII exposure = mass data exfiltration</li>
+</ul>
+
+<p>When you find a low-severity bug, ask: "What can I combine this with to increase impact?"</p>
+
+<h2>Phase 5: Reporting and Follow-Up</h2>
+
+<p>A great finding with a bad report gets closed. A good finding with a great report gets paid. Reporting is a skill — invest in it.</p>
+
+<h3>Report Structure</h3>
+
+<ol>
+<li><strong>Title</strong> — Vulnerability type + affected component + impact. Example: "IDOR in /api/v2/users/{id}/documents Allows Any Authenticated User to Download Other Users' Tax Documents"</li>
+<li><strong>Summary</strong> — One paragraph explaining what the vulnerability is and why it matters</li>
+<li><strong>Reproduction steps</strong> — Numbered steps with exact URLs, parameters, headers, and payloads</li>
+<li><strong>Proof of concept</strong> — Screenshots, HTTP request/response pairs, or video showing the exploit working</li>
+<li><strong>Impact</strong> — What an attacker could achieve and how many users are affected</li>
+<li><strong>Remediation</strong> — Brief fix recommendation (1-2 sentences)</li>
+</ol>
+
+<p>For a complete guide to writing reports that get paid, see our <a href="/articles/how-to-write-bug-bounty-reports-2026/">bug bounty report writing guide</a>.</p>
+
+<h3>After Submission</h3>
+
+<ul>
+<li><strong>Respond to triager questions promptly</strong> — Slow responses delay your payout and frustrate the security team</li>
+<li><strong>Don't argue severity publicly</strong> — If you disagree with the severity rating, provide additional impact evidence privately</li>
+<li><strong>Request mediation if needed</strong> — Platforms like HackerOne offer mediation for disputes. Use it as a last resort.</li>
+</ul>
+
+<h2>Building Your Methodology Over Time</h2>
+
+<p>The methodology above is a starting framework. The best hunters customize it based on their experience:</p>
+
+<ul>
+<li><strong>Track what works</strong> — Keep a log of every bug you find, which phase you found it in, and which technique led to the discovery. Patterns will emerge.</li>
+<li><strong>Automate your recon</strong> — Build scripts that run your standard recon pipeline against new targets. The less manual work in recon, the more time for manual testing.</li>
+<li><strong>Revisit targets</strong> — Set calendar reminders to re-test targets after 30-60 days. New features, scope changes, and code deployments create fresh attack surface.</li>
+<li><strong>Specialize</strong> — Once you've found a few bugs, you'll notice you're better at certain vulnerability classes. Double down on those.</li>
+<li><strong>Learn from disclosures</strong> — Read published bug bounty reports on HackerOne's Hacktivity feed. Study the methodology behind each finding.</li>
+</ul>
+
+<h2>Common Methodology Mistakes</h2>
+
+<ul>
+<li><strong>Skipping recon</strong> — Testing the main web app without discovering subdomains, APIs, and hidden endpoints means you're competing with every other hunter on the same surface.</li>
+<li><strong>Tool dependency</strong> — Running automated scanners and submitting whatever they find. Scanners miss the bugs that pay well. Use them for coverage, not as your primary methodology.</li>
+<li><strong>Ignoring business logic</strong> — The highest-paying bugs are often business logic flaws that require understanding how the application works, not just what technologies it uses.</li>
+<li><strong>Not reading the scope</strong> — Submitting out-of-scope findings wastes everyone's time and can get you banned from programs.</li>
+<li><strong>Giving up too early</strong> — Most targets have bugs. If you haven't found one, you haven't looked hard enough or in the right places. Revisit your recon and try different vulnerability classes.</li>
+</ul>
+
+<h2>Recommended Tools by Phase</h2>
+
+<table>
+<thead>
+<tr><th>Phase</th><th>Tools</th></tr>
+</thead>
+<tbody>
+<tr><td>Subdomain Enumeration</td><td>subfinder, amass, crt.sh, SecurityTrails</td></tr>
+<tr><td>Port Scanning</td><td>nmap, masscan, httpx</td></tr>
+<tr><td>Content Discovery</td><td>ffuf, feroxbuster, gobuster, Wayback Machine</td></tr>
+<tr><td>Technology Fingerprinting</td><td>Wappalyzer, whatweb, Burp Suite</td></tr>
+<tr><td>Manual Testing</td><td>Burp Suite Professional, Caido, browser DevTools</td></tr>
+<tr><td>Automated Scanning</td><td>Nuclei, OWASP ZAP, nikto</td></tr>
+<tr><td>JavaScript Analysis</td><td>LinkFinder, JSParser, RetireJS</td></tr>
+<tr><td>Reporting</td><td>Markdown editor, Greenshot/Flameshot for screenshots</td></tr>
+</tbody>
+</table>
+
+<p>For the complete toolkit breakdown, see our <a href="/articles/essential-bug-bounty-tools-2026/">Essential Tools for Bug Bounty Hunters</a> guide.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

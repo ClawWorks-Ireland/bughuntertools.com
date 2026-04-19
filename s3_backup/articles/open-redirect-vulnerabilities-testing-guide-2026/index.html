@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Open redirects are the most underrated vulnerability class. They turn your trusted domain into a phishing weapon, chain with SSRF to bypass URL validation, and hide in login flows, OAuth callbacks, and marketing links.">
+    <title>Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/open-redirect-vulnerabilities-testing-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/open-redirect-vulnerabilities-testing-guide-2026/">
+    <meta property="og:title" content="Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users">
+    <meta property="og:description" content="Open redirects are the most underrated vulnerability class. They turn your trusted domain into a phishing weapon, chain with SSRF to bypass URL validation, and hide in login flows, OAuth callbacks, and marketing links.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/open-redirect-vulnerabilities-testing-guide-2026/">
+    <meta name="twitter:title" content="Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users">
+    <meta name="twitter:description" content="Open redirects are the most underrated vulnerability class. They turn your trusted domain into a phishing weapon, chain with SSRF to bypass URL validation, and hide in login flows, OAuth callbacks, and marketing links.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users",
+      "description": "Open redirects are the most underrated vulnerability class. They turn your trusted domain into a phishing weapon, chain with SSRF to bypass URL validation, and hide in login flows, OAuth callbacks, and marketing links.",
+      "url": "https://bughuntertools.com/articles/open-redirect-vulnerabilities-testing-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users",
+  "description": "Open redirects turn your trusted domain into a phishing weapon. Here is how they work, where they hide, and how to fix them.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an open redirect vulnerability?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An open redirect is a vulnerability where a web application accepts a user-controlled URL parameter and redirects the browser to it without validation. For example, https://trusted-bank.com/login?redirect=https://attacker.com. The user sees the trusted domain in the link, clicks it, and gets redirected to the attacker's site. This is used for phishing, credential theft, and as a stepping stone for SSRF and OAuth token theft attacks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where do open redirects commonly appear?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Open redirects most commonly appear in: login pages (redirect after authentication), logout pages (redirect after session end), OAuth callback URLs, marketing tracking links, URL shorteners, file download redirects, and any feature with a 'return to' or 'next' parameter. Login pages are the highest-impact location because users expect to enter credentials after clicking a login link."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do open redirects chain with other vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Open redirects are force multipliers for other attacks. They chain with SSRF (bypass URL allowlists by redirecting from an allowed domain to an internal one), OAuth (steal authorization codes by redirecting the callback to an attacker-controlled URL), phishing (use the trusted domain as a convincing lure), and CORS (if the application reflects the origin after redirect, the attacker gets cross-origin access)."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users</h1>
+
+<p class="article-meta">Published April 2026 · 8 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+    <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+    <li>Automated scanning catches common patterns but manual testing finds logic flaws</li>
+  </ul>
+</div>
+
+
+<p>Open redirects are the most underrated vulnerability class in web security. They're consistently deprioritised in triage ("it's just a redirect"), they're excluded from many bug bounty scopes, and they're rarely flagged by automated scanners. And yet they're the foundation of some of the most effective phishing campaigns and the key ingredient in SSRF bypass chains.</p>
+
+<p>Here's the problem in one URL:</p>
+
+<pre><code>https://your-bank.com/login?next=https://attacker.com/fake-login</code></pre>
+
+<p>Your user sees <code>your-bank.com</code> in the link. They click it. They land on a page that looks exactly like your login form. They enter their credentials. The credentials go to the attacker.</p>
+
+<p>The redirect happened on <em>your</em> domain. Your SSL certificate was in the address bar. Your brand was in the URL. And your application sent the user to the attacker.</p>
+
+<h2>Where Open Redirects Hide</h2>
+
+<p>Open redirects appear wherever an application uses a URL parameter to control navigation:</p>
+
+<table>
+  <thead>
+    <tr><th>Location</th><th>Common Parameters</th><th>Impact</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Login pages</td><td><code>next</code>, <code>redirect</code>, <code>return_to</code>, <code>continue</code></td><td>CRITICAL — credential phishing</td></tr>
+    <tr><td>OAuth callbacks</td><td><code>redirect_uri</code>, <code>callback</code></td><td>CRITICAL — token theft</td></tr>
+    <tr><td>Logout pages</td><td><code>redirect</code>, <code>next</code></td><td>MEDIUM — phishing after logout</td></tr>
+    <tr><td>Marketing links</td><td><code>url</code>, <code>dest</code>, <code>target</code></td><td>MEDIUM — brand abuse</td></tr>
+    <tr><td>Error pages</td><td><code>return</code>, <code>back</code></td><td>LOW — limited phishing</td></tr>
+    <tr><td>File downloads</td><td><code>file</code>, <code>path</code>, <code>download</code></td><td>MEDIUM — malware delivery</td></tr>
+  </tbody>
+</table>
+
+<h2>The Attack Chains</h2>
+
+<h3>Chain 1: Phishing via Trusted Domain</h3>
+
+<p>The simplest and most effective use. The attacker crafts a URL using your domain that redirects to their phishing page. Email filters and link scanners see your trusted domain and let the link through. The user sees your domain and trusts it.</p>
+
+<pre><code>https://company.com/login?redirect=https://company-login.attacker.com</code></pre>
+
+<h3>Chain 2: OAuth Token Theft</h3>
+
+<p>OAuth flows use a <code>redirect_uri</code> parameter to send the authorization code back to the application. If the OAuth provider doesn't strictly validate the redirect URI, an attacker can change it to their own server and steal the authorization code.</p>
+
+<pre><code>https://oauth-provider.com/authorize?
+  client_id=legit-app&amp;
+  redirect_uri=https://legit-app.com/callback/../../../redirect?url=https://attacker.com&amp;
+  response_type=code</code></pre>
+
+<p>The authorization code — which can be exchanged for an access token — goes to the attacker.</p>
+
+<h3>Chain 3: SSRF Bypass</h3>
+
+<p>Many SSRF defences validate the URL before making the request: "only allow requests to <code>api.example.com</code>." An open redirect on <code>api.example.com</code> bypasses this:</p>
+
+<pre><code># SSRF payload that passes URL validation
+GET /fetch?url=https://api.example.com/redirect?next=http://169.254.169.254/latest/meta-data/</code></pre>
+
+<p>The URL validation sees <code>api.example.com</code> (allowed). The server follows the redirect to the metadata endpoint (not allowed, but the validation already passed).</p>
+
+<h3>Chain 4: XSS via JavaScript Protocol</h3>
+
+<p>If the redirect is implemented client-side (via <code>window.location = param</code>), the attacker can use the <code>javascript:</code> protocol:</p>
+
+<pre><code>https://app.com/redirect?url=javascript:alert(document.cookie)</code></pre>
+
+<p>This turns an open redirect into a reflected XSS vulnerability.</p>
+
+<h2>How to Test for Open Redirects</h2>
+
+<h3>Manual Testing</h3>
+
+<pre><code># Test 1: External domain redirect
+curl -s -o /dev/null -w "%{redirect_url}" \
+  "https://target.com/login?next=https://attacker.com"
+
+# Test 2: Protocol-relative URL (bypasses scheme checks)
+curl -s -o /dev/null -w "%{redirect_url}" \
+  "https://target.com/login?next=//attacker.com"
+
+# Test 3: Backslash confusion (some parsers treat \ as /)
+curl -s -o /dev/null -w "%{redirect_url}" \
+  "https://target.com/login?next=https://attacker.com\@target.com"
+
+# Test 4: URL encoding bypass
+curl -s -o /dev/null -w "%{redirect_url}" \
+  "https://target.com/login?next=https%3A%2F%2Fattacker.com"
+
+# Test 5: JavaScript protocol (for client-side redirects)
+# Check if the page sets window.location to the parameter value</code></pre>
+
+<h3>Common Bypass Techniques</h3>
+
+<table>
+  <thead>
+    <tr><th>Bypass</th><th>Payload</th><th>What It Bypasses</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Protocol-relative</td><td><code>//attacker.com</code></td><td>Scheme validation (checks for http/https)</td></tr>
+    <tr><td>Backslash</td><td><code>https://attacker.com\@target.com</code></td><td>Domain validation (some parsers read target.com)</td></tr>
+    <tr><td>URL encoding</td><td><code>%2F%2Fattacker.com</code></td><td>Literal string matching</td></tr>
+    <tr><td>Subdomain</td><td><code>https://target.com.attacker.com</code></td><td>Suffix-based domain validation</td></tr>
+    <tr><td>Tab/newline</td><td><code>https://attacker%09.com</code></td><td>Whitespace-insensitive parsers</td></tr>
+    <tr><td>Data URI</td><td><code>data:text/html,&lt;script&gt;...&lt;/script&gt;</code></td><td>Scheme allowlists that don't include data:</td></tr>
+  </tbody>
+</table>
+
+<h2>How to Fix Open Redirects</h2>
+
+<h3>Option 1: Allowlist (Best)</h3>
+
+<pre><code>ALLOWED_REDIRECTS = {'/dashboard', '/profile', '/settings'}
+
+def safe_redirect(url):
+    if url in ALLOWED_REDIRECTS:
+        return redirect(url)
+    return redirect('/dashboard')  # Default fallback</code></pre>
+
+<h3>Option 2: Same-Origin Only</h3>
+
+<pre><code>from urllib.parse import urlparse
+
+def safe_redirect(url):
+    parsed = urlparse(url)
+    # Only allow relative paths (no scheme, no host)
+    if parsed.scheme or parsed.netloc:
+        return redirect('/dashboard')
+    # Block protocol-relative URLs
+    if url.startswith('//'):
+        return redirect('/dashboard')
+    return redirect(url)</code></pre>
+
+<h3>Option 3: Signed Redirect Tokens</h3>
+
+<p>For cases where you need to redirect to external URLs (e.g., marketing links), use signed tokens instead of raw URLs:</p>
+
+<pre><code># Generate: /redirect?token=hmac_signed_url
+# Verify: check HMAC before redirecting
+# This prevents attackers from crafting arbitrary redirect URLs</code></pre>
+
+<h3>What NOT to Do</h3>
+
+<ul>
+  <li><strong>Don't use denylists</strong> — blocking "attacker.com" doesn't block "attacker.org" or "attacker.com.evil.com"</li>
+  <li><strong>Don't check the scheme only</strong> — <code>//attacker.com</code> has no scheme but still redirects</li>
+  <li><strong>Don't check the domain suffix</strong> — <code>target.com.attacker.com</code> ends with "target.com" but is attacker-controlled</li>
+  <li><strong>Don't use client-side redirects with user input</strong> — <code>window.location = param</code> enables javascript: protocol XSS</li>
+</ul>
+
+<h2>Testing Checklist</h2>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Check</th><th>Expected Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>External URL in redirect parameter</td><td>Redirect blocked or goes to default page</td></tr>
+    <tr><td>2</td><td>Protocol-relative URL (<code>//attacker.com</code>)</td><td>Redirect blocked</td></tr>
+    <tr><td>3</td><td>Backslash confusion (<code>https://evil\@target.com</code>)</td><td>Redirect blocked</td></tr>
+    <tr><td>4</td><td>URL-encoded payload</td><td>Redirect blocked after decoding</td></tr>
+    <tr><td>5</td><td>Subdomain confusion (<code>target.com.evil.com</code>)</td><td>Redirect blocked</td></tr>
+    <tr><td>6</td><td>JavaScript protocol (<code>javascript:alert(1)</code>)</td><td>Not executed</td></tr>
+    <tr><td>7</td><td>Data URI (<code>data:text/html,...</code>)</td><td>Redirect blocked</td></tr>
+    <tr><td>8</td><td>OAuth redirect_uri manipulation</td><td>Strict redirect_uri validation by OAuth provider</td></tr>
+  </tbody>
+</table>
+
+<h2>Bottom Line</h2>
+
+<p>Open redirects are the vulnerability that makes other vulnerabilities worse. On their own, they enable phishing. Combined with SSRF, they bypass URL validation. Combined with OAuth, they steal tokens. Combined with XSS, they execute arbitrary JavaScript.</p>
+
+<p>The fix is simple: don't redirect to user-controlled URLs. Use allowlists for internal paths, signed tokens for external URLs, and never trust a URL parameter to be safe just because it starts with your domain.</p>
+
+<p>See also: <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">SSRF Detection</a> (open redirects as SSRF bypass), <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">XSS Detection</a> (javascript: protocol via redirect), <a href="/articles/cors-misconfiguration-security-testing-guide-2026/">CORS Misconfiguration</a> (redirect-based CORS bypass).</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

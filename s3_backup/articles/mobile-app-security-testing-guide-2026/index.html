@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s guide to mobile app security testing in 2026 — covering Android and iOS tools, OWASP MASTG methodology, dynamic analysis, and how to integrate mobile testing into your security workflow.">
+    <title>Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/mobile-app-security-testing-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/mobile-app-security-testing-guide-2026/">
+    <meta property="og:title" content="Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows">
+    <meta property="og:description" content="A practitioner&#39;s guide to mobile app security testing in 2026 — covering Android and iOS tools, OWASP MASTG methodology, dynamic analysis, and how to integrate mobile testing into your security workflow.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/mobile-app-security-testing-guide-2026/">
+    <meta name="twitter:title" content="Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows">
+    <meta name="twitter:description" content="A practitioner&#39;s guide to mobile app security testing in 2026 — covering Android and iOS tools, OWASP MASTG methodology, dynamic analysis, and how to integrate mobile testing into your security workflow.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows",
+      "description": "A practitioner&#39;s guide to mobile app security testing in 2026 — covering Android and iOS tools, OWASP MASTG methodology, dynamic analysis, and how to integrate mobile testing into your security workflow.",
+      "url": "https://bughuntertools.com/articles/mobile-app-security-testing-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows",
+      "description": "A practitioner's guide to mobile app security testing in 2026 — covering Android and iOS tools, OWASP MASTG methodology, dynamic analysis, and integration into security workflows.",
+      "datePublished": "2026-04-11",
+      "dateModified": "2026-04-11",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What tools do I need for mobile app security testing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The core toolkit includes: a proxy tool (Burp Suite or OWASP ZAP) for intercepting traffic, a dynamic analysis framework (Frida for runtime hooking, Objection for quick wins), a static analysis tool (MobSF for automated scanning, jadx/apktool for manual Android reversing), and platform-specific tools (adb for Android, Xcode instruments for iOS). Most testers also use an emulator or rooted/jailbroken physical device."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the OWASP MASTG?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The OWASP Mobile Application Security Testing Guide (MASTG) is the definitive methodology for mobile app security testing. It provides detailed test cases mapped to the OWASP MASVS (Mobile Application Security Verification Standard). The MASTG covers storage, cryptography, authentication, network communication, platform interaction, code quality, and resilience testing for both Android and iOS."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I do mobile security testing without a jailbroken or rooted device?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can do partial testing without root/jailbreak — static analysis, network traffic interception (with certificate pinning bypass via Frida), and basic dynamic analysis all work on stock devices. However, full filesystem inspection, keychain/keystore access, and runtime manipulation are significantly easier on rooted Android or jailbroken iOS devices. For professional testing, a rooted test device is strongly recommended."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between mobile app security testing and web app security testing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mobile app testing adds several dimensions beyond web testing: local data storage analysis (SQLite databases, shared preferences, keychain), binary protections (obfuscation, anti-tampering, root detection), inter-process communication (intents, URL schemes, deep links), platform-specific APIs (biometrics, push notifications, permissions), and client-side logic that may contain hardcoded secrets or bypass-able authentication. The backend API testing overlaps significantly with web app testing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does a mobile app security test typically take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A thorough mobile app security test typically takes 3-5 days for a single platform (Android or iOS) and 5-8 days for both platforms. This includes static analysis, dynamic analysis, network traffic analysis, and backend API testing. Simple apps with minimal functionality can be tested in 1-2 days, while complex apps with payment processing, biometric auth, and offline functionality may take 2+ weeks."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Mobile App Security Testing Guide 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>Mobile App Security Testing Guide 2026: Tools, Techniques, and Workflows</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Mobile app security testing requires a different toolkit than web testing — Frida, MobSF, objection, and platform-specific tools are essential alongside your usual proxy setup.</li>
+<li>The OWASP MASTG (Mobile Application Security Testing Guide) is the industry-standard methodology, with test cases mapped to the MASVS verification standard.</li>
+<li>Local data storage is the most commonly exploited weakness in mobile apps — SQLite databases, shared preferences, and keychain entries frequently contain sensitive data in plaintext.</li>
+<li>Certificate pinning bypass is a prerequisite for meaningful dynamic testing — Frida scripts handle this in seconds on most apps.</li>
+<li>A structured workflow (static analysis → network interception → dynamic analysis → backend API testing) catches more issues than ad-hoc poking.</li>
+</ul>
+</div>
+
+<p>Mobile apps are everywhere, and they're a growing target surface for bug bounty hunters and penetration testers. But mobile security testing is a different discipline from web app testing — you need different tools, different techniques, and a different mental model for where vulnerabilities hide.</p>
+
+<p>This guide covers the practical side: what tools to use, how to set up your testing environment, and a structured workflow that catches the issues most testers miss. Whether you're testing Android, iOS, or both, this is the methodology that works in 2026.</p>
+
+<h2>Why Mobile App Security Testing Matters in 2026</h2>
+
+<p>Mobile apps handle increasingly sensitive operations — banking, healthcare, authentication, payments. The attack surface is broader than web apps because mobile clients store data locally, communicate with backend APIs, interact with device hardware (biometrics, cameras, GPS), and run on devices that users may not keep updated.</p>
+
+<p>Bug bounty programs increasingly include mobile apps in scope. HackerOne and Bugcrowd both report that mobile-specific vulnerabilities (insecure local storage, hardcoded API keys, broken certificate pinning) are among the most commonly reported findings. If you're only testing web apps, you're leaving money on the table.</p>
+
+<h2>The Mobile Security Testing Toolkit</h2>
+
+<p>Here's what you actually need, organized by function. You don't need everything on day one — start with the essentials and add tools as your testing matures.</p>
+
+<h3>Essential Tools (Start Here)</h3>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Platform</th><th>Purpose</th><th>Cost</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Burp Suite</strong></td><td>Both</td><td>HTTP/HTTPS proxy for intercepting mobile app traffic</td><td>Community (free) / Pro ($449/yr)</td></tr>
+<tr><td><strong>Frida</strong></td><td>Both</td><td>Dynamic instrumentation — runtime hooking, certificate pinning bypass, method tracing</td><td>Free (open source)</td></tr>
+<tr><td><strong>Objection</strong></td><td>Both</td><td>Frida-powered toolkit for quick mobile security tasks (built on Frida)</td><td>Free (open source)</td></tr>
+<tr><td><strong>MobSF</strong></td><td>Both</td><td>Automated static + dynamic analysis — decompiles APK/IPA, scans for common issues</td><td>Free (open source)</td></tr>
+<tr><td><strong>adb</strong></td><td>Android</td><td>Android Debug Bridge — device communication, app installation, log capture</td><td>Free (Android SDK)</td></tr>
+</tbody>
+</table>
+
+<h3>Android-Specific Tools</h3>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>When to Use</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>jadx</strong></td><td>Decompile APK to readable Java/Kotlin source</td><td>Static analysis — reading app logic, finding hardcoded secrets</td></tr>
+<tr><td><strong>apktool</strong></td><td>Decompile/recompile APK (resources + smali)</td><td>Modifying app behavior, patching certificate pinning</td></tr>
+<tr><td><strong>Drozer</strong></td><td>Android security assessment framework</td><td>Testing exported components, content providers, intents</td></tr>
+<tr><td><strong>Android Studio Emulator</strong></td><td>Virtual Android device</td><td>Testing without physical hardware (limited for some tests)</td></tr>
+<tr><td><strong>Magisk</strong></td><td>Root management for physical devices</td><td>Gaining root access for deep filesystem inspection</td></tr>
+</tbody>
+</table>
+
+<h3>iOS-Specific Tools</h3>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>When to Use</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Xcode + Instruments</strong></td><td>iOS development tools with profiling/debugging</td><td>Network profiling, memory inspection, debugging</td></tr>
+<tr><td><strong>class-dump / dsdump</strong></td><td>Extract Objective-C class information from binaries</td><td>Understanding app structure before dynamic analysis</td></tr>
+<tr><td><strong>Grapefruit</strong></td><td>iOS runtime analysis tool (Frida-based)</td><td>GUI-based iOS app inspection</td></tr>
+<tr><td><strong>ipatool</strong></td><td>Download IPA files from App Store</td><td>Obtaining app binaries for analysis</td></tr>
+<tr><td><strong>checkra1n / palera1n</strong></td><td>iOS jailbreak tools</td><td>Gaining filesystem access on physical iOS devices</td></tr>
+</tbody>
+</table>
+
+<h2>Setting Up Your Testing Environment</h2>
+
+<h3>Android Setup</h3>
+
+<p>The fastest path to a working Android testing environment:</p>
+
+<ol>
+<li><strong>Get a physical device</strong> — A used Pixel 4a or Pixel 5 costs under $100 and has excellent Magisk support. Emulators work for basic testing but struggle with certificate pinning bypass and hardware-dependent features.</li>
+<li><strong>Root with Magisk</strong> — Flash Magisk via custom recovery. This gives you root access while preserving SafetyNet (some apps check for root and refuse to run).</li>
+<li><strong>Install Frida server</strong> — Download the correct frida-server binary for your device architecture, push it via adb, and run it as root. Objection can automate this.</li>
+<li><strong>Configure proxy</strong> — Set your device's WiFi proxy to point at Burp Suite on your testing machine. Install Burp's CA certificate on the device (for Android 7+, you'll need to install it as a system CA, which requires root).</li>
+<li><strong>Install target app</strong> — Either from Play Store or sideload the APK via <code>adb install</code>.</li>
+</ol>
+
+<h3>iOS Setup</h3>
+
+<p>iOS testing is more constrained due to Apple's security model:</p>
+
+<ol>
+<li><strong>Jailbroken device</strong> — A jailbroken iPhone is strongly recommended for serious testing. checkra1n supports iPhone X and earlier (hardware exploit, very reliable). palera1n supports newer devices on specific iOS versions.</li>
+<li><strong>Install Frida</strong> — On jailbroken devices, install Frida from Cydia/Sileo. On non-jailbroken devices, you can use Frida with a developer-signed IPA (more complex setup).</li>
+<li><strong>Configure proxy</strong> — Same as Android: WiFi proxy pointing at Burp, install Burp's CA certificate via Settings → Profile.</li>
+<li><strong>Obtain the IPA</strong> — Use ipatool to download from App Store, or use frida-ios-dump to pull a decrypted IPA from a jailbroken device.</li>
+</ol>
+
+<h2>The Testing Workflow: A Structured Approach</h2>
+
+<p>Random poking finds random bugs. A structured workflow finds systematic weaknesses. Here's the methodology that works, based on the OWASP MASTG categories.</p>
+
+<h3>Phase 1: Static Analysis (30% of testing time)</h3>
+
+<p>Before you run the app, analyze the binary. Static analysis reveals hardcoded secrets, insecure configurations, and architectural decisions that inform your dynamic testing.</p>
+
+<p><strong>Android:</strong></p>
+<ol>
+<li>Decompile with jadx: <code>jadx -d output/ target.apk</code></li>
+<li>Run MobSF automated scan — it catches low-hanging fruit (hardcoded keys, insecure permissions, debug flags)</li>
+<li>Search for secrets: API keys, Firebase URLs, AWS credentials, OAuth client secrets. Use <code>grep -rn "AIza\|AKIA\|firebase\|api[_-]key\|secret\|password\|token" output/</code></li>
+<li>Review AndroidManifest.xml: exported components, permissions, debug flag, backup flag, network security config</li>
+<li>Check for insecure network security config — does the app allow cleartext traffic? Does it trust user-installed CAs?</li>
+</ol>
+
+<p><strong>iOS:</strong></p>
+<ol>
+<li>Extract class information: <code>class-dump target.app/target > classes.h</code></li>
+<li>Run MobSF on the IPA</li>
+<li>Search for secrets in the binary and embedded plists</li>
+<li>Check Info.plist: URL schemes, App Transport Security exceptions, exported UTIs</li>
+<li>Look for embedded frameworks and third-party SDKs — these often have their own vulnerabilities</li>
+</ol>
+
+<h3>Phase 2: Network Traffic Analysis (25% of testing time)</h3>
+
+<p>Intercept all traffic between the app and its backend. This is where you find the same vulnerabilities you'd find in <a href="/articles/api-security-testing-checklist-2026/">API security testing</a> — but with the added context of how the mobile client uses those APIs.</p>
+
+<ol>
+<li><strong>Bypass certificate pinning</strong> — Most modern apps implement certificate pinning. Use Frida with objection: <code>objection -g com.target.app explore --startup-command "android sslpinning disable"</code> (Android) or <code>ios sslpinning disable</code> (iOS).</li>
+<li><strong>Map all API endpoints</strong> — Browse every feature of the app while Burp captures traffic. Build a complete sitemap of the backend API.</li>
+<li><strong>Test authentication</strong> — How are tokens stored? Are they transmitted securely? Can you replay them? Do they expire?</li>
+<li><strong>Test authorization</strong> — Can user A access user B's data by manipulating API requests? IDOR vulnerabilities are extremely common in mobile app backends.</li>
+<li><strong>Check for sensitive data in transit</strong> — Are there any cleartext HTTP requests? Is sensitive data included in URLs (which get logged)?</li>
+</ol>
+
+<h3>Phase 3: Dynamic Analysis (30% of testing time)</h3>
+
+<p>Run the app and poke at it while it's live. Frida is your primary tool here — it lets you hook into any function at runtime.</p>
+
+<p><strong>Local data storage (the #1 finding):</strong></p>
+<ul>
+<li>Check SQLite databases: <code>find /data/data/com.target.app/ -name "*.db" -exec sqlite3 {} ".tables" \;</code></li>
+<li>Check SharedPreferences (Android) / NSUserDefaults (iOS) for sensitive data stored in plaintext</li>
+<li>Check the Keystore (Android) / Keychain (iOS) — is sensitive data stored here instead of in plaintext files?</li>
+<li>Check for data in app logs: <code>adb logcat | grep -i "password\|token\|key\|secret"</code></li>
+<li>Check clipboard — does the app copy sensitive data to the clipboard?</li>
+<li>Check screenshots — does the app prevent screenshots of sensitive screens? (iOS backgrounding snapshots are a common leak)</li>
+</ul>
+
+<p><strong>Runtime manipulation with Frida:</strong></p>
+<ul>
+<li>Bypass root/jailbreak detection: <code>objection -g com.target.app explore --startup-command "android root disable"</code></li>
+<li>Bypass biometric authentication — hook the biometric callback to always return success</li>
+<li>Modify function return values — change <code>isUserPremium()</code> to return true, <code>isDebugMode()</code> to return true</li>
+<li>Trace method calls to understand app logic: <code>frida-trace -U -i "open*" com.target.app</code></li>
+</ul>
+
+<p><strong>Inter-process communication:</strong></p>
+<ul>
+<li>Android: Test exported activities, services, broadcast receivers, and content providers with Drozer or adb</li>
+<li>iOS: Test URL schemes and universal links — can you trigger sensitive actions via a crafted URL?</li>
+<li>Deep link injection — can you craft a deep link that bypasses authentication or navigates to a restricted screen?</li>
+</ul>
+
+<h3>Phase 4: Backend API Testing (15% of testing time)</h3>
+
+<p>With the API endpoints mapped from Phase 2, apply standard <a href="/articles/web-app-security-testing-checklist-2026/">web app security testing</a> techniques to the backend. Mobile backends often have weaker security than web backends because developers assume the mobile client enforces business logic.</p>
+
+<p>Common findings:</p>
+<ul>
+<li>IDOR (Insecure Direct Object References) — change user IDs in API requests</li>
+<li>Missing rate limiting — mobile APIs often lack brute-force protection</li>
+<li>Verbose error messages — stack traces and debug info in API responses</li>
+<li>Broken function-level authorization — admin endpoints accessible to regular users</li>
+<li>Mass assignment — send extra fields in API requests that the server shouldn't accept</li>
+</ul>
+
+<h2>OWASP MASVS/MASTG: The Standard You Should Follow</h2>
+
+<p>The <a href="/articles/owasp-top-10-testing-guide-hub-2026/">OWASP</a> Mobile Application Security Verification Standard (MASVS) defines security requirements across eight categories. The MASTG provides specific test cases for each requirement. Here's a condensed mapping of the highest-impact test areas:</p>
+
+<table>
+<thead>
+<tr><th>MASVS Category</th><th>Key Tests</th><th>Common Findings</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>MASVS-STORAGE</strong></td><td>Local data storage, logs, backups, clipboard</td><td>Plaintext credentials in SQLite, sensitive data in logs</td></tr>
+<tr><td><strong>MASVS-CRYPTO</strong></td><td>Encryption implementation, key management</td><td>Hardcoded encryption keys, weak algorithms (MD5, SHA1 for passwords)</td></tr>
+<tr><td><strong>MASVS-AUTH</strong></td><td>Authentication, session management, biometrics</td><td>Bypassable biometric auth, weak session tokens</td></tr>
+<tr><td><strong>MASVS-NETWORK</strong></td><td>TLS configuration, certificate pinning</td><td>Missing pinning, cleartext traffic, weak TLS versions</td></tr>
+<tr><td><strong>MASVS-PLATFORM</strong></td><td>IPC, WebViews, deep links, permissions</td><td>Exported components, JavaScript bridges in WebViews</td></tr>
+<tr><td><strong>MASVS-CODE</strong></td><td>Code quality, debug settings, third-party libs</td><td>Debug mode enabled, outdated libraries with known CVEs</td></tr>
+<tr><td><strong>MASVS-RESILIENCE</strong></td><td>Anti-tampering, root detection, obfuscation</td><td>Easily bypassed root detection, no obfuscation</td></tr>
+</tbody>
+</table>
+
+<h2>Common Vulnerabilities: What You'll Actually Find</h2>
+
+<p>After testing hundreds of mobile apps, certain vulnerability patterns appear repeatedly. Focus your testing time on these high-probability areas:</p>
+
+<h3>1. Insecure Local Data Storage (Found in ~70% of apps)</h3>
+
+<p>The most common mobile-specific vulnerability. Apps store sensitive data — authentication tokens, personal information, financial data — in locations that any app on a rooted device (or a forensic examiner) can read.</p>
+
+<p><strong>Where to look:</strong></p>
+<ul>
+<li>SharedPreferences XML files (Android) — often contain auth tokens in plaintext</li>
+<li>SQLite databases — user data, chat messages, transaction history</li>
+<li>Application sandbox files — cached API responses, downloaded documents</li>
+<li>iOS Keychain with weak access controls — data accessible after first unlock instead of only while unlocked</li>
+</ul>
+
+<h3>2. Hardcoded Secrets (Found in ~50% of apps)</h3>
+
+<p>API keys, OAuth client secrets, Firebase database URLs, AWS access keys — developers embed these in mobile binaries assuming "nobody will decompile the app." jadx makes this trivial.</p>
+
+<h3>3. Broken Certificate Pinning (Found in ~40% of apps)</h3>
+
+<p>Many apps implement certificate pinning incorrectly — pinning only in some network calls, using bypassable implementations, or not pinning at all. Even well-implemented pinning can be bypassed with Frida, but the goal is to assess whether the app makes interception trivially easy.</p>
+
+<h3>4. Insecure Deep Links (Found in ~35% of apps)</h3>
+
+<p>Deep links and URL schemes that trigger sensitive actions without proper validation. A malicious website can craft a link that opens the target app and performs actions — password resets, payment confirmations, account linking — without user confirmation.</p>
+
+<h3>5. WebView Vulnerabilities (Found in ~30% of apps)</h3>
+
+<p>Hybrid apps that use WebViews to render content are vulnerable to JavaScript injection if the WebView is misconfigured. Look for: JavaScript enabled with a JavaScript bridge to native code, loading untrusted URLs, file access enabled.</p>
+
+<h2>Mobile Testing in Bug Bounty Programs</h2>
+
+<p>If you're doing mobile testing for bug bounties, focus your time on the highest-payout findings:</p>
+
+<ul>
+<li><strong>Authentication bypass</strong> — Bypassing biometric auth, session hijacking, token manipulation. These pay the most because they have the highest impact.</li>
+<li><strong>IDOR via mobile API</strong> — Mobile APIs are often less hardened than web APIs. The same IDOR that's been patched on the web endpoint may still work on the mobile API endpoint.</li>
+<li><strong>Hardcoded secrets</strong> — AWS keys, Firebase admin credentials, and OAuth secrets found in decompiled apps are easy wins. Check if the secrets are actually valid and what access they grant.</li>
+<li><strong>Deep link exploitation</strong> — Craft a URL that triggers a sensitive action. If you can demonstrate account takeover via a deep link, that's a critical finding.</li>
+</ul>
+
+<p>Many bug bounty programs have separate mobile apps for Android and iOS. Test both — they're often developed by different teams and have different vulnerabilities. The Android app might have hardcoded secrets that the iOS app doesn't, or vice versa.</p>
+
+<h2>Integrating Mobile Testing Into Your Security Workflow</h2>
+
+<p>Mobile app security testing doesn't exist in isolation. It connects to your broader security testing practice:</p>
+
+<ul>
+<li><strong>API testing overlap</strong> — The backend APIs you discover during mobile testing should be added to your <a href="/articles/api-security-testing-checklist-2026/">API security testing</a> scope.</li>
+<li><strong>Cloud backend testing</strong> — Mobile apps often connect to <a href="/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">cloud services</a> (Firebase, AWS Amplify, Azure Mobile Apps). Test the cloud configuration too.</li>
+<li><strong>CI/CD integration</strong> — MobSF can run in your <a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">CI/CD pipeline</a> to catch issues before release. Static analysis on every build, dynamic analysis on release candidates.</li>
+<li><strong>Recon for mobile</strong> — Use your <a href="/articles/bug-bounty-recon-workflow-2026/">recon workflow</a> to discover mobile API endpoints, hidden app versions, and beta testing infrastructure.</li>
+</ul>
+
+<h2>Quick Reference: Mobile Testing Checklist</h2>
+
+<table>
+<thead>
+<tr><th>Check</th><th>Tool</th><th>Priority</th></tr>
+</thead>
+<tbody>
+<tr><td>Decompile and search for hardcoded secrets</td><td>jadx, MobSF</td><td>High</td></tr>
+<tr><td>Review manifest/plist for insecure config</td><td>Manual review</td><td>High</td></tr>
+<tr><td>Bypass certificate pinning</td><td>Frida, objection</td><td>High</td></tr>
+<tr><td>Intercept and test all API calls</td><td>Burp Suite</td><td>High</td></tr>
+<tr><td>Check local data storage for sensitive data</td><td>adb, objection</td><td>High</td></tr>
+<tr><td>Test authentication and session management</td><td>Burp Suite, Frida</td><td>High</td></tr>
+<tr><td>Test deep links and URL schemes</td><td>adb, manual</td><td>Medium</td></tr>
+<tr><td>Test exported components (Android)</td><td>Drozer, adb</td><td>Medium</td></tr>
+<tr><td>Check WebView configuration</td><td>Frida, jadx</td><td>Medium</td></tr>
+<tr><td>Test root/jailbreak detection bypass</td><td>objection</td><td>Medium</td></tr>
+<tr><td>Review third-party SDK versions</td><td>MobSF, jadx</td><td>Medium</td></tr>
+<tr><td>Test biometric authentication bypass</td><td>Frida</td><td>Low</td></tr>
+<tr><td>Check binary protections (obfuscation, anti-debug)</td><td>MobSF</td><td>Low</td></tr>
+</tbody>
+</table>
+
+<h2>Conclusion</h2>
+
+<p>Mobile app security testing is a distinct discipline that rewards practitioners who invest in the right tools and methodology. The OWASP MASTG gives you the framework, Frida gives you the power to inspect and manipulate apps at runtime, and a structured workflow ensures you don't miss the vulnerabilities that matter.</p>
+
+<p>Start with static analysis to understand what you're dealing with, intercept network traffic to map the attack surface, then go deep with dynamic analysis on the areas that look promising. The most common findings — insecure local storage, hardcoded secrets, broken certificate pinning — are also the easiest to test for once your environment is set up.</p>
+
+<p>If you're coming from web app testing, the learning curve is manageable. The backend API testing is identical to what you already know. The new skills are device setup, binary analysis, and runtime instrumentation with Frida. Invest a weekend in setting up your testing environment and working through a practice app (DIVA, InsecureBankv2, or OWASP iGoat), and you'll be productive on real targets within a week.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

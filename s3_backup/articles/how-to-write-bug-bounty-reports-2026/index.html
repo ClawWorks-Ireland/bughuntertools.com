@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to write bug bounty reports that get triaged fast and paid well. Covers report structure, proof of concept, impact statements, and common mistakes that get reports closed as informative.">
+    <title>How to Write Bug Bounty Reports That Get Paid (2026)</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/how-to-write-bug-bounty-reports-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/how-to-write-bug-bounty-reports-2026/">
+    <meta property="og:title" content="How to Write Bug Bounty Reports That Get Paid (2026)">
+    <meta property="og:description" content="Learn how to write bug bounty reports that get triaged fast and paid well. Covers report structure, proof of concept, impact statements, and common mistakes that get reports closed as informative.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/how-to-write-bug-bounty-reports-2026/">
+    <meta name="twitter:title" content="How to Write Bug Bounty Reports That Get Paid (2026)">
+    <meta name="twitter:description" content="Learn how to write bug bounty reports that get triaged fast and paid well. Covers report structure, proof of concept, impact statements, and common mistakes that get reports closed as informative.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "How to Write Bug Bounty Reports That Get Paid (2026)",
+      "description": "Learn how to write bug bounty reports that get triaged fast and paid well. Covers report structure, proof of concept, impact statements, and common mistakes that get reports closed as informative.",
+      "url": "https://bughuntertools.com/articles/how-to-write-bug-bounty-reports-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">How to Write Bug Bounty Reports That Get Paid (2026)</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to Write Bug Bounty Reports That Get Paid (2026)",
+  "description": "Learn how to write bug bounty reports that get triaged fast and paid well. Covers report structure, proof of concept, impact statements, and common mistakes.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How long should a bug bounty report be?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A good bug bounty report is as long as it needs to be and no longer. Most effective reports are 200-500 words plus a clear proof of concept. The goal is to give the triager everything they need to reproduce and assess the bug in under 5 minutes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the most common reason bug bounty reports get closed as informative?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most common reason is failing to demonstrate real security impact. Reports that describe theoretical vulnerabilities without showing how an attacker could exploit them to cause harm are routinely closed as informative or N/A."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I include remediation advice in my bug bounty report?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, but keep it brief. A one or two sentence fix recommendation shows you understand the root cause and helps the development team. Don't write a full remediation plan — the security team knows their codebase better than you do."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I estimate severity for a bug bounty report?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use the CVSS 3.1 calculator as a starting point, but focus on business impact. Ask: what's the worst thing an attacker could do with this? Data theft, account takeover, and financial loss are critical. Information disclosure and denial of service are typically medium to high depending on scope."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use AI to write my bug bounty reports?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AI tools like GPT-4 and Claude can help draft and polish reports, but never submit an AI-generated report without verifying every technical detail. Triagers can spot generic AI output, and inaccurate technical claims will get your report closed and hurt your reputation."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Write a Bug Bounty Report That Gets Paid",
+  "description": "Step-by-step guide to writing effective bug bounty reports that get triaged quickly and paid at the right severity level.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Write a Clear Title",
+      "text": "Start with a title that includes the vulnerability type, affected component, and impact. Example: 'Stored XSS in Profile Bio Field Allows Session Hijacking on example.com'."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Describe the Vulnerability",
+      "text": "Explain what the vulnerability is, where it exists, and why it's a security issue. Be specific about the endpoint, parameter, or component affected."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Provide Step-by-Step Reproduction",
+      "text": "Write numbered steps that a triager can follow to reproduce the bug. Include exact URLs, payloads, HTTP requests, and any prerequisites like account type or browser."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Demonstrate Impact",
+      "text": "Show what an attacker could achieve by exploiting this vulnerability. Include proof of concept screenshots, HTTP responses, or video recordings that prove the impact is real."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Suggest a Fix and Submit",
+      "text": "Add a brief remediation recommendation, set the appropriate severity using CVSS, and submit through the program's official channel."
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "How to Write Bug Bounty Reports That Get Paid (2026)" }
+  ]
+}
+</script>
+
+<article>
+  <h1>How to Write Bug Bounty Reports That Get Paid (2026)</h1>
+
+  <div class="meta">
+    <span>Published: April 12, 2026</span>
+    <span>•</span>
+    <span>Reading time: 12 minutes</span>
+    <span>•</span>
+    <span>Category: Bug Bounty</span>
+  </div>
+
+  <div class="affiliate-disclosure">
+    <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+  </div>
+
+  <div class="intro">
+    <p><strong>Finding a bug is only half the job. The other half is convincing someone to pay you for it.</strong> Every experienced bug bounty hunter has a story about a valid vulnerability that got closed as "informative" because the report was unclear, lacked proof of concept, or undersold the impact. On the flip side, well-written reports get triaged faster, paid at higher severity, and build your reputation with security teams.</p>
+
+    <p>This guide covers exactly how to write bug bounty reports that get triaged quickly and paid at the right level — with real examples of what works and what gets your report sent to the bottom of the pile.</p>
+  </div>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>A clear title with vulnerability type + component + impact gets your report triaged 2-3x faster</li>
+      <li>Step-by-step reproduction instructions are non-negotiable — if the triager can't reproduce it, you don't get paid</li>
+      <li>Impact statements should describe what an attacker can actually do, not just what's theoretically possible</li>
+      <li>Screenshots and HTTP request/response pairs are more convincing than paragraphs of explanation</li>
+      <li>The #1 reason valid bugs get closed as informative: the reporter failed to demonstrate real-world impact</li>
+    </ul>
+  </div>
+
+  <nav aria-label="Table of Contents" style="background: #f8f9fa; padding: 16px 20px; margin: 24px 0; border-radius: 4px;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Table of Contents</h2>
+    <ol>
+      <li><a href="#why-reports-matter">Why Report Quality Matters More Than Bug Quality</a></li>
+      <li><a href="#anatomy">Anatomy of a Report That Gets Paid</a></li>
+      <li><a href="#title">Writing Titles That Get Triaged Fast</a></li>
+      <li><a href="#description">The Vulnerability Description</a></li>
+      <li><a href="#reproduction">Step-by-Step Reproduction</a></li>
+      <li><a href="#impact">Demonstrating Impact</a></li>
+      <li><a href="#severity">Getting Severity Right</a></li>
+      <li><a href="#mistakes">7 Mistakes That Get Reports Closed</a></li>
+      <li><a href="#templates">Report Templates You Can Use Today</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ol>
+  </nav>
+
+  <section id="why-reports-matter">
+    <h2>Why Report Quality Matters More Than Bug Quality</h2>
+
+    <p>Here's a truth that surprises new hunters: <strong>a medium-severity bug with an excellent report often pays more than a high-severity bug with a bad report.</strong></p>
+
+    <p>Security teams at companies running bug bounty programs receive hundreds of reports per month. Triagers spend an average of 5-10 minutes on initial assessment. If your report is confusing, missing reproduction steps, or doesn't clearly explain the impact, it goes to the bottom of the queue — or gets closed outright.</p>
+
+    <p>The math is simple:</p>
+    <ul>
+      <li><strong>Clear report</strong> → triager reproduces in 5 minutes → validated → paid at correct severity</li>
+      <li><strong>Unclear report</strong> → triager asks for clarification → you respond 2 days later → context is lost → closed as "needs more info" or downgraded</li>
+    </ul>
+
+    <p>Your report is a sales document. You're selling the idea that this bug is real, exploitable, and worth fixing. Treat it that way.</p>
+  </section>
+
+  <section id="anatomy">
+    <h2>Anatomy of a Report That Gets Paid</h2>
+
+    <p>Every effective bug bounty report has these components:</p>
+
+    <ol>
+      <li><strong>Title</strong> — Vulnerability type + affected component + impact (one line)</li>
+      <li><strong>Summary</strong> — What the bug is and why it matters (2-3 sentences)</li>
+      <li><strong>Severity</strong> — Your CVSS assessment with justification</li>
+      <li><strong>Steps to Reproduce</strong> — Numbered steps anyone can follow</li>
+      <li><strong>Proof of Concept</strong> — Screenshots, HTTP requests, video, or code</li>
+      <li><strong>Impact Statement</strong> — What an attacker can actually achieve</li>
+      <li><strong>Remediation Suggestion</strong> — Brief fix recommendation (optional but helpful)</li>
+    </ol>
+
+    <p>That's it. No life story about how you found it. No 3-paragraph introduction about OWASP. No "I've been hacking since I was 12." Just the facts, organized for fast consumption.</p>
+  </section>
+
+  <section id="title">
+    <h2>Writing Titles That Get Triaged Fast</h2>
+
+    <p>Your title is the first thing a triager sees. A good title tells them exactly what they're dealing with before they read a single line of the report.</p>
+
+    <p><strong>Bad titles:</strong></p>
+    <ul>
+      <li>"XSS found" — Where? What kind? What impact?</li>
+      <li>"Security vulnerability in your website" — This tells the triager nothing</li>
+      <li>"Critical bug!!!" — Exclamation marks don't make bugs more critical</li>
+    </ul>
+
+    <p><strong>Good titles:</strong></p>
+    <ul>
+      <li>"Stored XSS in /profile/bio endpoint allows session hijacking via crafted SVG upload"</li>
+      <li>"IDOR on /api/v2/users/{id}/documents allows any authenticated user to download other users' private documents"</li>
+      <li>"SQL injection in search parameter on /products allows extraction of user credentials table"</li>
+    </ul>
+
+    <p>The formula: <code>[Vulnerability Type] in [Component/Endpoint] allows [Impact]</code></p>
+  </section>
+
+  <section id="description">
+    <h2>The Vulnerability Description</h2>
+
+    <p>Keep this to 2-4 sentences. Answer three questions:</p>
+    <ol>
+      <li>What is the vulnerability?</li>
+      <li>Where does it exist?</li>
+      <li>Why is it a security issue?</li>
+    </ol>
+
+    <p><strong>Example:</strong></p>
+    <blockquote>
+      <p>The <code>/api/v2/users/{id}/documents</code> endpoint does not verify that the authenticated user owns the requested document. By changing the <code>id</code> parameter, any authenticated user can download documents belonging to other users, including private tax forms and identity documents. This is an Insecure Direct Object Reference (IDOR) vulnerability.</p>
+    </blockquote>
+
+    <p>Notice what's not here: no explanation of what IDOR is (the triager knows), no history of how you found it, no speculation about other endpoints that might be affected. Just the facts.</p>
+  </section>
+
+  <section id="reproduction">
+    <h2>Step-by-Step Reproduction</h2>
+
+    <p><strong>This is the most important section of your report.</strong> If the triager can't reproduce the bug, you don't get paid. Period.</p>
+
+    <p>Rules for reproduction steps:</p>
+    <ul>
+      <li><strong>Number every step</strong> — "First... then... after that..." is harder to follow than "1. 2. 3."</li>
+      <li><strong>Include exact values</strong> — URLs, parameters, payloads, headers. Don't say "inject a payload" — show the exact payload</li>
+      <li><strong>State prerequisites</strong> — "Requires two accounts: one attacker (free tier), one victim (any tier)"</li>
+      <li><strong>Specify the environment</strong> — Browser, OS, any extensions that need to be disabled</li>
+    </ul>
+
+    <p><strong>Example:</strong></p>
+    <blockquote>
+      <p><strong>Prerequisites:</strong> Two registered accounts (Account A = attacker, Account B = victim). Account B must have at least one uploaded document.</p>
+      <ol>
+        <li>Log in as Account B. Navigate to /documents and upload any file. Note the document URL: <code>/api/v2/users/5432/documents/789</code></li>
+        <li>Log out. Log in as Account A (user ID: 1234)</li>
+        <li>Send the following request (using Burp Suite or curl):
+          <pre><code>GET /api/v2/users/5432/documents/789 HTTP/1.1
+Host: example.com
+Authorization: Bearer [Account_A_token]
+Cookie: session=[Account_A_session]</code></pre>
+        </li>
+        <li>Observe: the response returns Account B's document with a 200 OK status, despite Account A having no authorization to access it</li>
+      </ol>
+    </blockquote>
+  </section>
+
+  <section id="impact">
+    <h2>Demonstrating Impact</h2>
+
+    <p>This is where most reports fail. Hunters describe the vulnerability but don't explain why anyone should care.</p>
+
+    <p><strong>Weak impact statement:</strong> "An attacker could access other users' data."</p>
+
+    <p><strong>Strong impact statement:</strong> "An attacker can enumerate all user IDs (they're sequential) and download every document uploaded to the platform. Based on the document types observed (tax forms, government IDs, bank statements), this exposes PII for all users. With approximately 50,000 users on the platform (per the company's public metrics), this represents a significant data breach risk."</p>
+
+    <p>The difference: specificity. The strong version tells the triager exactly what's at risk, how many users are affected, and why this matters to the business.</p>
+
+    <p><strong>Impact amplifiers to include when relevant:</strong></p>
+    <ul>
+      <li>Number of affected users (estimate if exact count isn't available)</li>
+      <li>Type of data exposed (PII, credentials, financial data)</li>
+      <li>Whether the attack is automatable (can an attacker script mass exploitation?)</li>
+      <li>Whether authentication is required (unauthenticated bugs are almost always higher severity)</li>
+      <li>Regulatory implications (GDPR, HIPAA, PCI-DSS if applicable)</li>
+    </ul>
+  </section>
+
+  <section id="severity">
+    <h2>Getting Severity Right</h2>
+
+    <p>Most platforms use CVSS 3.1 for severity scoring. Here's a practical guide:</p>
+
+    <table>
+      <thead>
+        <tr><th>Severity</th><th>CVSS Range</th><th>Typical Examples</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Critical</strong></td><td>9.0-10.0</td><td>RCE, authentication bypass, full database access, admin account takeover</td></tr>
+        <tr><td><strong>High</strong></td><td>7.0-8.9</td><td>Stored XSS with session hijacking, IDOR on sensitive data, SSRF to internal services</td></tr>
+        <tr><td><strong>Medium</strong></td><td>4.0-6.9</td><td>Reflected XSS, CSRF on non-critical actions, information disclosure of non-sensitive data</td></tr>
+        <tr><td><strong>Low</strong></td><td>0.1-3.9</td><td>Self-XSS, missing security headers, verbose error messages</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Pro tip:</strong> Don't inflate severity. Triagers see hundreds of reports marked "Critical" that are clearly medium. Accurate severity assessment builds trust and gets your future reports taken more seriously. If anything, slightly underselling and letting the triager upgrade is better than overselling and getting downgraded.</p>
+  </section>
+
+  <section id="mistakes">
+    <h2>7 Mistakes That Get Reports Closed</h2>
+
+    <ol>
+      <li><strong>No reproduction steps</strong> — "I found XSS on your site" with a screenshot of an alert box but no steps to reproduce it. The triager can't verify what they can't reproduce.</li>
+
+      <li><strong>Theoretical impact only</strong> — "An attacker could potentially..." without demonstrating that the attack actually works. Show, don't tell.</li>
+
+      <li><strong>Duplicate without checking</strong> — Not searching for existing reports before submitting. Most platforms show you disclosed vulnerabilities. Check them.</li>
+
+      <li><strong>Out of scope</strong> — Not reading the program policy. Testing against staging environments, third-party services, or explicitly excluded domains wastes everyone's time.</li>
+
+      <li><strong>Scanner output as a report</strong> — Pasting raw Burp Suite or Nuclei output without analysis. Scanners produce false positives. Your job is to verify and explain, not forward automated output.</li>
+
+      <li><strong>Missing proof of concept</strong> — Describing a vulnerability without evidence it's exploitable. Include screenshots, HTTP request/response pairs, or a video walkthrough.</li>
+
+      <li><strong>Reporting best practice violations as vulnerabilities</strong> — Missing HSTS header, cookie without SameSite flag, or server version disclosure are not vulnerabilities on most programs. Check the program's policy on "informational" findings.</li>
+    </ol>
+  </section>
+
+  <section id="templates">
+    <h2>Report Templates You Can Use Today</h2>
+
+    <h3>Template: Web Vulnerability Report</h3>
+
+    <pre><code>## Title
+[Vuln Type] in [Endpoint/Component] allows [Impact]
+
+## Summary
+[2-3 sentences: what, where, why it matters]
+
+## Severity
+[CVSS score] — [Critical/High/Medium/Low]
+[One sentence justifying the rating]
+
+## Steps to Reproduce
+Prerequisites: [accounts needed, tools, browser]
+1. [Step 1 with exact URL/payload]
+2. [Step 2]
+3. [Step 3]
+4. Observe: [what happens that shouldn't]
+
+## Proof of Concept
+[Screenshots, HTTP requests/responses, video link]
+
+## Impact
+[What an attacker can achieve. Be specific about data types,
+user count, and whether the attack is automatable.]
+
+## Suggested Fix
+[1-2 sentences on remediation]</code></pre>
+
+    <h3>Template: API Vulnerability Report</h3>
+
+    <pre><code>## Title
+[Vuln Type] in [API Endpoint] — [HTTP Method] [Path]
+
+## Summary
+The [endpoint] fails to [validate/authorize/sanitize] [what],
+allowing [who] to [do what].
+
+## Severity
+[CVSS score] — [Rating]
+
+## Affected Endpoint
+- Method: [GET/POST/PUT/DELETE]
+- Path: [/api/v2/resource/{id}]
+- Authentication: [Required/Not required]
+
+## Steps to Reproduce
+Prerequisites: [setup needed]
+1. Authenticate as [role] and capture the bearer token
+2. Send the following request:
+   ```
+   [Full HTTP request with headers]
+   ```
+3. Observe the response:
+   ```
+   [Relevant response showing the vulnerability]
+   ```
+
+## Impact
+[Specific impact with data types and scope]
+
+## Suggested Fix
+[Brief remediation — input validation, authorization check, etc.]</code></pre>
+  </section>
+
+  <section id="faq">
+    <h2>Frequently Asked Questions</h2>
+
+    <h3>How long should a bug bounty report be?</h3>
+    <p>A good bug bounty report is as long as it needs to be and no longer. Most effective reports are 200-500 words plus a clear proof of concept. The goal is to give the triager everything they need to reproduce and assess the bug in under 5 minutes.</p>
+
+    <h3>What is the most common reason bug bounty reports get closed as informative?</h3>
+    <p>The most common reason is failing to demonstrate real security impact. Reports that describe theoretical vulnerabilities without showing how an attacker could exploit them to cause harm are routinely closed as informative or N/A.</p>
+
+    <h3>Should I include remediation advice in my bug bounty report?</h3>
+    <p>Yes, but keep it brief. A one or two sentence fix recommendation shows you understand the root cause and helps the development team. Don't write a full remediation plan — the security team knows their codebase better than you do.</p>
+
+    <h3>How do I estimate severity for a bug bounty report?</h3>
+    <p>Use the CVSS 3.1 calculator as a starting point, but focus on business impact. Ask: what's the worst thing an attacker could do with this? Data theft, account takeover, and financial loss are critical. Information disclosure and denial of service are typically medium to high depending on scope.</p>
+
+    <h3>Can I use AI to write my bug bounty reports?</h3>
+    <p>AI tools like GPT-4 and Claude can help draft and polish reports, but never submit an AI-generated report without verifying every technical detail. Triagers can spot generic AI output, and inaccurate technical claims will get your report closed and hurt your reputation.</p>
+  </section>
+
+  <section class="related-articles">
+    <h2>Related Articles</h2>
+    <ul>
+      
+      <li><a href="/articles/bug-bounty-starter-kit/">Bug Bounty Starter Kit</a> — Everything you need to start your first bug bounty hunt.</li>
+      
+      <li><a href="/articles/essential-bug-bounty-tools-2026/">Essential Tools for Bug Bounty Hunters 2026</a> — The complete toolkit every bug bounty hunter needs in 2026.</li>
+      
+      <li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow 2026</a> — A step-by-step recon workflow for finding attack surface.</li>
+      
+      <li><a href="/articles/ai-tools-bug-bounty-hunting-2026/">AI Tools for Bug Bounty Hunting 2026</a> — How to use GPT and LLM tools to speed up your bug bounty workflow.</li>
+      
+    </ul>
+  </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical guide to hardware requirements, OS setup, and tool configurations for bug bounty hunting in 2026. From minimum specs to optimized rigs — what matters and what doesn&#39;t.">
+    <title>Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bug-bounty-hardware-setup-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bug-bounty-hardware-setup-guide-2026/">
+    <meta property="og:title" content="Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting">
+    <meta property="og:description" content="A practical guide to hardware requirements, OS setup, and tool configurations for bug bounty hunting in 2026. From minimum specs to optimized rigs — what matters and what doesn&#39;t.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bug-bounty-hardware-setup-guide-2026/">
+    <meta name="twitter:title" content="Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting">
+    <meta name="twitter:description" content="A practical guide to hardware requirements, OS setup, and tool configurations for bug bounty hunting in 2026. From minimum specs to optimized rigs — what matters and what doesn&#39;t.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting",
+      "description": "A practical guide to hardware requirements, OS setup, and tool configurations for bug bounty hunting in 2026. From minimum specs to optimized rigs — what matters and what doesn&#39;t.",
+      "url": "https://bughuntertools.com/articles/bug-bounty-hardware-setup-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting",
+      "description": "A practical guide to hardware requirements, OS setup, and tool configurations for bug bounty hunting in 2026.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" },
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "mainEntityOfPage": "https://bughuntertools.com/articles/bug-bounty-hardware-setup-guide-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What are the minimum hardware requirements for bug bounty hunting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You need at least 8 GB RAM, a quad-core CPU, and 256 GB SSD. Most web app testing is browser and terminal work — you don't need a gaming rig. 16 GB RAM is recommended if you run Burp Suite alongside multiple browser tabs and terminal tools."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need a dedicated GPU for bug bounty hunting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Bug bounty hunting is CPU and RAM intensive, not GPU intensive. A dedicated GPU only matters if you're cracking password hashes, which is rare in typical web app bounty hunting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I use Linux or Windows for bug bounty hunting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Linux (Ubuntu or Kali) is the standard for bug bounty hunting because most tools are built for it. If you prefer Windows, use WSL2 — it gives you a full Linux environment without dual-booting. macOS works well too since it's Unix-based."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I do bug bounty hunting on a Chromebook or tablet?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Chromebook with Linux (Crostini) enabled can handle basic web testing, but you'll hit RAM and storage limits quickly. Tablets are not practical for serious hunting. A used ThinkPad with 16 GB RAM is a better investment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does a bug bounty setup cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A capable setup costs $300-500 used (refurbished ThinkPad) or $800-1200 new. The tools themselves are mostly free and open source. Burp Suite Pro ($449/year) is the main paid tool, but the free Community Edition works for beginners."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Set Up a Bug Bounty Hunting Environment",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Choose Your Hardware",
+          "text": "Get a machine with at least 8 GB RAM (16 GB recommended), a quad-core CPU, and a 256 GB SSD. A used ThinkPad T480 or T14 is the community favorite."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Install Your OS",
+          "text": "Install Ubuntu 24.04 LTS, Kali Linux, or ParrotOS. If on Windows, enable WSL2 and install Ubuntu. If on macOS, you're already on a Unix base."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Install Core Tools",
+          "text": "Install Go, Python 3, git, curl, jq, and a terminal multiplexer (tmux). Then install bug bounty essentials: Burp Suite, subfinder, httpx, nuclei, ffuf, and gau."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Configure Your Browser",
+          "text": "Install Firefox with FoxyProxy for Burp Suite proxy routing. Add Wappalyzer for tech stack detection and Cookie-Editor for session manipulation."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Set Up Your Workspace",
+          "text": "Create a directory structure for targets, organize by program. Set up a notes system (Obsidian or plain markdown) to track findings across sessions."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Test Your Setup",
+          "text": "Run your tools against a legal practice target like OWASP Juice Shop, HackTheBox, or PortSwigger Web Security Academy to verify everything works."
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Bug Bounty Hardware and Setup Guide (2026)" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>Bug Bounty Hardware and Setup Guide (2026): What You Actually Need to Start Hunting</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li><strong>Minimum specs</strong>: 8 GB RAM, quad-core CPU, 256 GB SSD — 16 GB RAM recommended for running Burp Suite alongside recon tools</li>
+<li><strong>Best value hardware</strong>: A used ThinkPad T480/T14 ($300-500) outperforms most new budget laptops for hunting</li>
+<li><strong>OS choice</strong>: Linux (Ubuntu/Kali) is standard; WSL2 on Windows works; macOS is fine since it's Unix-based</li>
+<li><strong>You don't need a GPU</strong> — bug bounty is CPU/RAM work, not graphics work</li>
+<li><strong>Most tools are free</strong> — Burp Suite Community Edition, subfinder, nuclei, ffuf, httpx all cost nothing</li>
+<li><strong>Your setup matters less than your methodology</strong> — hunters earn bounties on $400 laptops every day</li>
+</ul>
+</div>
+
+<p>One of the most common questions from people getting into bug bounty hunting is "what hardware do I need?" The answer is simpler than most guides make it: you need a machine that can run a browser, a proxy, and a handful of terminal tools simultaneously without choking.</p>
+
+<p>This guide covers the actual hardware requirements, OS setup, tool installation, and workspace configuration you need to start hunting in 2026. No fluff about building a $3,000 "hacking rig" — just what works.</p>
+
+<h2>Minimum Hardware Requirements</h2>
+
+<p>Bug bounty hunting is not resource-intensive compared to video editing, machine learning, or gaming. Here's what you actually need:</p>
+
+<table>
+<thead>
+<tr><th>Component</th><th>Minimum</th><th>Recommended</th><th>Why It Matters</th></tr>
+</thead>
+<tbody>
+<tr><td>RAM</td><td>8 GB</td><td>16 GB</td><td>Burp Suite + browser + terminal tools run concurrently. 8 GB works but you'll feel the squeeze.</td></tr>
+<tr><td>CPU</td><td>Quad-core (i5/Ryzen 5)</td><td>6+ cores (i7/Ryzen 7)</td><td>Recon tools like subfinder and ffuf are CPU-bound when scanning large target lists.</td></tr>
+<tr><td>Storage</td><td>256 GB SSD</td><td>512 GB SSD</td><td>SSDs are mandatory — HDDs make everything painfully slow. You'll store wordlists, tool output, and notes.</td></tr>
+<tr><td>GPU</td><td>Integrated</td><td>Integrated</td><td>Not needed. Bug bounty is not GPU work.</td></tr>
+<tr><td>Display</td><td>13" 1080p</td><td>15"+ or external monitor</td><td>You'll have Burp, a browser, and terminals open simultaneously. Screen real estate helps.</td></tr>
+<tr><td>Network</td><td>Wi-Fi 5</td><td>Wi-Fi 6 + Ethernet</td><td>Stable internet matters more than speed. Ethernet is more reliable for long recon scans.</td></tr>
+</tbody>
+</table>
+
+<h2>Best Hardware for Bug Bounty Hunting (2026)</h2>
+
+<h3>Budget Option: Used ThinkPad ($300-500)</h3>
+
+<p>The ThinkPad T480, T14, or X1 Carbon is the unofficial bug bounty laptop. Reasons:</p>
+
+<ul>
+<li>Widely available refurbished with 16 GB RAM</li>
+<li>Excellent Linux compatibility — everything works out of the box</li>
+<li>Great keyboards for long terminal sessions</li>
+<li>Durable — these are enterprise machines built to last</li>
+<li>Easy to upgrade RAM and storage yourself</li>
+</ul>
+
+<h3>Mid-Range Option: New Laptop ($800-1200)</h3>
+
+<p>If buying new, look for: 16 GB RAM (non-negotiable), Ryzen 7 or i7, 512 GB NVMe SSD, and good Linux support. The Framework Laptop, Lenovo IdeaPad Pro, and ASUS Zenbook are solid choices.</p>
+
+<h3>Desktop Option: Any Modern Desktop ($500-800)</h3>
+
+<p>If portability doesn't matter, a desktop gives you more power per dollar. 32 GB RAM is cheap on desktop and lets you run VMs alongside your hunting tools. Useful if you're testing mobile apps in Android emulators.</p>
+
+<h3>Cloud Option: VPS ($5-20/month)</h3>
+
+<p>Some hunters run recon tools on a VPS (DigitalOcean, Linode, Hetzner) and do analysis locally. This is smart for long-running scans — your laptop doesn't need to stay on, and you get better bandwidth. A $10/month VPS with 4 GB RAM handles subfinder, httpx, and nuclei easily.</p>
+
+<h2>Operating System Setup</h2>
+
+<h3>Option 1: Linux (Recommended)</h3>
+
+<p>Most bug bounty tools are built for Linux first. Your options:</p>
+
+<ul>
+<li><strong>Ubuntu 24.04 LTS</strong> — best for beginners. Huge community, everything just works. Install security tools yourself.</li>
+<li><strong>Kali Linux</strong> — comes with 600+ security tools pre-installed. Convenient but bloated if you only use 20 of them.</li>
+<li><strong>ParrotOS</strong> — lighter than Kali, similar tool selection. Good middle ground.</li>
+</ul>
+
+<h3>Option 2: Windows + WSL2</h3>
+
+<p>If you need Windows for other work, WSL2 gives you a full Linux environment:</p>
+
+<ol>
+<li>Enable WSL2: <code>wsl --install -d Ubuntu-24.04</code></li>
+<li>Install Windows Terminal for a proper terminal experience</li>
+<li>Run all hunting tools inside WSL2</li>
+<li>Use Burp Suite on Windows side, proxy through to WSL2 tools</li>
+</ol>
+
+<h3>Option 3: macOS</h3>
+
+<p>macOS is Unix-based, so most tools work natively. Install Homebrew, then <code>brew install</code> your tools. The main limitation: some tools have Linux-only features or better Linux performance.</p>
+
+<h2>Essential Tool Installation</h2>
+
+<p>After your OS is set up, install these tools. This is the minimum viable toolkit — you can add more as you specialize.</p>
+
+<h3>Prerequisites</h3>
+
+<pre><code># Ubuntu/Debian
+sudo apt update && sudo apt install -y git curl wget jq tmux python3 python3-pip golang-go
+
+# Set Go path
+echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
+source ~/.bashrc</code></pre>
+
+<h3>Recon Tools</h3>
+
+<pre><code># Subdomain enumeration
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+
+# HTTP probing
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+
+# URL discovery
+go install -v github.com/lc/gau/v2/cmd/gau@latest
+
+# Vulnerability scanning
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+nuclei -update-templates</code></pre>
+
+<h3>Active Testing Tools</h3>
+
+<pre><code># Directory/parameter fuzzing
+go install -v github.com/ffuf/ffuf/v2@latest
+
+# Download SecLists wordlists
+git clone --depth 1 https://github.com/danielmiessler/SecLists.git ~/wordlists</code></pre>
+
+<h3>Burp Suite</h3>
+
+<p>Download <a href="https://portswigger.net/burp/communitydownload">Burp Suite Community Edition</a> (free) or Pro ($449/year). Community Edition is enough to start — it includes the proxy, repeater, and decoder. Pro adds the scanner, which automates finding common vulnerabilities.</p>
+
+<h3>Browser Setup</h3>
+
+<ul>
+<li><strong>Firefox</strong> — preferred for testing because of its developer tools and extension ecosystem</li>
+<li><strong>FoxyProxy</strong> — routes traffic through Burp Suite's proxy</li>
+<li><strong>Wappalyzer</strong> — identifies technologies used by the target</li>
+<li><strong>Cookie-Editor</strong> — view and modify cookies during testing</li>
+</ul>
+
+<h2>Workspace Organization</h2>
+
+<p>Create a consistent directory structure for your hunting:</p>
+
+<pre><code>~/bounty/
+├── targets/
+│   ├── program-name-1/
+│   │   ├── recon/          # subfinder, httpx, gau output
+│   │   ├── notes/          # findings, observations
+│   │   ├── screenshots/    # evidence for reports
+│   │   └── reports/        # submitted reports
+│   └── program-name-2/
+├── tools/                  # custom scripts
+├── wordlists/              # SecLists, custom lists
+└── templates/              # report templates, nuclei custom templates</code></pre>
+
+<p>Use a note-taking system to track your findings across sessions. <a href="https://obsidian.md">Obsidian</a> with markdown files works well — it's searchable, linkable, and version-controllable with git.</p>
+
+<h2>What You Don't Need</h2>
+
+<p>Skip these — they're common recommendations that waste money for beginners:</p>
+
+<ul>
+<li><strong>A dedicated GPU</strong> — unless you're cracking hashes (rare in web bounties)</li>
+<li><strong>32+ GB RAM</strong> — 16 GB handles everything unless you're running multiple VMs</li>
+<li><strong>Kali Linux specifically</strong> — Ubuntu + manual tool installs gives you the same result with less bloat</li>
+<li><strong>Multiple monitors</strong> — nice to have, not required. A single 15" screen works fine with tmux or tiling window managers</li>
+<li><strong>A VPN for hunting</strong> — most programs don't require it, and some explicitly ban VPN traffic to their assets</li>
+<li><strong>Expensive courses before starting</strong> — free resources (PortSwigger Academy, HackTheBox) teach you more than most paid courses</li>
+</ul>
+
+<h2>Testing Your Setup</h2>
+
+<p>Before hunting on real programs, verify your tools work on legal practice targets:</p>
+
+<ol>
+<li><strong>PortSwigger Web Security Academy</strong> — free labs covering every web vulnerability class</li>
+<li><strong>OWASP Juice Shop</strong> — intentionally vulnerable app you run locally</li>
+<li><strong>HackTheBox / TryHackMe</strong> — guided challenges that build methodology</li>
+</ol>
+
+<p>Run a basic recon chain against a practice target to confirm everything is connected:</p>
+
+<pre><code># Test your recon pipeline (use only on authorized targets)
+echo "target.com" | subfinder -silent | httpx -silent | nuclei -t http/technologies/</code></pre>
+
+<h2>Next Steps</h2>
+
+<p>Your hardware and setup are the foundation — but methodology is what finds bugs. Once your environment is ready:</p>
+
+<ul>
+<li><a href="/articles/how-to-get-started-bug-bounty-hunting-2026/">How to Get Started in Bug Bounty Hunting (2026)</a> — complete beginner's guide</li>
+<li><a href="/articles/bug-bounty-methodology-guide-2026/">Bug Bounty Methodology: Step-by-Step Framework</a> — structured approach from recon to payout</li>
+<li><a href="/articles/subdomain-enumeration-techniques-tools-2026/">Subdomain Enumeration Techniques and Tools</a> — deep dive into recon</li>
+<li><a href="/articles/essential-tools-bug-bounty-hunters-2026/">Essential Tools for Bug Bounty Hunters (2026)</a> — comprehensive tool guide</li>
+<li><a href="/articles/bug-bounty-automation-scripts-tools-2026/">Bug Bounty Automation: Scale Your Hunting</a> — automate repetitive tasks</li>
+<li><a href="/articles/burp-suite-extensions-bug-bounty-2026/">Best Burp Suite Extensions for Bug Bounty</a> — extend your primary tool</li>
+<li><a href="/articles/how-to-write-bug-bounty-reports-2026/">How to Write Bug Bounty Reports That Get Paid</a> — turn findings into payouts</li>
+<li><a href="/articles/bug-bounty-platforms-comparison-2026/">Bug Bounty Platforms Compared (2026)</a> — choose the right platform</li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

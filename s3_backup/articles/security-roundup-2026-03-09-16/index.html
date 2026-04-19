@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Security Roundup March 9-16, 2026: Two actively exploited Chrome zero-days, seven critical Veeam Backup flaws, a supply chain nx npm attack that breached AWS in 72 hours, SocksEscort botnet takedown, ClickFix expanding to macOS, and Wing FTP Server joins CISA KEV. Essential reading for bug hunters.">
+    <title>Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/security-roundup-2026-03-09-16/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/security-roundup-2026-03-09-16/">
+    <meta property="og:title" content="Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach">
+    <meta property="og:description" content="Security Roundup March 9-16, 2026: Two actively exploited Chrome zero-days, seven critical Veeam Backup flaws, a supply chain nx npm attack that breached AWS in 72 hours, SocksEscort botnet takedown, ClickFix expanding to macOS, and Wing FTP Server joins CISA KEV. Essential reading for bug hunters.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/security-roundup-2026-03-09-16/">
+    <meta name="twitter:title" content="Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach">
+    <meta name="twitter:description" content="Security Roundup March 9-16, 2026: Two actively exploited Chrome zero-days, seven critical Veeam Backup flaws, a supply chain nx npm attack that breached AWS in 72 hours, SocksEscort botnet takedown, ClickFix expanding to macOS, and Wing FTP Server joins CISA KEV. Essential reading for bug hunters.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach",
+      "description": "Security Roundup March 9-16, 2026: Two actively exploited Chrome zero-days, seven critical Veeam Backup flaws, a supply chain nx npm attack that breached AWS in 72 hours, SocksEscort botnet takedown, ClickFix expanding to macOS, and Wing FTP Server joins CISA KEV. Essential reading for bug hunters.",
+      "url": "https://bughuntertools.com/articles/security-roundup-2026-03-09-16/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE & Supply Chain AWS Breach",
+      "description": "Weekly security roundup: Two actively exploited Chrome zero-days in Skia and V8, seven critical Veeam Backup CVEs, UNC6426 supply chain AWS breach in 72 hours, SocksEscort proxy botnet dismantled, ClickFix hits macOS with MacSync infostealer, and CISA adds Wing FTP Server to KEV.",
+      "datePublished": "2026-03-16",
+      "dateModified": "2026-03-16",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What Chrome zero-days were exploited in March 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Two Chrome zero-days were actively exploited: CVE-2026-3909 in the Skia graphics library and CVE-2026-3910 in the V8 JavaScript engine. Both were used in targeted attacks before Google released emergency patches."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many Veeam Backup CVEs were disclosed and how severe are they?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Seven critical CVEs were disclosed in Veeam Backup and Replication, with five rated CVSS 9.9. These vulnerabilities allow remote code execution and are particularly dangerous because Veeam is widely deployed in enterprise backup infrastructure."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How did UNC6426 breach AWS through a supply chain attack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "UNC6426 exploited stale supply chain keys to gain initial access, then escalated to full AWS admin access within 72 hours. The attack demonstrated how forgotten or unrotated credentials in software supply chains can provide a direct path to cloud infrastructure compromise."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>Security Roundup March 9–16, 2026: Chrome Zero-Days, Veeam Mass RCE &amp; Supply Chain AWS Breach</h1>
+
+    <div class="meta">
+        <span>Published: March 16, 2026</span>
+        <span>•</span>
+        <span>Reading time: 15 minutes</span>
+        <span>•</span>
+        <span style="color: #f44336; font-weight: bold;">🚨 WEEKLY ROUNDUP</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>This week the browser you're reading this on had two actively exploited zero-days fixed mid-week, a backup platform deployed on millions of enterprise servers shipped seven critical RCE patches in a single advisory, and a supply chain attack from eight months ago quietly turned into a full AWS environment wipe in under 72 hours.</strong></p>
+
+        <p>Google rushed out emergency Chrome patches for CVE-2026-3909 and CVE-2026-3910 — an out-of-bounds write in the Skia graphics engine and a logic flaw in the V8 JavaScript engine — both confirmed exploited in the wild before the patch. Veeam followed with the most concentrated single advisory in its history: seven critical-severity CVEs, five of them at CVSS 9.9, with some requiring only authenticated domain access to execute code remotely on backup infrastructure. And Google's Cloud Threat Horizons Report lifted the curtain on how UNC6426 turned a poisoned npm package from August 2025 into full AWS administrator access, data destruction, and public GitHub exposure of every internal repo — all in three days.</p>
+
+        <p>Meanwhile, a court-authorised international takedown shut down the SocksEscort residential proxy botnet — but a second router botnet named KadNap immediately stepped in to fill the gap. ClickFix crossed the OS boundary to target macOS users with a new infostealer called MacSync. And CISA added Wing FTP Server to the KEV catalogue just as researchers published proof-of-concept chains combining its information disclosure flaw with a critical RCE bug patched last May.</p>
+
+        <p><strong>Six findings plus a bonus — here's everything that mattered this week for bug hunters and security professionals.</strong></p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Weekly digest of the most significant security vulnerabilities and threats</li>
+        <li>Each vulnerability includes severity assessment and recommended actions</li>
+        <li>Prioritize patching based on active exploitation status, not just CVSS scores</li>
+      </ul>
+    </div>
+
+
+    <!-- Table of Contents -->
+    <nav style="background: #f5f5f5; padding: 20px 30px; border-radius: 8px; margin: 30px 0;">
+        <strong>Jump to:</strong>
+        <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li><a href="#chrome-zero-days">CVE-2026-3909 &amp; CVE-2026-3910: Chrome 0-Days Exploited in the Wild</a></li>
+            <li><a href="#veeam-rce">Veeam Backup &amp; Replication: 7 Critical CVEs, Five at CVSS 9.9</a></li>
+            <li><a href="#unc6426-aws">UNC6426: nx npm Supply Chain Breach → Full AWS Admin in 72 Hours</a></li>
+            <li><a href="#socksescort">SocksEscort Takedown &amp; KadNap: The Router Botnet Never Sleeps</a></li>
+            <li><a href="#clickfix-macos">ClickFix Goes Cross-Platform: MacSync macOS Infostealer</a></li>
+            <li><a href="#wing-ftp">CVE-2025-47813: Wing FTP Server Hits CISA KEV, RCE Chain Exposed</a></li>
+            <li><a href="#bonus-apt28">Bonus: APT28's BEARDSHELL + COVENANT Toolkit Against Ukraine</a></li>
+            <li><a href="#essential-tools">Essential Tools This Week</a></li>
+            <li><a href="#books">Books to Go Deeper</a></li>
+            <li><a href="#recommendations">Recommendations for Bug Hunters</a></li>
+        </ol>
+    </nav>
+
+    <!-- Finding 1: Chrome Zero-Days -->
+    <section id="chrome-zero-days">
+        <h2>1. 🔴 CVE-2026-3909 &amp; CVE-2026-3910: Chrome 0-Days Actively Exploited</h2>
+
+        <div style="background: #ffebee; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #f44336; margin-bottom: 20px;">
+            <strong>Severity:</strong> High &nbsp;|&nbsp; <strong>Status:</strong> Both actively exploited in the wild &nbsp;|&nbsp; <strong>Fixed in:</strong> Chrome 146.0.7680.75/76 (Windows/macOS), 146.0.7680.75 (Linux)
+        </div>
+
+        <h3>What Happened</h3>
+        <p>Google issued an emergency update for Chrome on March 11 to patch two high-severity vulnerabilities that it confirmed have active in-the-wild exploits. The week's most urgent patch covers:</p>
+
+        <ul>
+            <li><strong>CVE-2026-3909</strong> — Out-of-bounds write in the Skia 2D graphics rendering library. Skia processes all visual rendering in Chrome — images, SVGs, CSS gradients, canvas operations. An OOB write in Skia is typically exploitable to achieve code execution within the renderer sandbox, serving as the first stage in a browser exploit chain.</li>
+            <li><strong>CVE-2026-3910</strong> — Inappropriate implementation in V8, Chrome's JavaScript and WebAssembly engine. V8 misimplementation bugs frequently result in out-of-bounds memory access or type confusion, enabling attackers to escape the renderer process or corrupt memory in ways that lead to code execution.</li>
+        </ul>
+
+        <p>A third flaw, <strong>CVE-2026-3913</strong>, was patched in the same release — a different Skia issue, though this one was not marked as actively exploited at time of publication.</p>
+
+        <p>Google declined to share technical details or attribution for CVE-2026-3909 and CVE-2026-3910, which is standard practice while the majority of users are still patching. Both flaws are being actively exploited, meaning there is a working exploit in circulation before most users updated.</p>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>Chrome zero-days are among the highest-value findings in the security research community — and among the most carefully defended targets. Google's Project Zero team, the Chrome Vulnerability Rewards Programme, and a large external research community make Chrome one of the most hardened applications in existence. When two zero-days land in the same emergency patch, it's notable.</p>
+
+        <p>For bug hunters, the Skia and V8 attack surfaces are both deep and heavily researched:</p>
+
+        <ul>
+            <li><strong>Skia</strong> is not just Chrome — it's also used in Android, Flutter, and Google products. Finding a class-similar bug in Skia affects a much broader attack surface than just the browser. Google's <a href="https://bughunters.google.com/about/rules/4918788891189248" rel="nofollow">Vulnerability Reward Programme</a> covers Skia bugs in Chrome and Android separately, and Android Skia bugs can command higher payouts due to broader impact.</li>
+            <li><strong>V8</strong> bugs are perennially valuable — V8 is also the JavaScript engine powering Node.js, Electron apps, and CloudFlare Workers. A V8 bug in Chrome may have sibling impact across the Node.js and server-side JavaScript ecosystem. <a href="https://bugs.chromium.org/p/chromium/issues/list?q=type%3DBug-Security%20status%3DFixed" rel="nofollow">Past V8 disclosures</a> have paid $15,000–$30,000 in Chrome VRP, with additional rewards for Electron or Node.js impact.</li>
+        </ul>
+
+        <p>The most accessible entry point for Chrome security research is <strong>fuzzing</strong>. Google itself runs Clusterfuzz continuously against Chrome and publishes the <a href="https://github.com/google/clusterfuzz" rel="nofollow">ClusterFuzz</a> framework as open source. Running targeted fuzzers against Skia (especially SVG and canvas paths) or V8 (particularly Wasm GC and JIT paths) remains a viable strategy for independent researchers, and the barrier is lower than it appears.</p>
+
+        <div style="background: #e8f5e9; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <strong>💡 Action Required:</strong> If you or your organisation haven't yet updated Chrome to 146.0.7680.75 or later, do it now. Both vulnerabilities have active exploits. Check your version at <code>chrome://settings/help</code>.
+        </div>
+
+        <p><strong>Source:</strong> <a href="https://thehackernews.com/2026/03/google-fixes-two-chrome-zero-days.html" rel="nofollow">The Hacker News — Google Fixes Two Chrome Zero-Days, March 11, 2026</a></p>
+    </section>
+
+    <!-- Finding 2: Veeam -->
+    <section id="veeam-rce">
+        <h2>2. 🔴 Veeam Backup &amp; Replication: 7 Critical CVEs, Five Rated CVSS 9.9</h2>
+
+        <div style="background: #ffebee; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #f44336; margin-bottom: 20px;">
+            <strong>Severity:</strong> Critical — five CVEs at CVSS 9.9, two at 8.8–9.1 &nbsp;|&nbsp; <strong>Product:</strong> Veeam Backup &amp; Replication v12.x and v13.x &nbsp;|&nbsp; <strong>Risk:</strong> Active ransomware exploitation expected
+        </div>
+
+        <h3>What Happened</h3>
+        <p>Veeam released emergency security updates this week covering <strong>seven critical vulnerabilities</strong> across Veeam Backup &amp; Replication — the most concentrated single advisory in the product's history. The full list:</p>
+
+        <ul>
+            <li><strong>CVE-2026-21666</strong> (CVSS 9.9) — Authenticated domain user → RCE on Backup Server</li>
+            <li><strong>CVE-2026-21667</strong> (CVSS 9.9) — Authenticated domain user → RCE on Backup Server (separate code path)</li>
+            <li><strong>CVE-2026-21668</strong> (CVSS 8.8) — Authenticated domain user → arbitrary file manipulation on Backup Repository</li>
+            <li><strong>CVE-2026-21672</strong> (CVSS 8.8) — Local privilege escalation on Windows-based Veeam servers</li>
+            <li><strong>CVE-2026-21708</strong> (CVSS 9.9) — Backup Viewer role → RCE as the PostgreSQL process user</li>
+            <li><strong>CVE-2026-21669</strong> (CVSS 9.9) — Authenticated domain user → RCE on Backup Server (fixed in v13 only)</li>
+            <li><strong>CVE-2026-21671</strong> (CVSS 9.1) — Backup Administrator → RCE in high-availability Veeam deployments</li>
+        </ul>
+
+        <p>The first five affect Veeam Backup &amp; Replication 12.3.2.4165 and all earlier version 12 builds, patched in <strong>version 12.3.2.4465</strong>. The remaining two affect version 13 branch and are fixed in <strong>version 13.0.1.2067</strong>. Veeam explicitly warned: "Once a vulnerability and its associated patch are disclosed, attackers will likely attempt to reverse-engineer the patch to exploit unpatched deployments."</p>
+
+        <p>This warning deserves emphasis. Veeam has the worst track record of any enterprise backup vendor for post-disclosure exploitation timelines. CVE-2023-27532, CVE-2024-40711, and CVE-2025-23120 were all weaponised by ransomware groups within days to weeks of patch disclosure. The pattern is consistent: attackers diff the patch, build an exploit, and scan for vulnerable instances before the majority of organisations have patched.</p>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>Backup infrastructure is one of the most critical attack targets in enterprise environments. Compromising a backup server gives an attacker access to backup data (which contains copies of everything), the ability to destroy backups (making ransomware recovery impossible), and often privileged credentials for the rest of the infrastructure.</p>
+
+        <p>The attack paths here are notable:</p>
+        <ul>
+            <li><strong>CVE-2026-21708</strong> requires only Backup Viewer role — the most basic read-only access level in Veeam. This is a particularly dangerous escalation path: a low-privilege service account for backup verification can translate to code execution as the database process user.</li>
+            <li>The "authenticated domain user" requirement for CVEs 21666/21667/21669 sounds restrictive but isn't in practice — most organisations have broad Active Directory access, and a single compromised domain account (via phishing, credential stuffing, or infostealer logs) is sufficient.</li>
+            <li><strong>CVE-2026-21671</strong> targeting HA deployments is particularly interesting — organisations that deployed HA for resilience have a higher-severity exposure than single-server installs.</li>
+        </ul>
+
+        <p>For bug bounty researchers, Veeam has a well-established vulnerability disclosure programme. RCE findings in Veeam Backup products consistently result in paid disclosures. Given the complexity of the codebase and Veeam's history, there are almost certainly additional undiscovered vulnerabilities in adjacent code paths to the ones patched this week.</p>
+
+        <h3>How to Test</h3>
+        <ul>
+            <li>Veeam Backup Server typically listens on TCP 9392 (REST API) and 9401/9395. The management console is accessible via HTTPS on these ports.</li>
+            <li>Enumerate endpoints at <code>/api/v1/</code> — Veeam's REST API has had authentication issues in multiple previous versions. Test with minimal credentials for privilege escalation paths.</li>
+            <li>The PostgreSQL angle (CVE-2026-21708) suggests the backup viewer role has excessive database access. Look for other roles that interact with the Postgres backend unexpectedly.</li>
+            <li>For CVE-2026-21672 (LPE): Veeam services run as SYSTEM on Windows. Test for writable directories in the Veeam install path, DLL search order hijacking in service processes, and named pipe impersonation — all common LPE vectors in Windows services.</li>
+            <li>Check whether your target exposes Veeam on internet-facing IPs via Shodan: <code>product:"Veeam"</code> or port-based fingerprinting on 9392.</li>
+        </ul>
+
+        <div style="background: #ffebee; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #f44336; margin: 20px 0;">
+            <strong>⚠️ Ransomware Risk:</strong> Based on Veeam's history, weaponised exploits for these CVEs will likely appear within days to weeks. If you run Veeam Backup &amp; Replication, patching to v12.3.2.4465 or v13.0.1.2067 is urgent.
+        </div>
+
+        <p><strong>Source:</strong> <a href="https://thehackernews.com/2026/03/veeam-patches-7-critical-backup.html" rel="nofollow">The Hacker News — Veeam Patches 7 Critical Backup &amp; Replication Flaws, March 12, 2026</a></p>
+    </section>
+
+    <!-- Finding 3: UNC6426 AWS Breach -->
+    <section id="unc6426-aws">
+        <h2>3. 🔴 UNC6426: Stale Supply Chain Keys → Full AWS Admin Access in 72 Hours</h2>
+
+        <div style="background: #ffebee; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #f44336; margin-bottom: 20px;">
+            <strong>Attack type:</strong> Supply chain → CI/CD token theft → OIDC abuse → AWS privilege escalation &nbsp;|&nbsp; <strong>Initial vector:</strong> nx npm package supply chain compromise (August 2025) &nbsp;|&nbsp; <strong>Outcome:</strong> Full data exfiltration, production EC2/RDS destruction, all repos made public
+        </div>
+
+        <h3>What Happened</h3>
+        <p>Google's Cloud Threat Horizons Report for H1 2026 revealed the full attack chain behind one of the most technically sophisticated cloud breaches of the year so far — and the initial entry point was a poisoned npm package from <em>eight months earlier</em>.</p>
+
+        <p>Here's the complete attack timeline:</p>
+
+        <ol>
+            <li><strong>August 2025 — Supply chain compromise:</strong> Unknown threat actors exploited a vulnerable <code>pull_request_target</code> GitHub Actions workflow in the <code>nx</code> npm package (the popular Nrwl/Nx monorepo tooling framework). This "Pwn Request" attack allowed them to push trojanised versions of <code>nx</code> to the npm registry, embedding a <code>postinstall</code> script that dropped a JavaScript credential stealer named <strong>QUIETVAULT</strong>.</li>
+            <li><strong>QUIETVAULT</strong> used a legitimate LLM coding tool already installed on victim machines to scan the local filesystem for sensitive data — environment variables, GitHub Personal Access Tokens (PATs), AWS credentials, and API keys — then uploaded everything to a public GitHub repository.</li>
+            <li><strong>March 2026 — Delayed exploitation:</strong> UNC6426 obtained a stolen GitHub PAT harvested months earlier when a developer at the victim organisation triggered an Nx Console extension update that pulled the malicious package. Using Nord Stream (an open-source CI/CD secret extraction tool), UNC6426 pivoted from the GitHub PAT to a service account with broader permissions.</li>
+            <li><strong>OIDC abuse:</strong> The service account had permission to trigger GitHub Actions workflows. UNC6426 used the <code>--aws-role</code> parameter in Nord Stream to generate temporary AWS STS tokens through the GitHub-to-AWS OpenID Connect trust relationship — a legitimate integration mechanism that was dramatically over-permissioned.</li>
+            <li><strong>Full admin escalation:</strong> The compromised <code>Actions-CloudFormation</code> role had <code>CAPABILITY_NAMED_IAM</code> permissions. UNC6426 deployed a new CloudFormation stack whose sole purpose was to create a new IAM role and attach <code>arn:aws:iam::aws:policy/AdministratorAccess</code> — achieving full AWS administrator access in under 72 hours from initial pivot.</li>
+            <li><strong>Destruction and exfiltration:</strong> The attacker enumerated and exfiltrated S3 buckets, terminated production EC2 and RDS instances, decrypted application keys, renamed all internal GitHub repositories to <code>/s1ngularity-repository-[random]</code>, and made them public.</li>
+        </ol>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>This attack chain is a masterclass in how supply chain compromises generate long-tail risk. The initial infection happened in August 2025. Exploitation happened in March 2026. Seven months passed between a developer pulling a malicious package and an attacker using the harvested tokens to destroy a production environment.</p>
+
+        <p>Several vulnerability classes converge in this story — each individually worth pursuing in bug bounty programmes:</p>
+
+        <ul>
+            <li><strong>Pwn Request / pull_request_target misuse:</strong> This GitHub Actions misconfiguration is widespread. The <code>pull_request_target</code> trigger runs with write permissions to the target repository and can access secrets — yet it's frequently misconfigured to execute code from PRs by untrusted contributors. Hunt for this pattern in public repos belonging to large organisations with bug bounty programmes. <a href="https://securitylab.github.com/research/github-actions-preventing-pwn-requests/" rel="nofollow">GitHub Security Lab's research</a> provides a solid methodology.</li>
+            <li><strong>OIDC trust misconfiguration:</strong> GitHub-to-AWS OIDC trust relationships are increasingly common but frequently over-permissioned. If an IAM role trusts any branch or any repo in an organisation, a compromised GitHub account can obtain cloud credentials. Testing OIDC trust scope (which repos, which branches, which Actions) is a valid cloud security bug class on many programmes.</li>
+            <li><strong>CloudFormation privilege escalation:</strong> The <code>CAPABILITY_NAMED_IAM</code> permission is a well-documented escalation path. If an IAM role can deploy CloudFormation stacks with IAM capabilities, it can create a new privileged role — regardless of its own permission set. This is a known AWS privilege escalation technique covered in <a href="https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/" rel="nofollow">Rhino Security Labs' AWS privilege escalation research</a>.</li>
+        </ul>
+
+        <div style="background: #e8f5e9; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <strong>💡 Audit Checklist:</strong> Review your GitHub Actions workflows for <code>pull_request_target</code> triggers. Audit your OIDC trust policies — ensure they scope to specific repos and branches, not wildcards. Audit which IAM roles have <code>CAPABILITY_NAMED_IAM</code> and <code>iam:CreateRole</code> permissions. These three checks will find real issues in most organisations.
+        </div>
+
+        <p><strong>Source:</strong> <a href="https://thehackernews.com/2026/03/unc6426-exploits-nx-npm-supply-chain.html" rel="nofollow">The Hacker News — UNC6426 Exploits nx npm Supply Chain Attack, March 12, 2026</a></p>
+    </section>
+
+    <!-- Finding 4: SocksEscort / KadNap -->
+    <section id="socksescort">
+        <h2>4. 🟠 SocksEscort Dismantled, KadNap Moves In: The Endless Router Botnet Cycle</h2>
+
+        <div style="background: #fff3e0; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #ff9800; margin-bottom: 20px;">
+            <strong>Operation 1:</strong> SocksEscort proxy service dismantled by international law enforcement &nbsp;|&nbsp; <strong>Operation 2:</strong> KadNap botnet (14,000+ routers) fuelling "Doppelganger" proxy — currently active
+        </div>
+
+        <h3>What Happened</h3>
+        <p>Two related stories this week paint a complete picture of the residential proxy botnet ecosystem.</p>
+
+        <p><strong>SocksEscort takedown:</strong> A court-authorised international law enforcement operation dismantled the SocksEscort criminal proxy service — a residential proxy network that had enslaved thousands of home routers into a botnet that sold anonymised internet traffic to cybercriminals for large-scale fraud. SocksEscort was powered by <strong>AVrecon</strong>, a C-written malware targeting MIPS and ARM architectures that exploited known security flaws in SOHO (small office/home office) routers. The malware's persistence mechanism was particularly nasty: it flashed custom firmware to infected devices that deliberately disabled future OEM updates, permanently converting routers into proxy nodes that would survive reboots and survive vendor patches.</p>
+
+        <p><strong>KadNap fills the gap:</strong> Almost simultaneously with the SocksEscort takedown, researchers detailed an active router botnet named KadNap comprising more than 14,000 compromised network devices — primarily Asus routers — that fuel an illegal proxy service called Doppelganger. Unlike SocksEscort's centralised infrastructure (making it takedown-vulnerable), KadNap uses a peer-to-peer network based on the Kademlia distributed hash table protocol for decentralised command-and-control. This design makes it significantly more resilient to law enforcement operations. Infected devices tunnel customers' internet traffic through residential IP addresses, offering threat actors cover for fraudulent and malicious activity.</p>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>Router botnets are a perennial problem with deep implications for security researchers:</p>
+
+        <p><strong>For vulnerability researchers:</strong> AVrecon and KadNap both exploit "known security flaws" in SOHO routers — CVEs that exist, have patches available, but are almost never applied by residential users. This means the vulnerability research pipeline is healthy, but the patch-application pipeline is broken. If you discover a new vulnerability in a popular consumer router (Asus, TP-Link, Netgear, D-Link), the attack surface is enormous — millions of unpatched devices persist for years.</p>
+
+        <p><strong>For cloud/enterprise bug hunters:</strong> Residential proxy services like SocksEscort and Doppelganger are the mechanism behind much of the credential stuffing, account takeover, and fraud activity that web applications face. Understanding how these services work helps you design better fraud detection — and helps you understand why IP-based blocking is insufficient as a primary security control.</p>
+
+        <p><strong>For IoT/embedded security researchers:</strong> The AVrecon firmware-flashing persistence technique is notable. Malware that defeats OEM updates by flashing custom firmware represents a new persistence class for embedded devices. Testing whether your target device has signed firmware verification, secure boot, or integrity checking is a valuable research direction — and many consumer devices fail this test.</p>
+
+        <h3>How to Test Router Security</h3>
+        <ul>
+            <li>Check for exposed router admin interfaces: Shodan searches for common router admin pages (<code>title:"ASUS Router"</code>, <code>title:"TP-LINK"</code>) find millions of exposed devices</li>
+            <li>Test for authentication bypass in the router's web management interface — many SOHO routers have had auth bypass bugs in their CGI-based admin panels</li>
+            <li>Review UPnP exposure: many routers auto-forward ports via UPnP without authentication, enabling direct access to internal services</li>
+            <li>Test for command injection in the diagnostic tools (ping, traceroute, nslookup) that most router admin interfaces expose — this class of bug is endemic in SOHO firmware</li>
+            <li>Verify firmware update integrity: does the router validate firmware signatures before flashing? Testing this on lab hardware reveals whether the device is vulnerable to the AVrecon persistence technique</li>
+        </ul>
+
+        <p><strong>Sources:</strong> <a href="https://thehackernews.com/2026/03/authorities-disrupt-socksescort-proxy.html" rel="nofollow">The Hacker News — Authorities Disrupt SocksEscort</a> | <a href="https://thehackernews.com/2026/03/kadnap-malware-infects-14000-edge.html" rel="nofollow">The Hacker News — KadNap Malware Infects 14,000 Edge Devices</a></p>
+    </section>
+
+    <!-- Finding 5: ClickFix macOS -->
+    <section id="clickfix-macos">
+        <h2>5. 🟠 ClickFix Goes Cross-Platform: MacSync Infostealer Hits macOS via Three Campaigns</h2>
+
+        <div style="background: #fff3e0; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #ff9800; margin-bottom: 20px;">
+            <strong>Threat:</strong> ClickFix social engineering now delivering macOS-specific infostealer &nbsp;|&nbsp; <strong>Lure types:</strong> Fake AI tool installers, fake CAPTCHA, fake browser extensions &nbsp;|&nbsp; <strong>Malware:</strong> MacSync infostealer
+        </div>
+
+        <h3>What Happened</h3>
+        <p>Sophos researchers published an analysis of three ClickFix campaigns delivering a new macOS infostealer named <strong>MacSync</strong> — marking ClickFix's clear expansion beyond its Windows PowerShell origins into macOS terminal command injection. The technique is conceptually identical but adapted for the macOS environment: instead of convincing users to paste malicious commands into a Windows Run dialog, the campaigns direct macOS users to open Terminal and paste malicious shell commands.</p>
+
+        <p>The three campaigns documented by Sophos:</p>
+
+        <ol>
+            <li><strong>November 2025 — OpenAI Atlas browser lure:</strong> Fake sponsored search results on Google directed users to a fake Google Sites page offering an "OpenAI Atlas browser" download. Instead of a download, the page displayed a fake error with Terminal commands to "fix" the installation. The commands installed MacSync.</li>
+            <li><strong>January 2026 — Fake CAPTCHA lure:</strong> A campaign using fake CAPTCHA verification pages that asked users to "verify they are human" by opening Terminal and pasting a provided command. The CAPTCHA aesthetic was designed to match familiar verification flows, reducing suspicion.</li>
+            <li><strong>February 2026 — Fake browser extension lure:</strong> A campaign impersonating a popular browser extension installer, again using the Terminal command injection pattern to deliver MacSync.</li>
+        </ol>
+
+        <p>MacSync exfiltrates browser cookies, saved passwords, autofill data, cryptocurrency wallet files, and document files matching high-value extensions. The Jamf Threat Labs team had flagged earlier ClickFix-to-macOS campaigns in December 2025, but Sophos' research provides the most complete picture of how the technique has matured.</p>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>ClickFix is doing something strategically significant: it's routing around technical exploitation entirely. There's no CVE needed. No browser vulnerability, no macOS sandbox escape. The "vulnerability" is the user's reasonable assumption that copying instructions from an apparently legitimate page is safe.</p>
+
+        <p>Several implications for security professionals:</p>
+
+        <ul>
+            <li><strong>macOS users are not safer by default:</strong> The security research community skews heavily macOS. If you're reading this, you're probably at higher risk from MacSync campaigns than the average user — because these campaigns specifically target developers and technical users who are comfortable with Terminal.</li>
+            <li><strong>Platform-specific detection gaps:</strong> macOS EDR coverage is weaker than Windows. Many organisations deploy Windows-focused endpoint detection and have lighter (or no) coverage on macOS machines. If you're doing detection engineering, test whether your macOS endpoint monitoring catches shell commands pasted directly into Terminal by a user (vs. executed from a script).</li>
+            <li><strong>The "legitimate tool" lure evolves:</strong> The fake AI tool installer pattern is expanding. Claude Code, OpenAI tools, Nx (from the supply chain story), and now "OpenAI Atlas" have all been used as lures. If you use AI developer tooling, verify every installation source against official documentation.</li>
+            <li><strong>Affiliate and advertising platform abuse:</strong> The first campaign used Google's sponsored search results. This is a detection and prevention gap worth investigating — advertising platforms that allow impersonation of technology products are an ongoing vector. Google, Meta, and Microsoft all have bug bounty / policy violation reporting mechanisms for ad abuse.</li>
+        </ul>
+
+        <div style="background: #ffebee; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #f44336; margin: 20px 0;">
+            <strong>⚠️ macOS OpSec:</strong> Be sceptical of any web page asking you to open Terminal and paste a command. Legitimate software installers use .dmg or .pkg files, not Terminal commands pasted from a webpage. Enable macOS Gatekeeper and XProtect, and consider deploying an EDR solution if you're doing security research on macOS.
+        </div>
+
+        <p><strong>Source:</strong> <a href="https://thehackernews.com/2026/03/clickfix-campaigns-spread-macsync-macos.html" rel="nofollow">The Hacker News — ClickFix Campaigns Spread MacSync macOS Infostealer, March 16, 2026</a></p>
+    </section>
+
+    <!-- Finding 6: Wing FTP Server KEV -->
+    <section id="wing-ftp">
+        <h2>6. 🟠 CVE-2025-47813: Wing FTP Server Joins CISA KEV — RCE Chain Goes Public</h2>
+
+        <div style="background: #fff3e0; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #ff9800; margin-bottom: 20px;">
+            <strong>CVE:</strong> CVE-2025-47813 (information disclosure, now KEV) chains with CVE-2025-47812 (critical RCE) &nbsp;|&nbsp; <strong>Affected:</strong> Wing FTP Server &lt; v7.4.4 &nbsp;|&nbsp; <strong>Customers:</strong> 10,000+ including US Air Force, Sony, Airbus
+        </div>
+
+        <h3>What Happened</h3>
+        <p>CISA added <strong>CVE-2025-47813</strong> to its Known Exploited Vulnerabilities catalogue on March 16, giving Federal Civilian Executive Branch agencies two weeks to patch. The flaw is a path disclosure vulnerability in Wing FTP Server — when a long value is sent in the UID cookie, the server returns an error message revealing the full local installation path.</p>
+
+        <p>Individually, a path disclosure sounds low severity. The problem is the chain: security researcher Julien Ahrens discovered and reported three Wing FTP Server vulnerabilities simultaneously:</p>
+        <ul>
+            <li><strong>CVE-2025-47813</strong> — Information disclosure (installation path via UID cookie error)</li>
+            <li><strong>CVE-2025-47812</strong> — Critical RCE (previously confirmed exploited in the wild; one day after PoC publication, active exploitation began)</li>
+            <li><strong>CVE-2025-27889</strong> — Password theft via information disclosure</li>
+        </ul>
+
+        <p>The path disclosure in CVE-2025-47813 is being exploited as part of the same chain as the RCE in CVE-2025-47812. Ahrens published proof-of-concept code for CVE-2025-47813 in June 2025, explicitly noting the chain potential. Now, eight months later, CISA is confirming it's being actively used.</p>
+
+        <p>Wing FTP Server's customer base — US Air Force, Sony, Airbus, Reuters, Sephora — makes this a high-impact KEV addition despite the relatively lower profile of the product compared to enterprise platforms.</p>
+
+        <h3>Why It Matters for Bug Hunters</h3>
+        <p>The Wing FTP Server story is a case study in vulnerability chaining — individually low-severity findings combined into critical exploitation paths:</p>
+
+        <ul>
+            <li><strong>Error messages as intelligence:</strong> The UID cookie disclosure reveals the installation path — which tells an attacker the exact file system layout, whether the server runs as a standard or custom install, and enables path-dependent exploit payloads. Information disclosure bugs are frequently dismissed as low severity and left unpatched, creating exactly these chain opportunities.</li>
+            <li><strong>File transfer software as attack surface:</strong> FTP/SFTP servers often run with elevated privileges (to bind low ports and access files across the filesystem), are frequently internet-exposed, and are often undermanaged. Wing FTP Server, Serv-U, FileZilla Server, and similar products are worth including in your target portfolio — they have rich vulnerability histories and are underresearched compared to web applications.</li>
+            <li><strong>The disclosure-to-exploitation gap:</strong> PoC published June 2025, first exploitation observed shortly after, CISA KEV added March 2026. Almost nine months of active exploitation before a federal mandate to patch. This gap is representative — expect similar windows for Veeam this week.</li>
+        </ul>
+
+        <h3>How to Test</h3>
+        <ul>
+            <li>Wing FTP Server exposes a web-based admin interface (typically port 5466) and a client-facing HTTPS interface (port 443 or 8443)</li>
+            <li>Test the UID cookie disclosure: send a request with an oversized UID cookie value and examine the error response for file system path information</li>
+            <li>Shodan fingerprinting: search for Wing FTP Server login pages to find exposed instances</li>
+            <li>For the RCE chain: once the path is disclosed, CVE-2025-47812 requires constructing a payload that exploits the specific RCE vector using the resolved path — refer to Ahrens' published advisory for details</li>
+            <li>Check for CVE-2025-27889 independently: the password theft disclosure may work without needing the full RCE chain and is useful for credential harvest even if the RCE is patched</li>
+        </ul>
+
+        <p><strong>Sources:</strong> <a href="https://www.bleepingcomputer.com/news/security/cisa-flags-wing-ftp-server-flaw-as-actively-exploited-in-attacks/" rel="nofollow">BleepingComputer — CISA Flags Wing FTP Server Flaw, March 16, 2026</a></p>
+    </section>
+
+    <!-- Bonus: APT28 -->
+    <section id="bonus-apt28">
+        <h2>⚡ Bonus: APT28 Deploys BEARDSHELL + COVENANT Toolkit Against Ukraine</h2>
+
+        <p>Russia's APT28 (Forest Blizzard / STRONTIUM / Fancy Bear) surfaced this week with a bespoke two-implant toolkit targeting Ukrainian cyber assets. The campaign uses <strong>BEARDSHELL</strong> — a malware family that borrows techniques from APT28's own tooling circa the 2010s — alongside a heavily modified version of the <strong>COVENANT</strong> C2 framework originally developed for legitimate red team use.</p>
+
+        <p>COVENANT provides APT28 with long-term persistence, lateral movement, PowerShell execution, and data exfiltration. A third component, <strong>SLIMAGENT</strong>, shares code overlaps with XAgent — APT28's long-running espionage implant tied to the 2016 DNC breach and numerous other campaigns over a decade of operations.</p>
+
+        <p><strong>For bug hunters and defenders:</strong> The reuse of COVENANT (a legitimate red team framework) as a nation-state C2 platform creates a detection challenge. Defenders who have COVENANT YARA or network signatures tuned to detect red team engagements may correctly flag C2 traffic — but now they need to distinguish authorised red team exercises from APT28 intrusions. Review your C2 framework detection logic and ensure it correlates with authorised engagement calendars. Any COVENANT/Cobalt Strike/Sliver traffic outside scheduled assessments warrants immediate investigation.</p>
+
+        <p><strong>Source:</strong> <a href="https://thehackernews.com/2026/03/apt28-uses-beardshell-and-covenant.html" rel="nofollow">The Hacker News — APT28 Uses BEARDSHELL and COVENANT, March 14, 2026</a></p>
+    </section>
+
+    <!-- Essential Tools -->
+    <section id="essential-tools">
+        <h2>🛠️ Essential Tools This Week</h2>
+
+        <p>This week's findings span browser security, backup infrastructure exploitation, CI/CD and cloud access control testing, and macOS threat research. Here are five tools that map directly to what we covered:</p>
+
+        <div class="tool">
+            <h3>1. Burp Suite Professional — Web, API &amp; Cloud App Proxy</h3>
+            <p><strong>Why it's relevant this week:</strong> The Veeam REST API vulnerabilities, Wing FTP Server's UID cookie chain, and Chrome zero-day PoC development all require a capable HTTP intercepting proxy with active scanning and scripting support. Burp Suite Pro's Collaborator server is the gold standard for out-of-band injection detection — essential for confirming blind RCE and SSRF in enterprise products like Veeam. The active scanner's custom insertion point support lets you test specific parameters (like Veeam's Backup Viewer API paths) systematically. The Intruder tool is indispensable for cookie value fuzzing (like the Wing FTP UID cookie disclosure).</p>
+            <p>Available directly from PortSwigger at $449/year — the single highest-ROI investment in your bug hunting toolkit.</p>
+            <p><a href="https://portswigger.net/burp/pro" rel="nofollow">Burp Suite Professional → PortSwigger (official)</a> — $449/year</p>
+        </div>
+
+        <div class="tool">
+            <h3>2. Flipper Zero — Multi-Protocol Embedded Security Testing Device</h3>
+            <p><strong>Why it's relevant this week:</strong> Router security — highlighted by the SocksEscort/KadNap botnet stories — is fundamentally about hardware and embedded systems. The Flipper Zero covers the protocol stack that matters for SOHO device research: Sub-1 GHz radio for proprietary device protocols, RFID/NFC for access control testing, infrared for device control interfaces, and the Bad USB / GPIO interfaces for hardware debugging. When AVrecon flashes custom firmware to defeat OEM updates, understanding how embedded firmware works (and fails) at the hardware level is essential. The Flipper's open-source firmware and active plugin ecosystem make it the best entry-level hardware hacking tool available.</p>
+            <p><a href="https://www.amazon.com/dp/B0BL6JV767?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Flipper Zero on Amazon</a> — ~$170–190</p>
+        </div>
+
+        <div class="tool">
+            <h3>3. Alfa AWUS036ACHM — 802.11ac USB WiFi Adapter for Kali Linux</h3>
+            <p><strong>Why it's relevant this week:</strong> Router botnets infect devices via wireless protocols as well as internet-facing services. Research into SOHO router vulnerabilities requires a WiFi adapter with reliable monitor mode and packet injection support — the Alfa AWUS036ACHM delivers both on Linux with no driver hackery required. It's the most recommended adapter in the Kali Linux ecosystem for wireless security testing, supporting 802.11ac with 2.4 GHz and 5 GHz band coverage. Essential for WPA2/3 testing, handshake capture, deauth testing, and wireless protocol fuzzing alongside the router vulnerability research highlighted this week.</p>
+            <p><a href="https://www.amazon.com/dp/B07VFFQ4JW?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Alfa AWUS036ACHM on Amazon</a> — ~$40–60</p>
+        </div>
+
+        <div class="tool">
+            <h3>4. YubiKey 5C NFC — Hardware Security Key</h3>
+            <p><strong>Why it's relevant this week:</strong> MacSync targets browser-stored credentials and cookies. The UNC6426 attack chain started with a stolen GitHub PAT. Infostealers — both MacSync and QUIETVAULT — are specifically designed to harvest the credentials that protect your accounts and cloud access. Hardware security keys are the one credential type that can't be stolen by software infostealers: a FIDO2 YubiKey generates a unique cryptographic proof per site, bound to the device and the domain. Even if MacSync exfiltrates your password database, a hardware-bound FIDO2 token on GitHub, AWS, and your email provider makes those credentials useless to an attacker. The 5C NFC covers USB-C and NFC for seamless use across devices.</p>
+            <p><a href="https://www.amazon.com/dp/B0BKLWL7LD?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">YubiKey 5C NFC on Amazon</a> — ~$55–65</p>
+        </div>
+
+        <div class="tool">
+            <h3>5. Raspberry Pi 5 (8GB) — Home Lab &amp; Research Platform</h3>
+            <p><strong>Why it's relevant this week:</strong> Testing Veeam Backup &amp; Replication vulnerabilities, replicating the KadNap router firmware persistence technique, and standing up isolated test environments for Chrome zero-day research all require compute. The Raspberry Pi 5 is a significant upgrade over Pi 4: 2–3× faster CPU performance, PCIe interface for NVMe SSD, and proper power delivery. It runs Kali Linux natively (ARM64), can host lightweight virtualisation via QEMU, and makes an excellent always-on research node. At ~$80 for the 8GB model, it remains the best cost-per-watt option for persistent security research labs.</p>
+            <p><a href="https://www.amazon.com/dp/B0CK2FCG4C?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Raspberry Pi 5 (8GB) on Amazon</a> — ~$80–95</p>
+        </div>
+    </section>
+
+    <!-- Books -->
+    <section id="books">
+        <h2>📚 Books to Go Deeper</h2>
+
+        <p>This week's findings span browser internals, enterprise backup exploitation, cloud CI/CD security, and embedded device research. Four books to level up across those domains:</p>
+
+        <div class="tool">
+            <h3>1. The Browser Hacker's Handbook</h3>
+            <p><strong>Why read it:</strong> Two Chrome zero-days in Skia and V8 this week make browser internals directly relevant. The Browser Hacker's Handbook covers the complete browser attack surface: JavaScript engine exploitation, sandbox escapes, extension abuse, and browser-based phishing techniques. It remains the most comprehensive reference for understanding how browser security mechanisms work and fail — essential context if you want to research Chrome VRP targets or understand what makes Skia OOB writes exploitable versus crash-only.</p>
+            <p><a href="https://www.amazon.com/dp/1118662091?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Buy on Amazon — ~$40–55</a></p>
+        </div>
+
+        <div class="tool">
+            <h3>2. Hacking the Cloud: AWS, Azure, and GCP Security</h3>
+            <p><strong>Why read it:</strong> The UNC6426 AWS breach is a textbook cloud attack chain — supply chain compromise, token theft, OIDC abuse, CloudFormation privilege escalation, data destruction. Understanding each step requires cloud-specific knowledge that most traditional penetration testing books don't cover. This book addresses the full AWS/Azure/GCP attack and defence landscape: IAM privilege escalation, OIDC trust manipulation, S3 bucket exploitation, EC2 metadata abuse, and CI/CD pipeline attacks — exactly the techniques UNC6426 chained together this week.</p>
+            <p><a href="https://www.amazon.com/dp/1718502990?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Buy on Amazon — ~$45</a></p>
+        </div>
+
+        <div class="tool">
+            <h3>3. The IoT Hacker's Handbook</h3>
+            <p><strong>Why read it:</strong> The SocksEscort/KadNap router botnet ecosystem, AVrecon's firmware-flashing persistence technique, and the broader SOHO device vulnerability landscape all point to embedded security as a high-value research area. The IoT Hacker's Handbook covers firmware extraction, binary analysis, UART/JTAG debugging, bootloader attacks, and wireless protocol testing in embedded systems — providing the methodology needed to research devices like the Asus routers targeted by KadNap. If you want to go beyond web applications into the hardware layer, this is the starting point.</p>
+            <p><a href="https://www.amazon.com/dp/1484242998?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Buy on Amazon — ~$40–50</a></p>
+        </div>
+
+        <div class="tool">
+            <h3>4. Real-World Bug Hunting</h3>
+            <p><strong>Why read it:</strong> The Wing FTP Server story this week is a reminder that great bug bounty reports aren't just about finding bugs — they're about documenting chains, demonstrating impact, and communicating technical findings clearly. Real-World Bug Hunting covers the full lifecycle: reconnaissance, finding vulnerabilities, chaining issues, and writing compelling reports. The book's case studies draw from real HackerOne disclosures and teach the difference between a finding that gets triaged as informational and one that gets paid as critical. For hunters who've found individual issues but struggle to get high-severity payouts, the chaining and report quality lessons here are directly applicable.</p>
+            <p><a href="https://www.amazon.com/dp/1593278616?tag=altclaw-20&amp;linkCode=ogi&amp;th=1&amp;psc=1" rel="nofollow">Buy on Amazon — ~$35</a></p>
+        </div>
+    </section>
+
+    <!-- Recommendations -->
+    <section id="recommendations">
+        <h2>🎯 Recommendations for Bug Hunters This Week</h2>
+
+        <h3>1. Patch Chrome Before Hunting Anything Else</h3>
+        <p>Both CVE-2026-3909 and CVE-2026-3910 have active exploits. If your research machine isn't on Chrome 146.0.7680.75+, you're operating with a known-compromised browser. Check <code>chrome://settings/help</code> and update immediately. This applies to any Chrome-based browser (Edge, Brave, Arc) — they all ship Skia and V8 and are similarly affected until updated.</p>
+
+        <h3>2. Map Exposed Veeam Instances in Your Target Scope</h3>
+        <p>Seven critical CVEs in a product with a documented history of rapid post-disclosure exploitation means there will be vulnerable instances in the wild within days. If any of your bug bounty targets run Veeam Backup &amp; Replication and it's in scope, now is the time to check version numbers. The CVSS 9.9 findings requiring only authenticated domain user access are particularly tractable — if you have any internal user credentials through your reconnaissance process, Veeam RCE may be reachable.</p>
+
+        <h3>3. Audit Your CI/CD for OIDC Trust Scope and Pwn Request Vectors</h3>
+        <p>The UNC6426 breach is a wake-up call for supply chain and CI/CD security. If you do application-layer bug hunting, add these to your reconnaissance checklist: search target GitHub organisations for workflows using <code>pull_request_target</code>, check whether their GitHub-to-cloud OIDC trust scopes are wildcarded, and review what IAM permissions their Actions roles carry. Each of these is a reportable finding if misconfigured — and the UNC6426 case shows exactly what the impact looks like when all three fail simultaneously.</p>
+
+        <h3>4. Research FTP and File Transfer Software</h3>
+        <p>Wing FTP Server is a reminder that legacy file transfer software is an underserved research area. Serv-U, FileZilla Server, JSCAPE MFT, and similar products are widely deployed in enterprise environments, often internet-facing, frequently under-patched, and underrepresented in bug bounty research. If you're looking for a high-value, low-competition research niche, enterprise file transfer software deserves a serious look.</p>
+
+        <h3>5. Add macOS to Your Threat Model (Especially for OpSec)</h3>
+        <p>ClickFix expanding to macOS via MacSync means security researchers operating on macOS are now explicitly targeted. Review what's installed on your research machines, audit Terminal command history for any unexpected entries, check your browser's saved credentials, and verify that your cryptocurrency wallet files haven't been accessed. Enable full-disk encryption, deploy an endpoint security product, and treat macOS with the same paranoia you'd apply to a Windows machine in a hostile environment.</p>
+    </section>
+
+    <!-- Conclusion -->
+    <section id="conclusion">
+        <h2>Conclusion: Attack Chains Are Getting Longer and Quieter</h2>
+
+        <p>The week of March 9–16 demonstrates a recurring theme in 2026 security: the most impactful compromises aren't the loudest ones. The UNC6426 breach started eight months before anyone noticed. Wing FTP Server's chain worked quietly for the better part of a year. The MacSync campaigns have been running since November 2025.</p>
+
+        <p>For bug hunters, this creates a counterintuitive lesson: the most valuable findings are often the ones that <em>work slowly</em>. A supply chain vector that silently harvests tokens for months before anyone uses them. An information disclosure bug that enables a critical RCE chain only when combined with another finding. A OIDC trust misconfiguration that's harmless until someone's token gets stolen.</p>
+
+        <p>These aren't the showstopper CVSSv3 10.0 findings that make headlines. They're the quiet, combinable issues that define real-world breach paths. And they're the findings that most automated scanners and AI-powered tools miss entirely — because they require understanding context, relationships, and what an attacker does after initial access.</p>
+
+        <p>The Chrome zero-days are urgent and important. Patch Veeam before ransomware groups weaponise the PoC. But the longer-term opportunity for researchers in 2026 is in finding these multi-stage, slow-burn attack paths — and that requires the kind of patient, contextual analysis that can't be automated.</p>
+
+        <p><strong>Stay sharp, stay curious, and happy hunting.</strong></p>
+    </section>
+
+    <!-- Previous Roundups -->
+    <section style="background: #f5f5f5; padding: 25px; border-radius: 8px; margin: 40px 0;">
+        <h3>📅 Previous Weekly Roundups</h3>
+        <ul>
+            <li><a href="/articles/security-roundup-2026-03-02-09/">Security Roundup March 2–9, 2026</a> — Cisco SD-WAN CVSS 10.0, VMware Aria CISA KEV, APT28 MSHTML 0-day, AI vibeware factories, ClickFix CastleRAT</li>
+            <li><a href="/articles/security-roundup-2026-02-17/">Security Roundup February 10–16, 2026</a> — vLLM CVSS 9.8 RCE, n8n six-CVE disclosure, AI-assisted AWS breach</li>
+        </ul>
+    </section>
+
+    <div style="background: #f5f5f5; padding: 30px; border-radius: 8px; margin: 40px 0;">
+        <h3>🔔 Get Weekly Roundups Delivered</h3>
+        <p>Subscribe to receive security roundups, tool reviews, and bug bounty tips every Monday.</p>
+        <p><a href="/" style="background: #f44336; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; display: inline-block;">Subscribe Now</a></p>
+    </div>
+
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/security-roundup-2026-03-02-09/">Security Roundup March 2–9, 2026: Top Vulnerabilities & Tools for Bug Hunters</a></li>
+    <li><a href="/articles/security-roundup-2026-02-17/">Security Roundup Feb 10–16 2026: AI Infrastructure Under Fire, Cloud Misconfigs & $4.3M in Bug Bounties</a></li>
+    <li><a href="/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</a></li>
+    <li><a href="/articles/stryker-intune-wipe-handala-iran-living-off-the-land-2026/">No Malware, No Problem: How Hackers Wiped 80,000 Stryker Devices Using Microsoft's Own Admin Tools</a></li>
+    <li><a href="/articles/security-testing-tools-2026/">Best Security Testing Tools for Bug Bounty Hunters 2026</a></li>
+    <li><a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">Detecting Reflected XSS: What Your Security Scanner Should Check in 2026</a></li>
+    <li><a href="/articles/owasp-zap-vs-burp-suite-2026/">OWASP ZAP vs Burp Suite 2026: Which Security Scanner Should You Use?</a></li>
+    <li><a href="/articles/security-headers-complete-guide-2026/">Security Headers Complete Guide 2026</a></li>
+    <li><a href="/articles/security-roundup-2026-03-31-04-06/">Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale & SQLi Still Everywhere</a></li>
+    <li><a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Security Scanner Should Check in 2026</a></li>
+    <li><a href="/articles/bug-bounty-resource-center-hub-2026/">Bug Bounty Resource Center: Tools, Guides & Community for Hunters (2026)</a></li>
+    <li><a href="/articles/web-app-security-testing-checklist-2026/">Web Application Security Testing Checklist for 2026</a></li>
+  </ul>
+</section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

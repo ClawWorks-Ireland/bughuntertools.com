@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Security Roundup March 31 – April 6, 2026: Why automated scanners still miss critical OWASP categories, how TLS misconfigurations persist in production, SQL injection patterns that bypass WAFs, and what security teams should prioritize this week.">
+    <title>Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/security-roundup-2026-03-31-04-06/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/security-roundup-2026-03-31-04-06/">
+    <meta property="og:title" content="Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere">
+    <meta property="og:description" content="Security Roundup March 31 – April 6, 2026: Why automated scanners still miss critical OWASP categories, how TLS misconfigurations persist in production, SQL injection patterns that bypass WAFs, and what security teams should prioritize this week.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/security-roundup-2026-03-31-04-06/">
+    <meta name="twitter:title" content="Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere">
+    <meta name="twitter:description" content="Security Roundup March 31 – April 6, 2026: Why automated scanners still miss critical OWASP categories, how TLS misconfigurations persist in production, SQL injection patterns that bypass WAFs, and what security teams should prioritize this week.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere",
+      "description": "Security Roundup March 31 – April 6, 2026: Why automated scanners still miss critical OWASP categories, how TLS misconfigurations persist in production, SQL injection patterns that bypass WAFs, and what security teams should prioritize this week.",
+      "url": "https://bughuntertools.com/articles/security-roundup-2026-03-31-04-06/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale & SQLi Still Everywhere",
+  "description": "Weekly security roundup covering OWASP Top 10 scanner coverage gaps, TLS misconfiguration trends, SQL injection bypass patterns, and what security teams should prioritize.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What OWASP Top 10 categories do most scanners miss?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most automated scanners have weak coverage for A04 (Insecure Design), A05 (Security Misconfiguration beyond defaults), A08 (Software and Data Integrity Failures), and A10 (Server-Side Request Forgery). These categories require context-aware testing that goes beyond signature matching."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is TLS misconfiguration still so common in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TLS misconfigurations persist because teams configure TLS once at deployment and rarely audit it again. Certificate rotation, cipher suite updates, and HSTS enforcement require ongoing attention. Many organizations still support TLS 1.0/1.1 for legacy client compatibility."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do SQL injection attacks bypass WAFs in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Modern SQLi bypass techniques include encoding tricks (double URL encoding, Unicode normalization), comment injection to break WAF pattern matching, and boolean-based blind injection that produces no error output. WAFs that rely on signature matching miss these variants."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What should security teams prioritize scanning for this week?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "This week: audit TLS configurations for expired certificates and weak cipher suites, test injection points for SQLi (especially boolean-based blind), review API gateway CORS policies, and check Next.js applications for exposed debug endpoints and source maps."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often should organizations run OWASP Top 10 scans?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Continuous scanning is ideal. At minimum, run full OWASP Top 10 scans after every deployment, weekly for production environments, and immediately after any dependency update. Injection testing (A03) and misconfiguration checks (A05) should run on every CI/CD pipeline."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>Security Roundup March 31 – April 6, 2026: OWASP Top 10 Scanner Coverage, TLS Misconfigs at Scale &amp; SQLi Still Everywhere</h1>
+
+    <div class="meta">
+        <span>Published: April 7, 2026</span>
+        <span>&bull;</span>
+        <span>Reading time: 12 minutes</span>
+        <span>&bull;</span>
+        <span style="color: #f44336; font-weight: bold;">🚨 WEEKLY ROUNDUP</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>This week we're stepping back from individual CVEs to look at the bigger picture: how well do your security scanners actually cover the OWASP Top 10? The answer, for most teams, is worse than they think.</strong></p>
+
+        <p>A gap analysis of major scanning platforms reveals that most automated tools cover A01 (Broken Access Control), A02 (Cryptographic Failures), and A03 (Injection) reasonably well — but drop off sharply for A04 through A10. Meanwhile, TLS misconfigurations continue to plague production environments at scale, SQL injection bypass techniques are evolving faster than WAF signatures, and the explosion of Next.js and API gateway deployments has created new attack surface that traditional scanners don't touch.</p>
+
+        <p>We also look at what's changed in the scanning landscape this week: new detection capabilities for CORS misconfigurations, authenticated portal testing, webmail CVE fingerprinting, TLS auditing, and SQL injection probing — all areas where the gap between "what scanners check" and "what attackers exploit" has been narrowing.</p>
+
+        <p><strong>Five themes this week — here's what matters for security teams and bug hunters.</strong></p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Weekly digest of the most significant security vulnerabilities and threats</li>
+        <li>Each vulnerability includes severity assessment and recommended actions</li>
+        <li>Prioritize patching based on active exploitation status, not just CVSS scores</li>
+      </ul>
+    </div>
+
+
+    <nav style="background: #f5f5f5; padding: 20px 30px; border-radius: 8px; margin: 30px 0;">
+        <strong>Jump to:</strong>
+        <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li><a href="#owasp-coverage">The OWASP Top 10 Scanner Coverage Gap</a></li>
+            <li><a href="#tls-misconfigs">TLS Misconfigurations: Still the #1 Cryptographic Failure</a></li>
+            <li><a href="#sqli-evolution">SQL Injection in 2026: WAF Bypass Patterns That Still Work</a></li>
+            <li><a href="#new-attack-surface">Next.js, API Gateways &amp; the New Attack Surface</a></li>
+            <li><a href="#scanner-updates">Scanner Landscape: What Changed This Week</a></li>
+            <li><a href="#action-items">Action Items for Security Teams</a></li>
+            <li><a href="#tools">Essential Tools &amp; Resources</a></li>
+        </ol>
+    </nav>
+
+    <!-- Section 1: OWASP Coverage Gap -->
+    <section id="owasp-coverage">
+        <h2>1. The OWASP Top 10 Scanner Coverage Gap</h2>
+
+        <p>Ask any security team if they scan for the OWASP Top 10 and the answer is almost always yes. Ask them which specific categories their scanner covers and the confidence drops fast.</p>
+
+        <p>The reality: most automated scanners provide strong coverage for three categories and partial-to-no coverage for the remaining seven.</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 12px 16px; text-align: left;">OWASP Category</th>
+                    <th style="padding: 12px 16px; text-align: center;">Typical Scanner Coverage</th>
+                    <th style="padding: 12px 16px; text-align: left;">Why It's Hard to Automate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">A01: Broken Access Control</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟡 Partial</td>
+                    <td style="padding: 10px 16px;">Requires authenticated sessions and role context</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">A02: Cryptographic Failures</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟢 Good</td>
+                    <td style="padding: 10px 16px;">TLS/cert checks are well-understood; data-at-rest is harder</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">A03: Injection (SQLi, XSS)</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟢 Good</td>
+                    <td style="padding: 10px 16px;">Mature detection; blind variants still missed</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">A04: Insecure Design</td>
+                    <td style="padding: 10px 16px; text-align: center;">🔴 Poor</td>
+                    <td style="padding: 10px 16px;">Design flaws require business logic understanding</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">A05: Security Misconfiguration</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟡 Partial</td>
+                    <td style="padding: 10px 16px;">Default checks exist; custom configs need context</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">A06: Vulnerable Components</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟢 Good</td>
+                    <td style="padding: 10px 16px;">SCA tools handle this well; runtime detection is harder</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">A07: Auth Failures</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟡 Partial</td>
+                    <td style="padding: 10px 16px;">Credential stuffing detection exists; session management gaps are harder</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">A08: Software Integrity Failures</td>
+                    <td style="padding: 10px 16px; text-align: center;">🔴 Poor</td>
+                    <td style="padding: 10px 16px;">Supply chain and CI/CD integrity require pipeline access</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">A09: Logging Failures</td>
+                    <td style="padding: 10px 16px; text-align: center;">🔴 Poor</td>
+                    <td style="padding: 10px 16px;">Can't test logging from outside the application</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">A10: SSRF</td>
+                    <td style="padding: 10px 16px; text-align: center;">🟡 Partial</td>
+                    <td style="padding: 10px 16px;">Requires out-of-band callbacks or response analysis</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The takeaway: if your security program relies solely on automated scanning, you likely have blind spots in at least four OWASP categories. The fix isn't to abandon automation — it's to understand what your scanner covers and supplement with manual testing or specialized tools for the gaps.</p>
+
+        <h3>What to Do About It</h3>
+        <ul>
+            <li><strong>Map your scanner's coverage</strong> against each OWASP category explicitly. Most vendors don't publish this mapping clearly.</li>
+            <li><strong>Layer specialized tools</strong> for weak categories: SCA for A06, SAST for A04/A08, and manual pen testing for A01/A04.</li>
+            <li><strong>Prioritize A03 and A10</strong> for automated testing — injection and SSRF are the categories where automation has the highest ROI and attackers are most active.</li>
+        </ul>
+    </section>
+
+    <!-- Section 2: TLS Misconfigurations -->
+    <section id="tls-misconfigs">
+        <h2>2. TLS Misconfigurations: Still the #1 Cryptographic Failure</h2>
+
+        <p>OWASP A02 (Cryptographic Failures) sounds abstract until you realize the most common manifestation is straightforward: bad TLS configuration. And it's everywhere.</p>
+
+        <p>The pattern repeats across organizations of every size: TLS is configured once during initial deployment, then never audited again. Certificates expire. Cipher suites that were acceptable in 2022 are now deprecated. HSTS headers are missing or misconfigured. And because "the site loads fine over HTTPS," nobody notices.</p>
+
+        <h3>The Five TLS Checks Every Scanner Should Run</h3>
+        <ol>
+            <li><strong>Protocol version</strong> — TLS 1.0 and 1.1 are deprecated (RFC 8996). Only TLS 1.2+ should be accepted. TLS 1.3 is preferred.</li>
+            <li><strong>Cipher suite strength</strong> — RC4, DES, 3DES, and export-grade ciphers must be disabled. Look for suites with forward secrecy (ECDHE/DHE).</li>
+            <li><strong>Certificate validity</strong> — Check expiration date, chain completeness, and whether the cert matches the hostname. Wildcard certs covering too many services are a risk.</li>
+            <li><strong>HSTS enforcement</strong> — The <code>Strict-Transport-Security</code> header should be present with <code>max-age</code> of at least 31536000 (1 year). <code>includeSubDomains</code> and <code>preload</code> are recommended.</li>
+            <li><strong>Certificate transparency</strong> — Verify the certificate appears in CT logs. Certificates not logged in CT are increasingly flagged by browsers.</li>
+        </ol>
+
+        <p>If your scanner doesn't check all five, you have a gap. Our <a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">TLS auditing deep dive</a> covers each check in detail with remediation steps.</p>
+    </section>
+
+    <!-- Section 3: SQLi Evolution -->
+    <section id="sqli-evolution">
+        <h2>3. SQL Injection in 2026: WAF Bypass Patterns That Still Work</h2>
+
+        <p>SQL injection is 26 years old and still the most exploited injection flaw in web applications. OWASP ranks it A03. Every major breach database includes SQLi as a root cause. And yet, it persists — not because we don't know how to prevent it, but because the attack surface keeps expanding and bypass techniques keep evolving.</p>
+
+        <h3>Why WAFs Aren't Enough</h3>
+        <p>Web Application Firewalls catch the obvious patterns: <code>OR 1=1</code>, <code>UNION SELECT</code>, <code>DROP TABLE</code>. But modern SQLi bypass techniques exploit the gap between what the WAF parses and what the database executes:</p>
+
+        <ul>
+            <li><strong>Double URL encoding</strong> — <code>%2527</code> decodes to <code>%27</code> at the WAF layer, then to <code>'</code> at the application layer. The WAF sees a harmless encoded string; the database sees a quote.</li>
+            <li><strong>Comment injection</strong> — <code>SEL/**/ECT</code> breaks WAF keyword matching but executes normally on MySQL. Each database has different comment syntax that can be exploited.</li>
+            <li><strong>Boolean-based blind injection</strong> — No error output, no UNION results. The attacker infers data by comparing response lengths: <code>AND 1=1</code> (normal response) vs <code>AND 1=2</code> (different response). WAFs that look for error strings miss this entirely.</li>
+            <li><strong>Database-specific syntax</strong> — PostgreSQL's <code>$$</code> string quoting, MySQL's backtick identifiers, MSSQL's <code>EXEC</code> vs <code>EXECUTE</code> — each database accepts syntax the others don't, and WAF rules rarely cover all variants.</li>
+        </ul>
+
+        <p>The fix is defense in depth: parameterized queries at the code level (not WAF-level filtering), least-privilege database accounts, and scanners that test for blind injection variants — not just error-based. Our <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQLi detection guide</a> covers what a thorough scanner should check.</p>
+    </section>
+
+    <!-- Section 4: New Attack Surface -->
+    <section id="new-attack-surface">
+        <h2>4. Next.js, API Gateways &amp; the New Attack Surface</h2>
+
+        <p>The web stack has shifted. Next.js is now the default React framework. API gateways sit in front of every microservice. And both introduce attack surface that traditional web scanners weren't built to test.</p>
+
+        <h3>Next.js Reconnaissance Targets</h3>
+        <p>Next.js applications expose predictable endpoints that reveal application structure:</p>
+        <ul>
+            <li><code>/_next/data/</code> — Server-side props data, often containing internal API responses</li>
+            <li><code>/_next/static/</code> — Build manifests that reveal every route in the application</li>
+            <li><code>/api/</code> — API routes that may lack the same auth middleware as page routes</li>
+            <li>Source maps in development builds that expose the full source code</li>
+        </ul>
+
+        <p>Most vulnerability scanners don't check these paths. A Next.js-aware recon tool should enumerate routes from the build manifest, check for exposed source maps, and test API routes independently from page routes.</p>
+
+        <h3>API Gateway CORS Misconfigurations</h3>
+        <p>API gateways (AWS API Gateway, Kong, Nginx) frequently have CORS policies that are too permissive:</p>
+        <ul>
+            <li><code>Access-Control-Allow-Origin: *</code> on authenticated endpoints — allows any origin to make credentialed requests</li>
+            <li>Reflecting the <code>Origin</code> header back without validation — effectively the same as wildcard but harder to detect in config review</li>
+            <li>Missing <code>Access-Control-Allow-Credentials: true</code> check — the gateway allows cross-origin requests but the developer assumes CORS blocks them</li>
+        </ul>
+
+        <p>These misconfigurations are especially dangerous when the API gateway sits in front of internal services. A CORS tester that sends requests with various <code>Origin</code> headers and checks the response policy is essential. See our <a href="/articles/securityclaw-4-new-skills-april-2026/">SecurityClaw new skills roundup</a> for how automated CORS testing works in practice.</p>
+    </section>
+
+    <!-- Section 5: Scanner Updates -->
+    <section id="scanner-updates">
+        <h2>5. Scanner Landscape: What Changed This Week</h2>
+
+        <p>The gap between "what scanners check" and "what attackers exploit" narrowed this week with several new detection capabilities shipping across the ecosystem:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 12px 16px; text-align: left;">Capability</th>
+                    <th style="padding: 12px 16px; text-align: left;">OWASP Category</th>
+                    <th style="padding: 12px 16px; text-align: left;">What It Detects</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">API Gateway CORS Testing</td>
+                    <td style="padding: 10px 16px;">A05 (Misconfiguration)</td>
+                    <td style="padding: 10px 16px;">Wildcard origins, reflected origins, missing credential checks</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">Next.js Reconnaissance</td>
+                    <td style="padding: 10px 16px;">A05 (Misconfiguration)</td>
+                    <td style="padding: 10px 16px;">Exposed build manifests, source maps, unprotected API routes</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">Webmail CVE Fingerprinting</td>
+                    <td style="padding: 10px 16px;">A06 (Vulnerable Components)</td>
+                    <td style="padding: 10px 16px;">Roundcube, Zimbra, Horde version detection against known CVEs</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">TLS Configuration Auditing</td>
+                    <td style="padding: 10px 16px;">A02 (Cryptographic Failures)</td>
+                    <td style="padding: 10px 16px;">Weak ciphers, expired certs, missing HSTS, deprecated protocols</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">SQL Injection Probing</td>
+                    <td style="padding: 10px 16px;">A03 (Injection)</td>
+                    <td style="padding: 10px 16px;">Error-based (4 DB signatures) + boolean-based blind detection</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">Authenticated Portal Testing</td>
+                    <td style="padding: 10px 16px;">A07 (Auth Failures)</td>
+                    <td style="padding: 10px 16px;">Default credentials, login bypass, session management flaws</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The trend is clear: scanners are moving from generic vulnerability signatures toward OWASP-category-specific detection modules. This is the right direction — but it means security teams need to actively track which categories their toolchain covers and update their scanning configuration as new capabilities ship.</p>
+    </section>
+
+    <!-- Section 6: Action Items -->
+    <section id="action-items">
+        <h2>6. Action Items for Security Teams</h2>
+
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <h3 style="margin-top: 0;">This Week's Priority Checklist</h3>
+            <ol>
+                <li><strong>Audit your TLS configuration</strong> — Run a TLS scan against all production endpoints. Check for expired certificates, weak cipher suites, and missing HSTS headers. Fix anything supporting TLS &lt; 1.2.</li>
+                <li><strong>Test for blind SQL injection</strong> — Error-based SQLi is easy to catch. Boolean-based blind injection is not. Run injection tests that compare response lengths, not just error strings.</li>
+                <li><strong>Check your CORS policies</strong> — If you run API gateways, verify that <code>Access-Control-Allow-Origin</code> is not set to <code>*</code> on any authenticated endpoint. Test with unexpected Origin headers.</li>
+                <li><strong>Scan Next.js applications</strong> — If you deploy Next.js, check for exposed <code>/_next/data/</code> endpoints, build manifests, and source maps in production. These are information disclosure risks.</li>
+                <li><strong>Map your OWASP coverage</strong> — Document which OWASP Top 10 categories your current scanner covers. Identify the gaps. Plan manual testing or specialized tools for uncovered categories.</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Section 7: Tools -->
+    <section id="tools">
+        <h2>7. Essential Tools &amp; Resources</h2>
+
+        <h3>Scanning &amp; Testing</h3>
+        <ul>
+            <li><strong><a href="https://www.zaproxy.org/" target="_blank" rel="noopener">OWASP ZAP</a></strong> — Free, open-source web app scanner. Strong A03 coverage. See our <a href="/articles/owasp-zap-vs-burp-suite-2026/">ZAP vs Burp comparison</a>.</li>
+            <li><strong><a href="https://github.com/projectdiscovery/nuclei" target="_blank" rel="noopener">Nuclei</a></strong> — Template-based scanner with community-contributed detection rules. See our <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei comparison</a>.</li>
+            <li><strong><a href="https://testssl.sh/" target="_blank" rel="noopener">testssl.sh</a></strong> — Command-line TLS testing tool. Checks protocols, ciphers, certificates, and headers.</li>
+            <li><strong><a href="https://sqlmap.org/" target="_blank" rel="noopener">sqlmap</a></strong> — Automated SQL injection detection and exploitation. Supports blind, error-based, and time-based techniques.</li>
+        </ul>
+
+        <h3>References</h3>
+        <ul>
+            <li><a href="https://owasp.org/Top10/" target="_blank" rel="noopener">OWASP Top 10 (2021)</a> — The definitive web application security risk list</li>
+            <li><a href="https://cheatsheetseries.owasp.org/" target="_blank" rel="noopener">OWASP Cheat Sheet Series</a> — Practical remediation guidance for each category</li>
+            <li><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">CISA KEV Catalog</a> — Known exploited vulnerabilities requiring immediate attention</li>
+        </ul>
+
+        <h3>Further Reading on This Site</h3>
+        <ul>
+            <li><a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">Detecting SQL Injection: What Your Scanner Should Check in 2026</a></li>
+            <li><a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Scanner Should Check in 2026</a></li>
+            <li><a href="/articles/securityclaw-4-new-skills-april-2026/">4 New SecurityClaw Skills That Change How You Recon Web Applications</a></li>
+            <li><a href="/articles/automate-zap-scans-github-actions-2026/">How to Automate OWASP ZAP Scans in GitHub Actions</a></li>
+        </ul>
+    </section>
+
+    <section style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 40px;">
+        <h2 style="margin-top: 0;">Bottom Line</h2>
+        <p>The OWASP Top 10 hasn't changed since 2021, but the attack surface has. Next.js, API gateways, and cloud-native architectures introduce risks that the 2021 list anticipated but most scanners still don't cover well. The gap is closing — new detection capabilities for CORS, TLS, SQLi, and framework-specific recon shipped this week — but security teams need to actively manage their coverage map rather than assuming "we scan for OWASP" means "we're covered."</p>
+        <p>Next week: we'll cover SSRF detection techniques and how cloud metadata endpoints remain the most exploited SSRF target in 2026.</p>
+    </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

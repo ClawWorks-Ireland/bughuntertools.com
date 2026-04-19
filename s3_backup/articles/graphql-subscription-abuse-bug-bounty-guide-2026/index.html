@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Exploit GraphQL subscriptions for data leaks, denial of service, and authorization bypasses. Covers WebSocket hijacking, subscription flooding, and real-time data exfiltration.">
+    <title>GraphQL Subscription Abuse: Exploiting Real-Time Endpoints for Data Leaks and DoS</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/graphql-subscription-abuse-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/graphql-subscription-abuse-bug-bounty-guide-2026/">
+    <meta property="og:title" content="GraphQL Subscription Abuse: Exploiting Real-Time Endpoints for Data Leaks and DoS">
+    <meta property="og:description" content="Exploit GraphQL subscriptions for data leaks, denial of service, and authorization bypasses. Covers WebSocket hijacking, subscription flooding, and real-time data exfiltration.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/graphql-subscription-abuse-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="GraphQL Subscription Abuse: Exploiting Real-Time Endpoints for Data Leaks and DoS">
+    <meta name="twitter:description" content="Exploit GraphQL subscriptions for data leaks, denial of service, and authorization bypasses. Covers WebSocket hijacking, subscription flooding, and real-time data exfiltration.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "GraphQL Subscription Abuse: Exploiting Real-Time Endpoints for Data Leaks and DoS",
+      "description": "Exploit GraphQL subscriptions for data leaks, denial of service, and authorization bypasses. Covers WebSocket hijacking, subscription flooding, and real-time data exfiltration.",
+      "url": "https://bughuntertools.com/articles/graphql-subscription-abuse-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">GraphQL Subscription Abuse: Exploiting Real-Time Endpoints for Data Leaks and DoS</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>GraphQL subscriptions are the most under-tested attack surface in modern APIs — authorization gaps are the norm, not the exception.</li>
+<li>The WebSocket transport layer introduces connection-level auth issues that don't exist in query/mutation flows.</li>
+<li>Subscription flooding is a reliable DoS vector because each subscription holds server resources open indefinitely.</li>
+<li>Schema introspection reveals subscription types that developers often forget to lock down.</li>
+<li>Cross-tenant data leakage via subscriptions is a high-severity finding that most programs will pay top bounties for.</li>
+</ul>
+</div>
+
+<h2>Why GraphQL Subscriptions Are a Bug Bounty Gold Mine</h2>
+
+<p>GraphQL subscriptions let clients receive real-time updates over a persistent connection. When a user places an order, when a message arrives, when a price changes — subscriptions push that data to the client instantly. The problem: most developers treat subscriptions as a convenience feature and skip the authorization checks they'd never forget on a query or mutation.</p>
+
+<p>This guide covers the practical techniques for finding and exploiting GraphQL subscription vulnerabilities in bug bounty targets. Every technique here has been validated against real-world applications.</p>
+
+<h2>How GraphQL Subscriptions Work (Attack-Relevant Details)</h2>
+
+<p>Before you test, you need to understand the subscription lifecycle — each phase is an attack surface:</p>
+
+<ol>
+<li><strong>Connection initialization</strong> — The client opens a WebSocket and sends a <code>connection_init</code> message, optionally with auth credentials. The server responds with <code>connection_ack</code>. If the server doesn't validate credentials here, every subsequent subscription runs unauthenticated.</li>
+<li><strong>Subscription registration</strong> — The client sends a <code>subscribe</code> message with a GraphQL subscription query. The server registers the subscription and starts pushing matching events. If the server doesn't check authorization per-subscription, any authenticated user can subscribe to any event stream.</li>
+<li><strong>Event delivery</strong> — The server pushes <code>next</code> messages as events occur. If field-level authorization isn't enforced on subscription payloads, sensitive fields leak to unauthorized subscribers.</li>
+<li><strong>Connection termination</strong> — The client sends <code>complete</code> or closes the WebSocket. If the server doesn't clean up subscriptions on disconnect, orphaned subscriptions consume resources indefinitely.</li>
+</ol>
+
+<h3>Two Protocols, Two Attack Surfaces</h3>
+
+<p>There are two competing WebSocket sub-protocols for GraphQL:</p>
+
+<ul>
+<li><strong>subscriptions-transport-ws</strong> (legacy) — Uses <code>connection_init</code>, <code>start</code>, <code>stop</code>, <code>connection_terminate</code>. Auth token goes in <code>connectionParams</code> during init. Many implementations never re-validate the token after connection.</li>
+<li><strong>graphql-ws</strong> (modern) — Uses <code>connection_init</code>, <code>subscribe</code>, <code>complete</code>. Stricter protocol but still relies on the server to enforce auth. The <code>Sec-WebSocket-Protocol</code> header tells you which one the target uses.</li>
+</ul>
+
+<h2>Reconnaissance: Finding Subscription Endpoints</h2>
+
+<h3>Step 1: Schema Introspection</h3>
+
+<p>Run a standard introspection query against the GraphQL endpoint. Look for the <code>subscriptionType</code> field in the schema:</p>
+
+<pre><code>{
+  __schema {
+    subscriptionType {
+      name
+      fields {
+        name
+        args { name type { name } }
+        type { name kind ofType { name } }
+      }
+    }
+  }
+}</code></pre>
+
+<p>If introspection is disabled, try these bypasses:</p>
+<ul>
+<li>Send the introspection query as a GET request with the query in the URL parameter</li>
+<li>Use field suggestion errors — send a subscription with a misspelled field and the error message often leaks valid field names</li>
+<li>Check for GraphQL Playground or GraphiQL endpoints at <code>/graphql/playground</code>, <code>/graphiql</code>, <code>/altair</code> — these often have introspection enabled even when the main endpoint doesn't</li>
+</ul>
+
+<h3>Step 2: Identify the WebSocket Endpoint</h3>
+
+<p>Common subscription endpoint patterns:</p>
+<ul>
+<li><code>wss://api.target.com/graphql</code> (same as query endpoint, upgraded)</li>
+<li><code>wss://api.target.com/subscriptions</code></li>
+<li><code>wss://ws.target.com/graphql</code></li>
+<li><code>wss://realtime.target.com/</code></li>
+</ul>
+
+<p>Check the browser's Network tab → WS filter while using the application's real-time features. The WebSocket URL and the <code>Sec-WebSocket-Protocol</code> header tell you everything you need.</p>
+
+<h2>Attack 1: Unauthorized Subscription Access (IDOR via Subscriptions)</h2>
+
+<p>The most common and highest-impact finding. The server checks authorization on queries and mutations but not on subscriptions.</p>
+
+<h3>Testing Methodology</h3>
+
+<ol>
+<li>Authenticate as User A. Open a WebSocket and subscribe to User A's events (e.g., <code>subscription { orderUpdated(userId: "A") { id status amount } }</code>).</li>
+<li>Confirm you receive events for User A.</li>
+<li>Now subscribe to User B's events: <code>subscription { orderUpdated(userId: "B") { id status amount } }</code>.</li>
+<li>If you receive User B's events, you have an authorization bypass — report it.</li>
+</ol>
+
+<h3>Practical Example with websocat</h3>
+
+<pre><code># Connect with User A's token
+websocat -H "Sec-WebSocket-Protocol: graphql-ws" \
+  wss://api.target.com/graphql
+
+# Send connection_init with auth
+{"type":"connection_init","payload":{"Authorization":"Bearer USER_A_TOKEN"}}
+
+# Subscribe to User B's events
+{"id":"1","type":"subscribe","payload":{"query":"subscription { orderUpdated(userId: \"USER_B_ID\") { id status amount shippingAddress } }"}}</code></pre>
+
+<p>Variations to test:</p>
+<ul>
+<li>Subscribe with no userId filter — does the server send ALL users' events?</li>
+<li>Subscribe with a wildcard or empty string as the filter argument</li>
+<li>Omit the auth token entirely in <code>connection_init</code> — does the subscription still work?</li>
+</ul>
+
+<h2>Attack 2: Connection-Level Authentication Bypass</h2>
+
+<p>Many GraphQL subscription implementations only check the auth token during <code>connection_init</code> and never re-validate it. This creates two exploitable scenarios:</p>
+
+<h3>Scenario A: Token Expiry Bypass</h3>
+<ol>
+<li>Connect with a valid token.</li>
+<li>Wait for the token to expire (or use a token that expires in 1 minute).</li>
+<li>Register new subscriptions after expiry.</li>
+<li>If the server accepts them, the connection outlives the token — report it.</li>
+</ol>
+
+<h3>Scenario B: Revoked Token Persistence</h3>
+<ol>
+<li>Connect with a valid token.</li>
+<li>In another session, revoke the token (logout, password change, admin revocation).</li>
+<li>Check if the existing WebSocket connection still delivers subscription events.</li>
+<li>If it does, revocation doesn't propagate to active connections — report it.</li>
+</ol>
+
+<h2>Attack 3: Subscription Flooding (Denial of Service)</h2>
+
+<p>Each active subscription consumes server memory and CPU. Most implementations don't limit the number of subscriptions per connection or per user.</p>
+
+<h3>Testing Methodology</h3>
+
+<pre><code># Python script to test subscription limits
+import asyncio, websockets, json
+
+async def flood():
+    uri = "wss://api.target.com/graphql"
+    async with websockets.connect(uri, subprotocols=["graphql-ws"]) as ws:
+        await ws.send(json.dumps({
+            "type": "connection_init",
+            "payload": {"Authorization": "Bearer TOKEN"}
+        }))
+        await ws.recv()  # connection_ack
+
+        for i in range(1000):
+            await ws.send(json.dumps({
+                "id": str(i),
+                "type": "subscribe",
+                "payload": {"query": "subscription { priceUpdated { symbol price } }"}
+            }))
+
+        # Monitor server response time degradation
+        while True:
+            msg = await ws.recv()
+            print(msg)
+
+asyncio.run(flood())</code></pre>
+
+<p><strong>Important</strong>: Start with small numbers (10, 50, 100) and monitor impact. Do NOT launch thousands of subscriptions against a production target without confirming the program allows DoS testing. Many programs explicitly exclude DoS — check the policy first.</p>
+
+<h3>What to Report</h3>
+<ul>
+<li>No per-user subscription limit → resource exhaustion risk</li>
+<li>No per-connection subscription limit → single connection can consume unbounded memory</li>
+<li>No rate limiting on <code>subscribe</code> messages → rapid subscription creation</li>
+</ul>
+
+<h2>Attack 4: Subscription Payload Data Leakage</h2>
+
+<p>Even when subscription access is authorized, the payload may include fields the subscriber shouldn't see.</p>
+
+<h3>Testing Methodology</h3>
+
+<ol>
+<li>Subscribe to an event you're authorized to receive.</li>
+<li>Request fields that should be restricted — admin fields, internal IDs, PII of other users, pricing data, etc.</li>
+<li>Compare the subscription payload to what the equivalent query returns. If the subscription returns more fields, the authorization layer is inconsistent.</li>
+</ol>
+
+<pre><code># Subscribe requesting sensitive fields
+{"id":"1","type":"subscribe","payload":{"query":"subscription { orderUpdated { id status amount internalNotes adminComments customerEmail customerPhone }"}}</code></pre>
+
+<p>This works because many implementations use a different resolver chain for subscriptions than for queries. The query resolver checks field-level permissions; the subscription resolver just serializes the entire event object.</p>
+
+<h2>Attack 5: Subscription Injection</h2>
+
+<p>If subscription arguments are interpolated into backend event filters without sanitization, you can inject filter logic:</p>
+
+<ul>
+<li><strong>NoSQL injection in subscription filters</strong> — If the backend uses MongoDB to match events: <code>subscription { events(filter: "{\"$gt\": \"\"}") { data } }</code></li>
+<li><strong>Regex injection</strong> — If the filter uses regex matching: <code>subscription { logs(pattern: ".*") { message } }</code> to match all events</li>
+<li><strong>Subscription query manipulation</strong> — Some implementations let you pass fragments or directives that alter the subscription behavior: <code>subscription { events @include(if: true) { sensitiveField } }</code></li>
+</ul>
+
+<h2>Tools for GraphQL Subscription Testing</h2>
+
+<table>
+<thead><tr><th>Tool</th><th>Use Case</th></tr></thead>
+<tbody>
+<tr><td><a href="https://portswigger.net/burp">Burp Suite</a></td><td>WebSocket interception, message modification, replay</td></tr>
+<tr><td><a href="https://github.com/vi/websocat">websocat</a></td><td>Command-line WebSocket client for manual testing</td></tr>
+<tr><td><a href="https://github.com/doyensec/inql">InQL</a></td><td>Burp extension for GraphQL introspection and query generation</td></tr>
+<tr><td><a href="https://github.com/APIs-guru/graphql-voyager">GraphQL Voyager</a></td><td>Visual schema exploration to identify subscription types</td></tr>
+<tr><td><a href="https://github.com/python-websockets/websockets">Python websockets</a></td><td>Scripted subscription testing and fuzzing</td></tr>
+</tbody>
+</table>
+
+<h2>Reporting GraphQL Subscription Vulnerabilities</h2>
+
+<h3>Severity Guidelines</h3>
+
+<ul>
+<li><strong>Critical</strong>: Cross-tenant data access via subscriptions (IDOR), unauthenticated subscription access to sensitive data</li>
+<li><strong>High</strong>: Authorization bypass on subscription registration, token expiry/revocation bypass on persistent connections</li>
+<li><strong>Medium</strong>: Subscription flooding without rate limits (if DoS is in scope), field-level data leakage in subscription payloads</li>
+<li><strong>Low</strong>: Missing subscription cleanup on disconnect, subscription count information disclosure</li>
+</ul>
+
+<h3>Report Template</h3>
+
+<pre><code>## Title
+Unauthorized Cross-Tenant Data Access via GraphQL Subscriptions
+
+## Severity
+Critical
+
+## Description
+The GraphQL subscription endpoint at wss://api.target.com/graphql
+does not enforce per-user authorization on subscription registration.
+An authenticated user can subscribe to events belonging to any other
+user by specifying their userId in the subscription query.
+
+## Steps to Reproduce
+1. Authenticate as User A (attacker)
+2. Open WebSocket to wss://api.target.com/graphql
+3. Send connection_init with User A's bearer token
+4. Send subscribe message with User B's userId
+5. Trigger an event for User B (e.g., place an order)
+6. Observe User B's event data delivered to User A's subscription
+
+## Impact
+Any authenticated user can monitor real-time events for any other
+user, including order details, messages, and account changes.
+</code></pre>
+
+<h2>Defensive Patterns (Know What You're Bypassing)</h2>
+
+<p>Understanding the defenses helps you find where they're missing:</p>
+
+<ul>
+<li><strong>Per-subscription authorization</strong> — The server checks if the authenticated user is allowed to subscribe to the requested resource. Test by subscribing to resources owned by other users.</li>
+<li><strong>Connection-level token refresh</strong> — The server periodically re-validates the auth token on active connections. Test by revoking your token and checking if the connection persists.</li>
+<li><strong>Subscription rate limiting</strong> — The server limits subscriptions per user/connection. Test by rapidly creating subscriptions and checking for 429-equivalent responses.</li>
+<li><strong>Payload filtering</strong> — The server applies field-level authorization to subscription payloads. Test by requesting restricted fields in your subscription query.</li>
+</ul>
+
+<h2>Related Guides</h2>
+
+<ul>
+<li><a href="/articles/websocket-security-testing-bug-bounty-guide-2026/">WebSocket Security Testing for Bug Bounty in 2026</a> — Covers the transport layer that GraphQL subscriptions run on</li>
+<li><a href="/articles/api-authentication-testing-bug-bounty-guide-2026/">API Authentication Testing for Bug Bounty in 2026</a> — Token handling and session management patterns</li>
+<li><a href="/articles/prototype-pollution-bug-bounty-guide-2026/">Prototype Pollution for Bug Bounty in 2026</a> — JavaScript-specific attacks relevant to Node.js GraphQL servers</li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

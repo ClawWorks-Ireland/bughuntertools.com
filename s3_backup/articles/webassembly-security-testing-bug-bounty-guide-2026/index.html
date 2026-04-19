@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test WebAssembly applications for memory corruption, logic flaws, and authentication bypasses. Covers Wasm reversing, debugging, and exploitation techniques.">
+    <title>WebAssembly Security Testing: Reversing and Exploiting Wasm Binaries</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/webassembly-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/webassembly-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="WebAssembly Security Testing: Reversing and Exploiting Wasm Binaries">
+    <meta property="og:description" content="Test WebAssembly applications for memory corruption, logic flaws, and authentication bypasses. Covers Wasm reversing, debugging, and exploitation techniques.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/webassembly-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="WebAssembly Security Testing: Reversing and Exploiting Wasm Binaries">
+    <meta name="twitter:description" content="Test WebAssembly applications for memory corruption, logic flaws, and authentication bypasses. Covers Wasm reversing, debugging, and exploitation techniques.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "WebAssembly Security Testing: Reversing and Exploiting Wasm Binaries",
+      "description": "Test WebAssembly applications for memory corruption, logic flaws, and authentication bypasses. Covers Wasm reversing, debugging, and exploitation techniques.",
+      "url": "https://bughuntertools.com/articles/webassembly-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">WebAssembly Security Testing: Reversing and Exploiting Wasm Binaries</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>WebAssembly modules compiled from C/C++ inherit memory corruption vulnerabilities — buffer overflows and use-after-free bugs exist inside the Wasm sandbox</li>
+<li>Most bug bounty programs don't explicitly exclude Wasm — it's an underexplored attack surface with high-impact findings</li>
+<li>WABT tools (wasm2wat, wasm-decompile) and Chrome DevTools are your primary reverse engineering toolkit</li>
+<li>Focus on the JavaScript-to-Wasm boundary — insecure imports and exports are the most common vulnerability class</li>
+<li>Server-side Wasm (Cloudflare Workers, Fastly Compute) is a growing attack surface with different threat models than browser Wasm</li>
+</ul>
+</div>
+
+<h2>Why WebAssembly Is a Bug Bounty Gold Mine</h2>
+
+<p>WebAssembly adoption has exploded. Figma, Google Earth, AutoCAD, Photoshop — major applications now ship critical logic as Wasm modules. Yet most bug bounty hunters skip Wasm entirely because they don't know how to analyze it. That's exactly why it's valuable: low competition, high-impact findings.</p>
+
+<p>Wasm modules often handle sensitive operations: cryptographic key derivation, authentication token generation, payment calculations, and data validation. A vulnerability in any of these is a critical finding.</p>
+
+<h2>Understanding the WebAssembly Attack Surface</h2>
+
+<p>Before diving into tools, you need to understand what makes Wasm different from JavaScript:</p>
+
+<ul>
+<li><strong>Linear memory model</strong> — Wasm uses a flat byte array for memory. There's no garbage collector. Code compiled from C/C++ manages memory manually, which means buffer overflows and use-after-free bugs are possible inside the sandbox.</li>
+<li><strong>Import/export boundary</strong> — Wasm modules communicate with JavaScript through imported and exported functions. This boundary is where type mismatches, missing validation, and trust assumptions create vulnerabilities.</li>
+<li><strong>No direct DOM access</strong> — Wasm can't touch the DOM directly. It must call JavaScript imports. But those JavaScript bridge functions often trust Wasm output without validation.</li>
+<li><strong>Deterministic execution</strong> — Same inputs produce same outputs. This makes fuzzing highly effective because you can reproduce crashes reliably.</li>
+</ul>
+
+<h2>Reconnaissance: Finding Wasm Modules</h2>
+
+<p>The first step is identifying targets that use WebAssembly:</p>
+
+<pre><code># Check if a site loads any .wasm files
+# Open Chrome DevTools → Network tab → filter by "wasm"
+# Or use curl to check common paths:
+curl -sI https://target.com/app.wasm
+curl -sI https://target.com/static/wasm/module.wasm
+
+# Search JavaScript bundles for Wasm instantiation
+curl -s https://target.com/main.js | grep -i "WebAssembly\.\(instantiate\|compile\|Module\)"
+
+# Check for inline Wasm (base64-encoded modules)
+curl -s https://target.com/main.js | grep -oP "AGFzbQ[A-Za-z0-9+/=]+"</code></pre>
+
+<p>The magic bytes for Wasm are <code>\0asm</code> (hex: <code>00 61 73 6d</code>), which base64-encodes to <code>AGFzbQ</code>. Finding this string in JavaScript source means there's an inline Wasm module.</p>
+
+<h2>Reverse Engineering Wasm Modules</h2>
+
+<h3>Step 1: Download and Convert to WAT</h3>
+
+<pre><code># Install WABT (WebAssembly Binary Toolkit)
+# Ubuntu/Debian:
+sudo apt-get install wabt
+# macOS:
+brew install wabt
+
+# Convert binary Wasm to human-readable WAT (WebAssembly Text Format)
+wasm2wat target.wasm -o target.wat
+
+# Or get a higher-level decompilation
+wasm-decompile target.wasm -o target.dcmp</code></pre>
+
+<h3>Step 2: Analyze Imports and Exports</h3>
+
+<p>The imports and exports tell you exactly what the Wasm module can do and what it depends on:</p>
+
+<pre><code># List all imports and exports
+wasm-objdump -x target.wasm
+
+# Look for interesting function names
+wasm-objdump -x target.wasm | grep -iE "auth|crypt|key|token|password|validate|verify|sign|hash|pay|admin"</code></pre>
+
+<p>Imports from the JavaScript environment are your primary attack surface. If the Wasm module imports a function like <code>env.get_user_role</code>, you can potentially override that import to return arbitrary values.</p>
+
+<h3>Step 3: Runtime Debugging with Chrome DevTools</h3>
+
+<p>Chrome has native Wasm debugging support:</p>
+
+<ol>
+<li>Open DevTools → Sources tab</li>
+<li>Find the Wasm module under <code>wasm://</code> in the source tree</li>
+<li>Set breakpoints on exported functions</li>
+<li>Inspect linear memory in the Memory panel</li>
+<li>Step through instructions to understand control flow</li>
+</ol>
+
+<p>Enable the "WebAssembly Debugging: Enable DWARF support" experiment in <code>chrome://flags</code> for source-level debugging if the module includes debug symbols (rare in production, but worth checking).</p>
+
+<h2>Common Vulnerability Classes in WebAssembly</h2>
+
+<h3>1. Buffer Overflow in Linear Memory</h3>
+
+<p>C/C++ code compiled to Wasm retains its memory bugs. The difference is that overflows corrupt the Wasm linear memory rather than process memory:</p>
+
+<pre><code>// Vulnerable C code compiled to Wasm
+void process_input(char* input) {
+    char buffer[64];
+    strcpy(buffer, input);  // No bounds checking — classic overflow
+    // buffer overflow corrupts adjacent data in linear memory
+}</code></pre>
+
+<p>To exploit this, identify functions that take string or buffer inputs from JavaScript, then send oversized inputs and observe memory corruption in DevTools.</p>
+
+<h3>2. Type Confusion at the JS-Wasm Boundary</h3>
+
+<p>Wasm functions have strict type signatures (i32, i64, f32, f64), but JavaScript is dynamically typed. The bridge code often fails to validate types properly:</p>
+
+<pre><code>// JavaScript bridge code (vulnerable)
+const result = wasmModule.exports.calculate_price(
+    userInput.quantity,  // Expected: i32, but what if this is a float? NaN? Infinity?
+    userInput.discount   // Expected: f64, but what if this is a string?
+);
+// Wasm receives garbage values and produces unexpected results</code></pre>
+
+<p>Test by passing unexpected types: <code>NaN</code>, <code>Infinity</code>, <code>-0</code>, very large numbers, negative numbers where unsigned is expected.</p>
+
+<h3>3. Insecure Import Overrides</h3>
+
+<p>When a Wasm module is instantiated, the JavaScript code provides its imports. If you can control the instantiation (e.g., through prototype pollution or a DOM-based injection), you can replace imported functions:</p>
+
+<pre><code>// Normal instantiation
+const imports = {
+    env: {
+        is_admin: () => 0,  // Returns false
+        get_balance: () => currentBalance
+    }
+};
+const instance = await WebAssembly.instantiate(wasmBytes, imports);
+
+// Attack: if you can modify the imports object
+imports.env.is_admin = () => 1;  // Now returns true
+imports.env.get_balance = () => 999999;  // Arbitrary balance</code></pre>
+
+<h3>4. Integer Overflow in Wasm Arithmetic</h3>
+
+<p>Wasm integers wrap on overflow (like C). If the application uses Wasm for financial calculations or access control checks, integer overflow can bypass validation:</p>
+
+<pre><code>;; WAT showing vulnerable bounds check
+(func $check_withdrawal (param $amount i32) (param $balance i32) (result i32)
+    ;; if amount <= balance, allow withdrawal
+    local.get $amount
+    local.get $balance
+    i32.le_u  ;; unsigned comparison
+    ;; But what if $amount is 0xFFFFFFFF (-1 as signed)?
+    ;; As unsigned, it's 4294967295 — larger than any balance
+    ;; But if used in subsequent signed arithmetic, it wraps
+)</code></pre>
+
+<h3>5. Memory Disclosure via Uninitialized Data</h3>
+
+<p>Wasm linear memory is zero-initialized at startup, but after the module runs, freed memory regions may contain sensitive data. If a function returns a pointer to a buffer without clearing it first, previous data leaks:</p>
+
+<pre><code>// If the Wasm module processes authentication tokens in memory,
+// then later allocates a buffer for user-visible output in the same region,
+// the output may contain fragments of the token</code></pre>
+
+<h2>Exploitation Techniques</h2>
+
+<h3>Manipulating Linear Memory from JavaScript</h3>
+
+<p>If the Wasm module exports its memory (most do), JavaScript can read and write it directly:</p>
+
+<pre><code>// Access Wasm linear memory
+const memory = wasmInstance.exports.memory;
+const view = new Uint8Array(memory.buffer);
+
+// Read sensitive data from known offsets
+const sensitiveData = new TextDecoder().decode(view.slice(0x1000, 0x1100));
+
+// Write arbitrary data to corrupt application state
+view.set(new TextEncoder().encode("admin"), 0x2000);</code></pre>
+
+<p>This is particularly dangerous when combined with a cross-site scripting (XSS) vulnerability — the attacker's JavaScript can directly manipulate the Wasm module's internal state.</p>
+
+<h3>Fuzzing Wasm Exports</h3>
+
+<p>Systematic fuzzing of exported functions often reveals crashes and unexpected behavior:</p>
+
+<pre><code>// Simple fuzzer for Wasm exported functions
+const exports = wasmInstance.exports;
+const testValues = [
+    0, -1, 1, 0x7FFFFFFF, -0x80000000, 0xFFFFFFFF,
+    NaN, Infinity, -Infinity, 0.1, -0.1,
+    Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER
+];
+
+for (const funcName of Object.keys(exports)) {
+    if (typeof exports[funcName] === 'function') {
+        for (const val of testValues) {
+            try {
+                const result = exports[funcName](val);
+                console.log(`${funcName}(${val}) = ${result}`);
+            } catch (e) {
+                console.error(`${funcName}(${val}) CRASHED: ${e.message}`);
+                // Wasm traps (unreachable, out-of-bounds) show up here
+            }
+        }
+    }
+}</code></pre>
+
+<p>Pay special attention to <code>RuntimeError: unreachable</code> (indicates a panic/abort path) and <code>RuntimeError: memory access out of bounds</code> (indicates a buffer overflow that escaped linear memory bounds).</p>
+
+<h2>Server-Side WebAssembly</h2>
+
+<p>Cloudflare Workers, Fastly Compute, and Fermyon Spin run Wasm on the server. The threat model is different:</p>
+
+<ul>
+<li><strong>WASI (WebAssembly System Interface)</strong> — Server-side Wasm may have filesystem, network, and environment variable access through WASI. Misconfigured WASI permissions can expose the host system.</li>
+<li><strong>Shared-nothing isolation</strong> — Each Wasm instance is isolated, but if the host runtime has bugs, sandbox escapes are possible (these are critical-severity findings).</li>
+<li><strong>Cold start data leaks</strong> — If Wasm instances are reused across requests, data from one request may leak to another through uncleared linear memory.</li>
+</ul>
+
+<p>To test server-side Wasm, look for headers like <code>cf-worker</code> (Cloudflare Workers) or <code>x-served-by: cache-</code> patterns that indicate edge compute. Then test for memory leaks by sending sequential requests and checking if response data contains fragments from previous requests.</p>
+
+<h2>Tools for WebAssembly Security Testing</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Link</th></tr>
+</thead>
+<tbody>
+<tr><td>WABT</td><td>Binary-to-text conversion, validation, objdump</td><td><a href="https://github.com/WebAssembly/wabt">github.com/WebAssembly/wabt</a></td></tr>
+<tr><td>wasm-decompile</td><td>Higher-level decompilation (included in WABT)</td><td>Included in WABT</td></tr>
+<tr><td>Ghidra + Wasm plugin</td><td>Full disassembly and decompilation</td><td><a href="https://github.com/nickcano/ghidra-wasm-plugin">ghidra-wasm-plugin</a></td></tr>
+<tr><td>Chrome DevTools</td><td>Runtime debugging, memory inspection, breakpoints</td><td>Built into Chrome</td></tr>
+<tr><td>Manticore</td><td>Symbolic execution for Wasm</td><td><a href="https://github.com/trailofbits/manticore">github.com/trailofbits/manticore</a></td></tr>
+<tr><td>wasm-opt (Binaryen)</td><td>Optimization and transformation of Wasm binaries</td><td><a href="https://github.com/WebAssembly/binaryen">github.com/WebAssembly/binaryen</a></td></tr>
+<tr><td>Wasmer</td><td>Local Wasm runtime for testing server-side modules</td><td><a href="https://wasmer.io">wasmer.io</a></td></tr>
+</tbody>
+</table>
+
+<h2>Bug Bounty Reporting Tips for Wasm Vulnerabilities</h2>
+
+<ul>
+<li><strong>Demonstrate impact clearly</strong> — A buffer overflow in Wasm linear memory is less impactful than a process-level overflow. Show what data gets corrupted and how it affects the application (e.g., bypassing authentication, manipulating financial calculations).</li>
+<li><strong>Chain with other vulnerabilities</strong> — Wasm memory manipulation + XSS = critical. A standalone Wasm type confusion might be medium severity, but chained with another bug it becomes high/critical.</li>
+<li><strong>Include reproduction steps with DevTools</strong> — Show the exact breakpoints, memory addresses, and function calls. Programs love detailed Wasm reports because they rarely receive them.</li>
+<li><strong>Note the source language</strong> — If you can identify that the Wasm was compiled from C (no bounds checking) vs. Rust (panics on overflow), mention it. It helps the developer understand the root cause.</li>
+</ul>
+
+<h2>Real-World Attack Scenarios</h2>
+
+<h3>Scenario 1: Crypto Wallet Key Derivation</h3>
+<p>A browser-based crypto wallet uses Wasm for key derivation. The Wasm module takes a password and salt, runs PBKDF2, and returns the derived key. By fuzzing the password length parameter, you discover a buffer overflow that corrupts the salt, causing the same key to be derived for different passwords. Impact: predictable wallet keys.</p>
+
+<h3>Scenario 2: Client-Side Access Control</h3>
+<p>A SaaS application uses Wasm to evaluate feature flags and access control rules client-side. The Wasm module exports a <code>check_permission</code> function. By overriding the imported <code>get_user_tier</code> function to always return the enterprise tier value, you unlock premium features. Impact: authorization bypass.</p>
+
+<h3>Scenario 3: Game Anti-Cheat Bypass</h3>
+<p>A browser game uses Wasm for physics calculations and score validation. By modifying the linear memory where the score is stored (exported memory + known offset from reverse engineering), you can submit arbitrary scores that pass the Wasm validation. Impact: game integrity compromise.</p>
+
+<h2>Methodology Checklist</h2>
+
+<ol>
+<li><strong>Discover</strong> — Find .wasm files in network traffic, JavaScript bundles, and source maps</li>
+<li><strong>Download</strong> — Save the .wasm binary locally for offline analysis</li>
+<li><strong>Decompile</strong> — Convert to WAT, run wasm-objdump, identify imports/exports</li>
+<li><strong>Map the boundary</strong> — Trace how JavaScript calls Wasm exports and what imports are provided</li>
+<li><strong>Identify sensitive functions</strong> — Look for auth, crypto, payment, and validation logic</li>
+<li><strong>Fuzz exports</strong> — Test all exported functions with edge-case values</li>
+<li><strong>Inspect memory</strong> — Check for sensitive data in linear memory, test for overflows</li>
+<li><strong>Test import overrides</strong> — Determine if imports can be manipulated (via XSS, prototype pollution, etc.)</li>
+<li><strong>Chain findings</strong> — Combine Wasm bugs with web vulnerabilities for maximum impact</li>
+<li><strong>Report with PoC</strong> — Include DevTools screenshots, memory dumps, and step-by-step reproduction</li>
+</ol>
+
+<h2>Related Articles</h2>
+
+<ul>
+<li><a href="/articles/browser-extension-security-testing-bug-bounty-guide-2026/">Browser Extension Security Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/race-condition-testing-bug-bounty-guide-2026/">Race Condition Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/supply-chain-attack-testing-bug-bounty-guide-2026/">Supply Chain Attack Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/graphql-rate-limiting-bypass-bug-bounty-guide-2026/">GraphQL Rate Limiting Bypass for Bug Bounty in 2026</a></li>
+<li><a href="/articles/xss-detection-bug-bounty-guide-2026/">XSS Detection for Bug Bounty in 2026</a></li>
+<li><a href="/articles/bug-bounty-starter-kit/">Bug Bounty Starter Kit</a></li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

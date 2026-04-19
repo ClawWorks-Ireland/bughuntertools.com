@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reflected XSS remains the most common injection flaw in web applications. Here&#39;s how context-aware detection works, what payloads your scanner should test, and how to fix reflected XSS at the source.">
+    <title>Detecting Reflected XSS: What Your Security Scanner Should Check in 2026</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/detecting-reflected-xss-what-scanners-should-check-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/detecting-reflected-xss-what-scanners-should-check-2026/">
+    <meta property="og:title" content="Detecting Reflected XSS: What Your Security Scanner Should Check in 2026">
+    <meta property="og:description" content="Reflected XSS remains the most common injection flaw in web applications. Here&#39;s how context-aware detection works, what payloads your scanner should test, and how to fix reflected XSS at the source.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/detecting-reflected-xss-what-scanners-should-check-2026/">
+    <meta name="twitter:title" content="Detecting Reflected XSS: What Your Security Scanner Should Check in 2026">
+    <meta name="twitter:description" content="Reflected XSS remains the most common injection flaw in web applications. Here&#39;s how context-aware detection works, what payloads your scanner should test, and how to fix reflected XSS at the source.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Detecting Reflected XSS: What Your Security Scanner Should Check in 2026",
+      "description": "Reflected XSS remains the most common injection flaw in web applications. Here&#39;s how context-aware detection works, what payloads your scanner should test, and how to fix reflected XSS at the source.",
+      "url": "https://bughuntertools.com/articles/detecting-reflected-xss-what-scanners-should-check-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Detecting Reflected XSS: What Your Security Scanner Should Check in 2026</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Detecting Reflected XSS: What Your Security Scanner Should Check in 2026",
+  "description": "Reflected XSS remains the most common injection flaw in web applications. Here is how context-aware detection works and how to fix it.",
+  "datePublished": "2026-04-08",
+  "dateModified": "2026-04-08",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is reflected XSS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Reflected XSS occurs when user input is included in the server's response without proper encoding. An attacker crafts a URL containing malicious JavaScript that executes when a victim clicks the link. Unlike stored XSS, the payload is not persisted — it's reflected from the request into the response."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does XSS context matter for severity?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A payload reflected in the HTML body (e.g., between tags) can execute directly — that's HIGH severity. A payload reflected inside an HTML attribute requires breaking out of the attribute first — MEDIUM severity. A payload that's HTML-encoded in the response is LOW severity because the encoding prevents execution, though it may indicate incomplete sanitization."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many XSS payloads should a scanner test?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A thorough scanner should test at least 7 payload variants per parameter: script tags, event handlers (onerror, onload), SVG-based payloads, JavaScript URI schemes, and attribute-breaking payloads. Each targets a different reflection context."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best fix for reflected XSS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Context-aware output encoding is the primary fix. HTML-encode for HTML body context, attribute-encode for HTML attributes, JavaScript-encode for script contexts, and URL-encode for URL parameters. Content Security Policy (CSP) provides defense in depth. Never rely on input validation alone."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Content Security Policy prevent XSS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CSP mitigates XSS but doesn't prevent it. A strict CSP with 'nonce-based' script-src blocks inline script execution even if XSS exists. However, CSP bypasses exist (JSONP endpoints, Angular template injection, base-tag hijacking), so CSP should complement output encoding, not replace it."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>Detecting Reflected XSS: What Your Security Scanner Should Check in 2026</h1>
+
+    <div class="meta">
+        <span>Published: April 8, 2026</span>
+        <span>&bull;</span>
+        <span>Reading time: 11 minutes</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>Cross-site scripting is the vulnerability that refuses to die. OWASP ranks it under A03 (Injection), and despite two decades of awareness, reflected XSS remains the most commonly reported web application vulnerability in bug bounty programs. The reason is simple: every parameter that reflects user input is a potential XSS vector, and most applications have dozens of them.</strong></p>
+
+        <p>The difference between a scanner that catches XSS and one that misses it comes down to two things: payload diversity and context awareness. A scanner that only tests <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> will miss payloads that work in attribute contexts, event handlers, and SVG elements. A scanner that doesn't distinguish between unescaped reflection and HTML-encoded reflection will flood you with false positives.</p>
+
+        <p>This guide covers how reflected XSS detection actually works, what payloads a thorough scanner should test, how context-aware severity classification reduces noise, and how to fix XSS at the source. This is the second article in our <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">injection detection series</a> — SQLi was first, SSRF is next.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Bug bounty success depends on systematic methodology, not just tool knowledge</li>
+        <li>Document everything — clear reports with reproduction steps get paid faster</li>
+        <li>Automated scanning catches common patterns but manual testing finds logic flaws</li>
+      </ul>
+    </div>
+
+
+    <nav style="background: #f5f5f5; padding: 20px 30px; border-radius: 8px; margin: 30px 0;">
+        <strong>Jump to:</strong>
+        <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li><a href="#how-reflected-xss-works">How Reflected XSS Works</a></li>
+            <li><a href="#payloads">The 7 Payloads Every Scanner Should Test</a></li>
+            <li><a href="#context-aware">Context-Aware Detection: Why It Matters</a></li>
+            <li><a href="#scanner-approach">How a Good Scanner Approaches XSS Testing</a></li>
+            <li><a href="#waf-bypass">WAF Bypass Patterns That Still Work</a></li>
+            <li><a href="#fixing-xss">Fixing XSS: Context-Aware Output Encoding</a></li>
+            <li><a href="#csp">Content Security Policy as Defense in Depth</a></li>
+            <li><a href="#checklist">Scanner Checklist</a></li>
+        </ol>
+    </nav>
+
+    <!-- Section 1 -->
+    <section id="how-reflected-xss-works">
+        <h2>1. How Reflected XSS Works</h2>
+
+        <p>Reflected XSS follows a three-step pattern:</p>
+        <ol>
+            <li><strong>Injection</strong> — The attacker crafts a URL with a malicious payload in a query parameter, form field, or HTTP header.</li>
+            <li><strong>Reflection</strong> — The server includes the payload in its response without proper encoding. The payload appears in the HTML body, an attribute value, or a JavaScript context.</li>
+            <li><strong>Execution</strong> — The victim's browser parses the response and executes the injected script. The attacker can steal session cookies, redirect the user, or modify the page content.</li>
+        </ol>
+
+        <p>The key distinction from stored XSS: reflected payloads are not persisted. They exist only in the request-response cycle. This means the attacker needs to trick the victim into clicking a crafted link — typically via phishing, social engineering, or embedding the link in a forum post.</p>
+
+        <h3>A Simple Example</h3>
+        <p>Consider a search page that reflects the query parameter:</p>
+        <pre><code>GET /search?q=test HTTP/1.1
+
+Response:
+<p>You searched for: test</p></code></pre>
+
+        <p>If the application doesn't encode the <code>q</code> parameter:</p>
+        <pre><code>GET /search?q=<script>alert(document.cookie)</script> HTTP/1.1
+
+Response:
+<p>You searched for: <script>alert(document.cookie)</script></p></code></pre>
+
+        <p>The browser executes the script tag. The attacker now has the victim's session cookie.</p>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="payloads">
+        <h2>2. The 7 Payloads Every Scanner Should Test</h2>
+
+        <p>Different payloads target different reflection contexts. A thorough scanner tests at least these seven variants per parameter:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 12px 16px; text-align: left;">#</th>
+                    <th style="padding: 12px 16px; text-align: left;">Payload</th>
+                    <th style="padding: 12px 16px; text-align: left;">Target Context</th>
+                    <th style="padding: 12px 16px; text-align: left;">Why It Works</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">1</td>
+                    <td style="padding: 10px 16px;"><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></td>
+                    <td style="padding: 10px 16px;">HTML body</td>
+                    <td style="padding: 10px 16px;">Classic script injection. Blocked by most WAFs but still works on unprotected apps.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">2</td>
+                    <td style="padding: 10px 16px;"><code>"&gt;&lt;img src=x onerror=alert(1)&gt;</code></td>
+                    <td style="padding: 10px 16px;">HTML attribute breakout</td>
+                    <td style="padding: 10px 16px;">Breaks out of a quoted attribute, injects an img tag with an error handler.</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">3</td>
+                    <td style="padding: 10px 16px;"><code>javascript:alert(1)</code></td>
+                    <td style="padding: 10px 16px;">href/src attributes</td>
+                    <td style="padding: 10px 16px;">Works when reflected into <code>href</code> or <code>src</code> attributes. Executes on click/load.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">4</td>
+                    <td style="padding: 10px 16px;"><code>'-alert(1)-'</code></td>
+                    <td style="padding: 10px 16px;">JavaScript string context</td>
+                    <td style="padding: 10px 16px;">Breaks out of a JavaScript string literal. Works when input is reflected inside JS code.</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">5</td>
+                    <td style="padding: 10px 16px;"><code>&lt;svg/onload=alert(1)&gt;</code></td>
+                    <td style="padding: 10px 16px;">HTML body (SVG)</td>
+                    <td style="padding: 10px 16px;">SVG elements support event handlers. Often bypasses WAFs that only block <code>&lt;script&gt;</code>.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">6</td>
+                    <td style="padding: 10px 16px;"><code>"&gt;&lt;svg/onload=alert(1)&gt;</code></td>
+                    <td style="padding: 10px 16px;">Attribute breakout + SVG</td>
+                    <td style="padding: 10px 16px;">Combines attribute breakout with SVG event handler. Effective against partial encoding.</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">7</td>
+                    <td style="padding: 10px 16px;"><code>&lt;img src=x onerror=alert(1)&gt;</code></td>
+                    <td style="padding: 10px 16px;">HTML body (event handler)</td>
+                    <td style="padding: 10px 16px;">No attribute breakout needed. Works when reflected directly in HTML body.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Testing only payload #1 catches maybe 30% of reflected XSS. Testing all seven catches 80%+. The remaining 20% requires context-specific payloads (template injection, DOM-based XSS) that go beyond reflected testing.</p>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="context-aware">
+        <h2>3. Context-Aware Detection: Why It Matters</h2>
+
+        <p>Not all reflections are equal. A scanner that reports every reflected parameter as "HIGH" severity generates noise that buries real findings. Context-aware detection classifies severity based on where the payload appears in the response:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 12px 16px; text-align: left;">Severity</th>
+                    <th style="padding: 12px 16px; text-align: left;">Reflection Context</th>
+                    <th style="padding: 12px 16px; text-align: left;">What It Means</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #ffebee;">
+                    <td style="padding: 10px 16px; font-weight: bold;">HIGH</td>
+                    <td style="padding: 10px 16px;">Payload reflected unescaped in HTML body</td>
+                    <td style="padding: 10px 16px;">Direct script execution. The browser will execute the injected code as-is. Exploitable.</td>
+                </tr>
+                <tr style="background: #fff3e0;">
+                    <td style="padding: 10px 16px; font-weight: bold;">MEDIUM</td>
+                    <td style="padding: 10px 16px;">Payload reflected inside an HTML attribute</td>
+                    <td style="padding: 10px 16px;">Requires attribute breakout to exploit. Still dangerous but needs a more specific payload.</td>
+                </tr>
+                <tr style="background: #e8f5e9;">
+                    <td style="padding: 10px 16px; font-weight: bold;">LOW</td>
+                    <td style="padding: 10px 16px;">Payload reflected but HTML-encoded</td>
+                    <td style="padding: 10px 16px;">The application is encoding output, preventing execution. May indicate incomplete sanitization — worth investigating but not directly exploitable.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>How Context Detection Works</h3>
+        <p>The scanner checks the response in order:</p>
+        <ol>
+            <li><strong>Is the raw payload present in the body?</strong> If yes, check if it's inside an attribute (regex match for <code>=["']..payload..["']</code>). Attribute context = MEDIUM. Otherwise = HIGH.</li>
+            <li><strong>Is only the HTML-encoded version present?</strong> (e.g., <code>&amp;lt;script&amp;gt;</code> instead of <code>&lt;script&gt;</code>). If yes = LOW.</li>
+            <li><strong>Neither version present?</strong> The parameter doesn't reflect this payload. No finding.</li>
+        </ol>
+
+        <p>This three-tier classification means security teams can focus on HIGH findings first, investigate MEDIUM findings for exploitability, and track LOW findings as potential weaknesses without treating them as urgent.</p>
+    </section>
+
+    <!-- Section 4 -->
+    <section id="scanner-approach">
+        <h2>4. How a Good Scanner Approaches XSS Testing</h2>
+
+        <p>The scanning workflow for reflected XSS:</p>
+
+        <ol>
+            <li><strong>Parse the target URL</strong> — Extract all query parameters. Each parameter is a potential injection point.</li>
+            <li><strong>For each parameter, for each payload</strong> — Replace the parameter value with the payload. Send the request. Analyze the response.</li>
+            <li><strong>Classify the reflection</strong> — Apply context-aware severity (HIGH/MEDIUM/LOW/NONE).</li>
+            <li><strong>Report the highest severity per parameter</strong> — If a parameter reflects multiple payloads, report the most severe one.</li>
+        </ol>
+
+        <p>For a URL with 5 parameters and 7 payloads, that's 35 requests. This is why XSS scanning is inherently noisy — and why context-aware classification is essential to keep the signal-to-noise ratio manageable.</p>
+
+        <h3>What Scanners Often Miss</h3>
+        <ul>
+            <li><strong>POST body parameters</strong> — Many scanners only test query string parameters. POST forms are equally vulnerable.</li>
+            <li><strong>HTTP headers</strong> — Referer, User-Agent, and custom headers can be reflected in error pages and logs.</li>
+            <li><strong>JSON API responses</strong> — If a JSON response is rendered as HTML (content-type mismatch), XSS payloads in JSON values can execute.</li>
+            <li><strong>DOM-based XSS</strong> — The payload never reaches the server. It's processed entirely in client-side JavaScript. Requires a headless browser to detect.</li>
+        </ul>
+    </section>
+
+    <!-- Section 5 -->
+    <section id="waf-bypass">
+        <h2>5. WAF Bypass Patterns That Still Work</h2>
+
+        <p>Web Application Firewalls block known XSS patterns. But the bypass game is well-documented:</p>
+
+        <ul>
+            <li><strong>Case variation</strong> — <code>&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;</code>. HTML is case-insensitive; many WAF rules are not.</li>
+            <li><strong>Event handler diversity</strong> — WAFs block <code>onerror</code> and <code>onload</code> but miss <code>onfocus</code>, <code>onmouseover</code>, <code>ontoggle</code>, and dozens of other event handlers.</li>
+            <li><strong>SVG and MathML</strong> — <code>&lt;svg&gt;</code> and <code>&lt;math&gt;</code> elements support event handlers and are often not in WAF blocklists.</li>
+            <li><strong>Encoding tricks</strong> — HTML entities (<code>&amp;#x3C;script&gt;</code>), Unicode normalization, and double encoding can bypass pattern matching.</li>
+            <li><strong>Null bytes</strong> — <code>&lt;scr%00ipt&gt;</code> may bypass WAF string matching while the browser ignores the null byte.</li>
+        </ul>
+
+        <p>The lesson: WAFs reduce the attack surface but don't eliminate XSS. Output encoding at the application level is the only reliable fix.</p>
+    </section>
+
+    <!-- Section 6 -->
+    <section id="fixing-xss">
+        <h2>6. Fixing XSS: Context-Aware Output Encoding</h2>
+
+        <p>The fix for reflected XSS is context-aware output encoding. The encoding must match the context where the data appears:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 12px 16px; text-align: left;">Context</th>
+                    <th style="padding: 12px 16px; text-align: left;">Encoding Required</th>
+                    <th style="padding: 12px 16px; text-align: left;">Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">HTML body</td>
+                    <td style="padding: 10px 16px;">HTML entity encoding</td>
+                    <td style="padding: 10px 16px;"><code>&amp;lt;script&amp;gt;</code> instead of <code>&lt;script&gt;</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">HTML attribute</td>
+                    <td style="padding: 10px 16px;">Attribute encoding (quote all attributes)</td>
+                    <td style="padding: 10px 16px;"><code>value="&amp;quot;payload&amp;quot;"</code></td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">JavaScript string</td>
+                    <td style="padding: 10px 16px;">JavaScript encoding</td>
+                    <td style="padding: 10px 16px;"><code>\x3cscript\x3e</code> or JSON.stringify()</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 16px;">URL parameter</td>
+                    <td style="padding: 10px 16px;">URL encoding</td>
+                    <td style="padding: 10px 16px;"><code>%3Cscript%3E</code></td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 10px 16px;">CSS value</td>
+                    <td style="padding: 10px 16px;">CSS encoding</td>
+                    <td style="padding: 10px 16px;"><code>\3C script\3E</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Framework-Level Protection</h3>
+        <p>Modern frameworks provide automatic encoding — but only if you use them correctly:</p>
+        <ul>
+            <li><strong>React</strong> — JSX auto-escapes by default. Danger: <code>dangerouslySetInnerHTML</code> bypasses this.</li>
+            <li><strong>Angular</strong> — Template binding auto-sanitizes. Danger: <code>bypassSecurityTrustHtml()</code>.</li>
+            <li><strong>Django</strong> — Template auto-escaping on by default. Danger: <code>|safe</code> filter and <code>mark_safe()</code>.</li>
+            <li><strong>Express/Node</strong> — No auto-encoding. You must use a template engine (EJS, Handlebars) or manually encode.</li>
+        </ul>
+
+        <p>The pattern: every framework has an escape hatch. XSS happens when developers use the escape hatch without understanding the risk.</p>
+    </section>
+
+    <!-- Section 7 -->
+    <section id="csp">
+        <h2>7. Content Security Policy as Defense in Depth</h2>
+
+        <p>Content Security Policy (CSP) is the strongest defense-in-depth measure against XSS. A strict CSP prevents inline script execution even if XSS exists in the application.</p>
+
+        <h3>Recommended CSP for XSS Mitigation</h3>
+        <pre><code>Content-Security-Policy: 
+  default-src 'self';
+  script-src 'nonce-{random}' 'strict-dynamic';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  object-src 'none';
+  base-uri 'self';</code></pre>
+
+        <p>Key directives:</p>
+        <ul>
+            <li><strong><code>script-src 'nonce-{random}'</code></strong> — Only scripts with a matching nonce attribute execute. Injected scripts won't have the nonce.</li>
+            <li><strong><code>'strict-dynamic'</code></strong> — Scripts loaded by trusted scripts are also trusted. Simplifies CSP for applications that dynamically load modules.</li>
+            <li><strong><code>object-src 'none'</code></strong> — Blocks Flash and Java applets, which can be used for XSS.</li>
+            <li><strong><code>base-uri 'self'</code></strong> — Prevents base-tag hijacking, a CSP bypass technique.</li>
+        </ul>
+
+        <p>CSP is not a replacement for output encoding. It's a safety net. If your encoding fails, CSP catches the fall. If your CSP has gaps, encoding is still there. Defense in depth.</p>
+    </section>
+
+    <!-- Section 8 -->
+    <section id="checklist">
+        <h2>8. Scanner Checklist</h2>
+
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <h3 style="margin-top: 0;">What Your XSS Scanner Should Do</h3>
+            <ol>
+                <li>✅ Test all query parameters, not just the first one</li>
+                <li>✅ Use at least 7 payload variants covering different contexts (script tags, event handlers, SVG, attribute breakout, JavaScript URI)</li>
+                <li>✅ Classify severity by reflection context (HIGH = unescaped body, MEDIUM = attribute, LOW = encoded)</li>
+                <li>✅ Test POST body parameters, not just GET query strings</li>
+                <li>✅ Check HTTP headers (Referer, User-Agent) for reflection in error pages</li>
+                <li>✅ Report the specific payload and parameter that triggered the finding</li>
+                <li>✅ Distinguish between reflected XSS and stored XSS (requires multiple requests)</li>
+                <li>✅ Support authenticated scanning for testing protected endpoints</li>
+            </ol>
+        </div>
+
+        <div style="background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800; margin: 20px 0;">
+            <h3 style="margin-top: 0;">What Your Scanner Probably Misses</h3>
+            <ul>
+                <li>❌ DOM-based XSS (requires headless browser execution)</li>
+                <li>❌ Mutation XSS (mXSS) in HTML sanitizers</li>
+                <li>❌ XSS via file upload (SVG files with embedded scripts)</li>
+                <li>❌ XSS in PDF generation (HTML-to-PDF libraries that execute JavaScript)</li>
+                <li>❌ Second-order XSS (payload stored in one place, reflected from another)</li>
+            </ul>
+            <p>These require specialized testing beyond parameter fuzzing. Plan manual testing or dedicated tools for these categories.</p>
+        </div>
+    </section>
+
+    <section style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 40px;">
+        <h2 style="margin-top: 0;">Bottom Line</h2>
+        <p>Reflected XSS detection is a solved problem — in theory. In practice, most scanners test too few payloads, don't classify by context, and miss non-query-string injection points. A good scanner tests 7+ payload variants per parameter, classifies findings by reflection context (HIGH/MEDIUM/LOW), and covers POST bodies and headers in addition to query strings.</p>
+        <p>On the fix side: context-aware output encoding is the primary defense, CSP is the safety net, and WAFs are the speed bump. All three together give you defense in depth against the vulnerability that's been in the OWASP Top 10 since the list was created.</p>
+        <p>This is the second article in our injection detection series. First: <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQL Injection Detection</a>. Next: Server-Side Request Forgery (SSRF) — coming when the detection tooling is ready.</p>
+    </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

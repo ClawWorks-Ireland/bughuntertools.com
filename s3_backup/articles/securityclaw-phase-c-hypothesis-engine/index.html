@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SecurityClaw Phase C ships three capabilities that change how automated security campaigns think: an Adversarial Hypothesis Engine that generates named, confidence-scored attack bets before running a single tool; a mid-campaign Replanner that rewrites the tool queue when the evidence changes; and an Intelligence Store that compounds across every campaign run. Here&#39;s the full technical demo.">
+    <title>SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and an Intelligence Store That Compounds</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/securityclaw-phase-c-hypothesis-engine/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/securityclaw-phase-c-hypothesis-engine/">
+    <meta property="og:title" content="SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and an Intelligence Store That Compounds">
+    <meta property="og:description" content="SecurityClaw Phase C ships three capabilities that change how automated security campaigns think: an Adversarial Hypothesis Engine that generates named, confidence-scored attack bets before running a single tool; a mid-campaign Replanner that rewrites the tool queue when the evidence changes; and an Intelligence Store that compounds across every campaign run. Here&#39;s the full technical demo.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/securityclaw-phase-c-hypothesis-engine/">
+    <meta name="twitter:title" content="SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and an Intelligence Store That Compounds">
+    <meta name="twitter:description" content="SecurityClaw Phase C ships three capabilities that change how automated security campaigns think: an Adversarial Hypothesis Engine that generates named, confidence-scored attack bets before running a single tool; a mid-campaign Replanner that rewrites the tool queue when the evidence changes; and an Intelligence Store that compounds across every campaign run. Here&#39;s the full technical demo.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and an Intelligence Store That Compounds",
+      "description": "SecurityClaw Phase C ships three capabilities that change how automated security campaigns think: an Adversarial Hypothesis Engine that generates named, confidence-scored attack bets before running a single tool; a mid-campaign Replanner that rewrites the tool queue when the evidence changes; and an Intelligence Store that compounds across every campaign run. Here&#39;s the full technical demo.",
+      "url": "https://bughuntertools.com/articles/securityclaw-phase-c-hypothesis-engine/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and an Intelligence Store That Compounds</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "SecurityClaw Phase C: The Scanner That Learned to Remember — Adversarial Hypothesis Engine, Mid-Campaign Replanning, and Intelligence Store",
+      "description": "SecurityClaw Phase C ships three capabilities: an Adversarial Hypothesis Engine with confidence scoring, mid-campaign replanning, and a cross-campaign intelligence store. Full technical demo on demobank.local.",
+      "datePublished": "2026-03-26",
+      "dateModified": "2026-03-26",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is SecurityClaw's Adversarial Hypothesis Engine?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Adversarial Hypothesis Engine is a Phase C component that generates named, confidence-scored attack hypotheses before running any tools. It predicts likely vulnerabilities based on target characteristics and prior intelligence, then prioritizes the tool queue accordingly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does SecurityClaw's mid-campaign replanning work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mid-campaign replanning allows SecurityClaw to rewrite its tool execution queue when new evidence changes the attack picture. Instead of following a static plan, the scanner adapts its strategy based on what it discovers during the campaign."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Intelligence Store in SecurityClaw Phase C?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Intelligence Store is a persistent knowledge base that compounds across every campaign run. It records findings, hypothesis outcomes, and target characteristics so that future campaigns start with accumulated intelligence rather than from scratch."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>SecurityClaw Phase C: The Scanner That Learned to Remember</h1>
+
+    <div class="meta">
+        <span>Published: March 26, 2026</span>
+        <span>•</span>
+        <span>Reading time: 11 minutes</span>
+        <span>•</span>
+        <span style="color: #2196f3; font-weight: bold;">🔬 PLATFORM RESEARCH</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>Every automated scanner runs the same playbook. Nmap, then Nuclei, then Gobuster. In that order. Every target. Every time. Whether you've tested a hundred Spring Boot fintech services or zero, the tool queue looks identical on day one.</strong></p>
+
+        <p>That's a significant gap between how automated tools work and how experienced human testers work. A seasoned bug hunter targeting a Spring Boot fintech service doesn't start from scratch. They walk in with a mental model: "I've seen actuator endpoints expose credentials on three of the last four fintech engagements. That's my first hypothesis. I'll start there." They adjust mid-engagement when something unexpected surfaces. They keep notes that make the next engagement faster and more targeted.</p>
+
+        <p>Phase C is the attempt to give SecurityClaw the same capability. Three components ship together: the <strong>Adversarial Hypothesis Engine</strong> (named attack hypotheses with confidence scores before any tool runs), the <strong>RePlanner</strong> (mid-campaign queue rewriting when triggers fire), and the <strong>Intelligence Store</strong> (cross-campaign persistence that feeds back into the next run). The demo below walks through a complete campaign against <code>demobank.local</code> — a controlled Spring Boot fintech target — showing exactly what each component does and where its current limits are.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>SecurityClaw is an AI-powered penetration testing platform built for automated security assessment</li>
+        <li>Each development phase adds capabilities that close gaps in automated vulnerability detection</li>
+        <li>The hypothesis engine generates and tests vulnerability theories autonomously</li>
+      </ul>
+    </div>
+
+
+    <nav class="toc" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 32px 0; border-left: 4px solid #2196f3;">
+        <h2 style="margin-top: 0; font-size: 1rem;">In This Article</h2>
+        <ol>
+            <li><a href="#the-three-components">Phase C at a Glance: Three Components, One Compounding Loop</a></li>
+            <li><a href="#intel-store-preload">C3 First: The Intelligence Store Pre-Seeds the Campaign</a></li>
+            <li><a href="#hypothesis-engine">C1: The Adversarial Hypothesis Engine</a></li>
+            <li><a href="#replanning">C2: Mid-Campaign Replanning in Action</a></li>
+            <li><a href="#intel-store-writebacks">C3 Close: The Record Writes Back</a></li>
+            <li><a href="#full-summary">Full Campaign Summary</a></li>
+            <li><a href="#honest-limits">Honest Limits: What Phase C Is and Isn't</a></li>
+            <li><a href="#why-it-matters">Why This Matters for Bug Hunters</a></li>
+            <li><a href="#recommended-resources">Recommended Resources</a></li>
+        </ol>
+    </nav>
+
+    <section id="the-three-components">
+        <h2>1. Phase C at a Glance: Three Components, One Compounding Loop</h2>
+
+        <p>The three Phase C components are designed to work as a cycle, not independently:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #2c3e50; color: white;">
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Component</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Code Label</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">What It Does</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">When It Runs</th>
+            </tr>
+            <tr>
+                <td style="padding: 12px; border: 1px solid #ddd;"><strong>Intelligence Store</strong></td>
+                <td style="padding: 12px; border: 1px solid #ddd;"><code>C3</code></td>
+                <td style="padding: 12px; border: 1px solid #ddd;">Persists campaign records, rebuilds attack patterns, surfaces hit rates</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">Before campaign (load) and after campaign (write)</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 12px; border: 1px solid #ddd;"><strong>Adversarial Hypothesis Engine</strong></td>
+                <td style="padding: 12px; border: 1px solid #ddd;"><code>C1</code></td>
+                <td style="padding: 12px; border: 1px solid #ddd;">Generates named attack hypotheses with confidence scores informed by C3 hit rates</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">After C3 preload, before first tool runs</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; border: 1px solid #ddd;"><strong>RePlanner</strong></td>
+                <td style="padding: 12px; border: 1px solid #ddd;"><code>C2</code></td>
+                <td style="padding: 12px; border: 1px solid #ddd;">Evaluates trigger conditions mid-campaign and rewrites the remaining tool queue</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">After each tool batch completes, before the next</td>
+            </tr>
+        </table>
+
+        <p>The loop: Intelligence Store loads prior campaign data → Hypothesis Engine uses that data to prioritise attack bets → tools run → RePlanner evaluates findings against hypotheses → tool queue adapts → campaign finishes → Intelligence Store writes the result back. Next campaign starts with richer data than the last.</p>
+
+        <p>The demo campaign numbers, for reference before diving in:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #1565c0; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Metric</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Result</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Prior campaigns in intel store (before run)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>3</strong></td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Patterns rebuilt</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>16 → 17</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Hypotheses generated</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>3</strong></td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">H1 confidence (intel-boosted)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>90%</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Replanning events triggered</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>3</strong></td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">CRITICAL findings</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #c62828;"><strong>1</strong> (<code>/actuator/env</code> → DB_PASSWORD exposed)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">HIGH findings</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #e65100;"><strong>2</strong> (JWT weak secret + subdomain expansion)</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Attack classes with 100% historical hit rate</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>3</strong> (auth_bypass, secret_exposure, recon_chain)</td>
+            </tr>
+        </table>
+    </section>
+
+    <section id="intel-store-preload">
+        <h2>2. C3 First: The Intelligence Store Pre-Seeds the Campaign</h2>
+
+        <p>Before <code>demobank.local</code> is targeted, SecurityClaw loads three prior campaigns from the intelligence store: <code>tradeflux.io</code>, <code>clearwire.finance</code>, and <code>vaultpay.co</code>. All Spring Boot fintech targets. All with findings. The load happens before the planner writes a single hypothesis.</p>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">✓ Stored: tradeflux.io     — 1 confirmed / 1 refuted / highest: CRITICAL
+✓ Stored: clearwire.finance — 2 confirmed / 1 refuted / highest: CRITICAL
+✓ Stored: vaultpay.co      — 2 confirmed / 1 refuted / highest: CRITICAL
+Patterns rebuilt → 16 pattern(s) written to store</div>
+
+        <p>The store produces a hit rate table before any tool has run against <code>demobank.local</code>:</p>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">Attack Class               Historical Hit Rate    Confidence
+───────────────────────── ────────────────────  ────────────
+auth_bypass               ██████████        100%  ← HIGH PRIOR
+secret_exposure           ██████████        100%  ← HIGH PRIOR
+recon_chain               ██████████        100%  ← HIGH PRIOR
+idor                      ░░░░░░░░░░          0%
+injection                 ░░░░░░░░░░          0%</div>
+
+        <p>This is the fundamental shift Phase C makes. A traditional scanner walking into <code>demobank.local</code> has no context — every target is a blank slate. SecurityClaw is already carrying three data points: on every comparable target it has run, <code>secret_exposure</code> yielded a CRITICAL finding, <code>auth_bypass</code> found something exploitable, and <code>recon_chain</code> expanded the scope. That context directly shapes what gets prioritised.</p>
+
+        <p>One important caveat before moving on: three campaigns is a very thin dataset. 100% hit rate on <code>secret_exposure</code> means 3-for-3, not 300-for-300. The patterns are directional at this stage. We'll address the limits explicitly in <a href="#honest-limits">section 7</a>.</p>
+    </section>
+
+    <section id="hypothesis-engine">
+        <h2>3. C1: The Adversarial Hypothesis Engine</h2>
+
+        <p>With intel context loaded, the Adversarial Hypothesis Engine generates three named attack hypotheses. Not generic scan categories — actual named scenarios with explicit confidence scores and reasoning tied to the intelligence data.</p>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">[H1] Spring Boot Actuator Credentials Exposed
+     Attack class: secret_exposure
+     Confidence:   90% ← boosted by intel
+     Rationale:    Historical data: 100% hit rate across 3 prior Spring Boot
+                   fintech campaigns. /actuator/env consistently exposes
+                   DB credentials.
+
+[H2] JWT Token Scope Escalation
+     Attack class: auth_bypass
+     Confidence:   55%
+     Rationale:    50% hit rate on Spring Boot fintech. Pattern: client_credentials
+                   grants exceeding declared scopes.
+
+[H3] Subdomain Expansion via Certificate Transparency
+     Attack class: recon_chain
+     Confidence:   65%
+     Rationale:    67% hit rate. Spring Boot services often deploy across
+                   multiple subdomains sharing the same backend.</div>
+
+        <p>A few things worth unpacking here.</p>
+
+        <p><strong>H1 opens at 90% confidence.</strong> The intel store showed 100% hit rate on <code>secret_exposure</code> for Spring Boot fintech targets. The 10% gap between 100% historical and 90% opening confidence is intentional conservatism — the dataset is small enough that one miss would break the streak. The engine doesn't treat 3-for-3 as certainty.</p>
+
+        <p><strong>H2 opens at 55%.</strong> The <code>auth_bypass</code> historical rate is 100%, but the JWT scope escalation pattern specifically had 50% prior evidence. The engine distinguishes between the attack class level hit rate and the specific attack vector hit rate. 55% is near-coin-flip. This hypothesis enters the campaign as a viable bet, not a confident one.</p>
+
+        <p><strong>H3 opens at 65%.</strong> Subdomain expansion showed 67% historical rate — two successes out of three. That's enough to prioritise it over a clean-slate target but not enough to treat it as near-certain.</p>
+
+        <p>The practical output of this step: the initial tool queue is ordered with H1 tools first (nuclei with actuator-focused templates), H3 tools second (amass for subdomain discovery), H2 tools third (JWT assessment). Generic directory enumeration — gobuster — sits at the end as a fallback if the hypothesis-driven approach doesn't surface anything. This is already different from the default nmap-first queue.</p>
+
+        <p>For bug hunters, this maps directly to how manual recon prioritisation works. You don't run gobuster before checking whether the actuator endpoints are open when you know this target class has a 100% hit rate on credential exposure. You run gobuster when the high-confidence bets haven't paid off. The AHE is automating that decision.</p>
+    </section>
+
+    <section id="replanning">
+        <h2>4. C2: Mid-Campaign Replanning in Action</h2>
+
+        <p>The initial skill queue goes into execution: nmap → nuclei → gobuster. By Batch 2, the queue no longer looks like this.</p>
+
+        <p><strong>Batch 1 — nmap:</strong></p>
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">[INFO] open_port via nmap</div>
+
+        <p>Standard port scan output. Nothing that triggers a replan. The RePlanner evaluates: no critical findings, no credential discovery, no high-confidence confirmation. Queue continues to nuclei as planned.</p>
+
+        <p><strong>Batch 2 — nuclei:</strong></p>
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">[CRITICAL] secret_found via nuclei
+[HIGH]     jwt_vuln via nuclei
+
+⚡ REPLAN TRIGGERED
+Trigger(s): CREDENTIAL_FOUND, CRITICAL_FINDING, HIGH_CONFIDENCE_CONFIRMED
+Decision:   PIVOT
+Reasoning:  CRITICAL: /actuator/env exposed DB_PASSWORD. Pivot to authentication
+            testing — enumerate token endpoints and test JWT for scope escalation.
+Updated queue: amass → nikto</div>
+
+        <p>Gobuster — the planned third tool in the original queue — is dropped entirely. The RePlanner's evaluation: a database password is now in the clear. Running gobuster to enumerate directories at this point is a suboptimal use of remaining campaign time. The CRITICAL credential finding confirms H1. The HIGH JWT vulnerability simultaneously starts confirming H2. The logical next moves are subdomain expansion (to understand the blast radius of the credential) and further authentication testing (to chain the JWT vuln with the exposed credentials).</p>
+
+        <p>The replan is automatic. No human intervention. The RePlanner evaluated the trigger set, compared it against the hypothesis states, and rewrote the remaining queue in real time.</p>
+
+        <p>Two more replan events fired after Batches 3 and 4 as amass and nikto completed. By Batch 4, the queue was empty — campaign complete. The full sequence of replanning decisions can be summarised:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #2c3e50; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">After Batch</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Trigger(s)</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Decision</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Queue Change</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Batch 1 (nmap)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">None</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Continue</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">No change — nuclei next</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Batch 2 (nuclei)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">CREDENTIAL_FOUND, CRITICAL_FINDING, HIGH_CONFIDENCE_CONFIRMED</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #e65100;"><strong>PIVOT</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Drop gobuster → add amass + nikto</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Batch 3 (amass)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">HIGH_CONFIDENCE_CONFIRMED</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Continue</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Queue unchanged — nikto next</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Batch 4 (nikto)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">HIGH_CONFIDENCE_CONFIRMED</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Complete</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Queue empty — campaign ends</td>
+            </tr>
+        </table>
+
+        <p>The trigger system is the key mechanism here. <code>CREDENTIAL_FOUND</code> fires when a secret or credential is confirmed in output. <code>CRITICAL_FINDING</code> fires on any CRITICAL-severity result. <code>HIGH_CONFIDENCE_CONFIRMED</code> fires when a hypothesis with ≥70% prior confidence is confirmed by evidence. Each trigger type maps to a set of replan responses in the RePlanner's decision matrix. PIVOT responses drop non-hypothesis-aligned tools from the queue and substitute more targeted ones. CONTINUE responses leave the queue unchanged and let the next batch proceed.</p>
+    </section>
+
+    <section id="intel-store-writebacks">
+        <h2>5. C3 Close: The Record Writes Back</h2>
+
+        <p>After the campaign completes, SecurityClaw writes the full result back to the intelligence store:</p>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">✓ Campaign record built — domain: demobank.local, findings: 5, highest: CRITICAL
+✓ Record persisted to intelligence store
+✓ 17 pattern(s) recomputed</div>
+
+        <p>The <code>secret_exposure</code> attack class now has four confirmed campaigns. The hit rate remains 100%. But the weight — how much the store trusts that number — has increased:</p>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">Attack Class           Hit Rate           Bar   Campaigns    Weight
+──────────────────── ──────────  ────────────  ──────────  ────────
+secret_exposure           100%  [██████████]           4      0.40
+auth_bypass               100%  [██████████]           4      0.40
+recon_chain               100%  [██████████]           4      0.40</div>
+
+        <p>The weight value (0.40 per attack class here) reflects the store's confidence in the hit rate given the sample size. At 4 campaigns, the weight is meaningful but not authoritative. The compounding effect: the next Spring Boot fintech campaign will open H1 not at 90% but at a higher confidence, backed by a fourth data point. Each campaign narrows the uncertainty.</p>
+
+        <p>The store also records H2's confirmation. The JWT scope escalation hypothesis opened at 55% — near coin-flip — and was confirmed. That outcome shifts the <code>auth_bypass</code> pattern confidence upward for the next campaign. If H2 had not been confirmed, the confidence would have dropped instead. The store is not a ratchet — it adjusts in both directions.</p>
+    </section>
+
+    <section id="full-summary">
+        <h2>6. Full Campaign Summary</h2>
+
+        <div class="demo-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 6px; font-family: monospace; font-size: 0.85em; margin: 20px 0; overflow-x: auto; white-space: pre;">Target:  demobank.local (Spring Boot fintech — controlled demo)
+Stack:   C3 intel → C1 AHE → C2 RePlanner → C3 record
+
+CRITICAL (1)
+  • [nuclei] secret_found — /actuator/env exposed DB_PASSWORD
+
+HIGH (2)
+  • [nuclei] jwt_vuln — /api/auth/token, weak_secret
+  • [amass]  subdomain — internal-api.demobank.local
+
+INFO (2)
+  • [nmap]   open_port — standard service enumeration
+  • [nikto]  misconfiguration — server version disclosure
+
+Phase C components exercised:
+C3  Intelligence store pre-loaded with 3 prior campaigns
+C3  Historical hit rates surfaced to AI planner (secret_exposure: 100%)
+C1  AHE generated 3 hypotheses with intelligence-boosted confidence
+C1  H1 (secret_exposure) opened at 90% — confirmed CRITICAL
+C1  H2 (auth_bypass) opened at 55% — confirmed HIGH
+C1  H3 (recon_chain) opened at 65% — confirmed HIGH
+C2  CREDENTIAL_FOUND + CRITICAL_FINDING triggered PIVOT replan after Batch 2
+C2  Replanner dropped gobuster, added amass + nikto
+C3  Completed campaign record persisted to intelligence store
+C3  Patterns rebuilt — all three attack classes reflect 4 confirmed campaigns</div>
+    </section>
+
+    <section id="honest-limits">
+        <h2>7. Honest Limits: What Phase C Is and Isn't</h2>
+
+        <p>Phase C ships a genuine capability improvement. It also has real limitations worth being explicit about, because the marketing version of "AI that learns" is almost always more impressive than the engineering reality.</p>
+
+        <p><strong>The demo is wired.</strong> <code>demobank.local</code> is a controlled environment. We built the target, planted the vulnerabilities, and ran the campaign. The findings are real outputs from real code against a real (synthetic) target. The replanning logic fired against real trigger conditions. The intelligence store updated with real pattern data. But the vulnerability was planted by us. That's not the same as running this against an adversarial target where the vulnerability landscape is unknown.</p>
+
+        <p><strong>Three campaigns is a thin dataset.</strong> 100% hit rate on <code>secret_exposure</code> sounds impressive. 3-for-3 is not the same as 30-for-30. At this data volume, a single refutation drops the hit rate to 75%. The patterns are directional — they tell the planner "lean here" — but they're not statistically authoritative until the campaign count grows into double digits per target class.</p>
+
+        <p><strong>Hypotheses can be wrong.</strong> H2 (JWT scope escalation) opened at 55%. If <code>demobank.local</code> hadn't exposed a JWT vulnerability, the hypothesis would have been marked REFUTED and the confidence would have adjusted downward. Opening confidence is an educated prior, not a guarantee. The engine is calibrated by data, not optimism.</p>
+
+        <p><strong>The replan heuristics are not magic.</strong> The RePlanner's decision to drop gobuster and add amass + nikto after the CRITICAL credential finding was the correct decision for this campaign. It's not guaranteed to be the correct decision in every scenario. The trigger-to-replan mapping is a rule set, not an AI planner in its own right. As the campaign volume increases, the mapping will need tuning against edge cases where the heuristic fires incorrectly.</p>
+
+        <p><strong>The compounding effect takes time.</strong> At 4 campaigns, the intel store is a useful signal. At 10, it starts to become genuinely reliable. At 50, it's a serious competitive advantage in automated bug hunting on known target classes. The infrastructure is in place. The data foundation has to be built through real campaign runs.</p>
+
+        <p>The honest assessment: Phase C is a meaningful engineering advance over a static tool queue. It is not a magic system. It makes campaigns measurably smarter on repeat target classes. It needs campaign data to deliver on that promise. The first campaign against a new target class still runs partly blind — the store has nothing to offer until patterns accumulate.</p>
+    </section>
+
+    <section id="why-it-matters">
+        <h2>8. Why This Matters for Bug Hunters</h2>
+
+        <p>The gap Phase C closes is one that experienced human researchers bridge with institutional knowledge and notes. You come back to a bug bounty program after three months, you don't restart from scratch — you look at your previous notes, recall what the stack looked like, and adjust your approach accordingly.</p>
+
+        <p>Automated scanners have never done this. Every run has been stateless. SecurityClaw now has persistent cross-campaign memory, and it's structured enough to feed quantified confidence into real-time planning decisions.</p>
+
+        <p>The practical implications for bug hunters using SecurityClaw:</p>
+
+        <ul>
+            <li><strong>On familiar target stacks:</strong> The more campaigns SecurityClaw has run against a given stack (Spring Boot, Django, Rails, Node/Express), the more targeted its first hypothesis set will be. Attack classes with high historical hit rates will open with higher confidence and be prioritised first.</li>
+            <li><strong>On replanning:</strong> The campaign adapts to what it finds. If a credential surfaces in the first batch, the remaining queue pivots to exploit that finding rather than continuing the generic enumeration path. This maps to how skilled human testers chain findings.</li>
+            <li><strong>On calibration over time:</strong> Confidence scores that prove consistently overconfident on a given target class will drift downward. The system self-corrects. This is the calibration property you want from a tool that makes probabilistic bets — it should get better at being right, not just accumulate wins in one direction.</li>
+        </ul>
+
+        <p>For bug bounty hunters specifically: the compounding value comes from running SecurityClaw across a consistent scope over time. The first campaign on a new program is a baseline. By the third or fourth run, the intelligence store has enough data to meaningfully differentiate the approach from what a stateless scanner would do. If you're working a single high-value program long-term, this is the use case Phase C was built for.</p>
+
+        <p>For those building out their security toolkit, the references below include the books that cover the underlying concepts Phase C is automating — hypothesis-driven testing, adaptive methodology, and structured note-keeping across engagements.</p>
+
+        <section id="recommended-resources">
+            <h2>9. Recommended Resources</h2>
+
+            <p>The techniques Phase C automates are covered in depth in these practitioner references:</p>
+
+            <ul>
+                <li>
+                    <strong><a href="https://www.amazon.co.uk/dp/1118026470?tag=bughuntertool-21" rel="nofollow">The Web Application Hacker's Handbook</a></strong> — Stuttard &amp; Pinto. The canonical reference for methodical web application security testing. Hypothesis-driven enumeration methodology that Phase C's AHE is partially automating is covered extensively here.
+                </li>
+                <li>
+                    <strong><a href="https://www.amazon.co.uk/dp/1718501951?tag=bughuntertool-21" rel="nofollow">Hacking APIs</a></strong> — Corey Ball. API security testing methodology including JWT attacks, scope escalation, and Spring Boot actuator exposure — the exact attack classes demonstrated in the Phase C demo.
+                </li>
+                <li>
+                    <strong><a href="https://www.amazon.co.uk/dp/1718501609?tag=bughuntertool-21" rel="nofollow">Bug Bounty Bootcamp</a></strong> — Vickie Li. Covers note-taking, target-class pattern recognition, and repeatable workflow across programs — the manual version of what SecurityClaw's intel store is automating.
+                </li>
+                <li>
+                    <strong><a href="https://www.amazon.co.uk/dp/0321712943?tag=bughuntertool-21" rel="nofollow">The Art of Software Security Assessment</a></strong> — Dowd, McDonald, Schuh. For understanding the attack classes that form the hypothesis taxonomy — secret exposure, authentication bypass, recon chains. Dense but authoritative.
+                </li>
+                <li>
+                    <strong><a href="https://www.amazon.co.uk/dp/1593275641?tag=bughuntertool-21" rel="nofollow">The Hacker Playbook 3</a></strong> — Peter Kim. Real-world engagement methodology and adaptive campaign thinking — the closest practitioner analog to what Phase C is attempting to automate at tool-execution level.
+                </li>
+            </ul>
+        </section>
+    </section>
+
+    <section class="related-reading" style="background: #f8f9fa; padding: 24px; border-radius: 8px; margin: 40px 0; border-left: 4px solid #667eea;">
+        <h2 style="margin-top: 0; font-size: 1.1em;">Related Reading</h2>
+        <ul>
+            <li><a href="/articles/securityclaw-phase-d-vinted-live-hunt-capability-gaps-2026/">SecurityClaw Phase D: Vinted Live Hunt — Capability Gaps Exposed</a></li>
+            <li><a href="/articles/openclaw-cve-batch-3-11-3-12-ai-agent-security-2026/">15 CVEs in One Release Batch: What OpenClaw's Security Fixes Reveal About AI Agent Platform Attack Surfaces</a></li>
+            <li><a href="/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">SecurityClaw OWASP Top 10 Complete Mapping Guide 2026</a></li>
+            <li><a href="/articles/validating-security-scanners-real-target-lessons-2026/">Validating Security Scanners: Real Target Lessons 2026</a></li>
+            <li><a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">Building an Automated Security Scanning Pipeline: From Zero to Full OWASP Coverage</a></li>
+            <li><a href="/articles/securityclaw-4-new-skills-april-2026/">4 New SecurityClaw Skills That Change How You Recon Web Applications</a></li>
+            <li><a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw OWASP Top 10 Coverage in 2026: What's Covered, What's Not, and What's Next</a></li>
+            <li><a href="/articles/securityclaw-5-new-skills-owasp-gap-sprint-2026/">5 New SecurityClaw Skills That Close OWASP Coverage Gaps</a></li>
+            <li><a href="/articles/nuclei-template-writing-guide-2026/">How to Write Custom Nuclei Templates: A Practical Guide for Security Teams (2026)</a></li>
+        </ul>
+    </section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

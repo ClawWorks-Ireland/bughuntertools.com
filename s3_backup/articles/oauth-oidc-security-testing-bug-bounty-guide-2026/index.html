@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A complete guide to testing OAuth 2.0 and OpenID Connect implementations for bug bounty. Covers authorization code flow attacks, token theft, PKCE bypass, scope manipulation, and OIDC claim injection with real-world examples.">
+    <title>OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/oauth-oidc-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/oauth-oidc-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties">
+    <meta property="og:description" content="A complete guide to testing OAuth 2.0 and OpenID Connect implementations for bug bounty. Covers authorization code flow attacks, token theft, PKCE bypass, scope manipulation, and OIDC claim injection with real-world examples.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/oauth-oidc-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties">
+    <meta name="twitter:description" content="A complete guide to testing OAuth 2.0 and OpenID Connect implementations for bug bounty. Covers authorization code flow attacks, token theft, PKCE bypass, scope manipulation, and OIDC claim injection with real-world examples.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties",
+      "description": "A complete guide to testing OAuth 2.0 and OpenID Connect implementations for bug bounty. Covers authorization code flow attacks, token theft, PKCE bypass, scope manipulation, and OIDC claim injection with real-world examples.",
+      "url": "https://bughuntertools.com/articles/oauth-oidc-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "OAuth/OIDC Security Testing for Bug Bounty in 2026: How to Find Authorization Flaws That Pay Critical Bounties",
+  "description": "A complete guide to testing OAuth 2.0 and OpenID Connect implementations for bug bounty. Covers authorization code flow attacks, token theft, PKCE bypass, scope manipulation, and OIDC claim injection.",
+  "datePublished": "2026-04-14",
+  "dateModified": "2026-04-14",
+  "author": {
+    "@type": "Person",
+    "name": "Sage Elliston"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/oauth-oidc-security-testing-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "OAuth/OIDC Security Testing for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between OAuth 2.0 and OpenID Connect for security testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OAuth 2.0 is an authorization framework that grants third-party applications limited access to resources. OpenID Connect (OIDC) is an identity layer built on top of OAuth 2.0 that adds authentication. When testing, OAuth bugs typically involve scope escalation and token theft, while OIDC bugs involve identity spoofing through claim manipulation, nonce reuse, and ID token validation failures."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the highest-paying OAuth vulnerabilities in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Account takeover via OAuth misconfiguration consistently pays critical-tier bounties ($5,000–$30,000+). The most common high-severity findings are: authorization code interception without PKCE, redirect_uri manipulation leading to token theft, scope escalation to admin permissions, and OIDC claim injection that allows impersonating other users."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I test OAuth implementations without breaking production?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use your own test accounts exclusively. Never attempt to access other users' tokens or data. Focus on flow manipulation (redirect_uri changes, state parameter removal, scope modification) using your own authorization sessions. Intercept and modify requests in Burp Suite before they reach the authorization server. Most OAuth testing is safe because you are only manipulating your own authentication flow."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tools do I need for OAuth/OIDC security testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Burp Suite (with the OAuth extension) is essential for intercepting and modifying authorization flows. jwt.io or jwt_tool help decode and tamper with JWTs. For automated scanning, use EsPReSSO (a Burp extension specifically for SSO protocols). Browser DevTools are useful for inspecting redirect chains and cookie behavior."
+      }
+    }
+  ]
+}
+</script>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>OAuth/OIDC bugs consistently pay critical-tier bounties because they lead directly to account takeover</li>
+<li>Most OAuth implementations still fail on redirect_uri validation — test open redirects, path traversal, and subdomain matching</li>
+<li>PKCE is mandatory in OAuth 2.1 but many apps still use the implicit flow or skip the code_verifier — always check</li>
+<li>OIDC claim injection (email, sub, aud) can let you impersonate any user if the relying party trusts claims without verification</li>
+<li>The state parameter prevents CSRF in OAuth flows — removing it is often accepted as a medium-severity finding</li>
+<li>Token storage matters: access tokens in localStorage are vulnerable to XSS, and refresh tokens without rotation enable persistent access</li>
+</ul>
+</div>
+
+<h2>Why OAuth/OIDC Bugs Are High-Value Targets</h2>
+
+<p>OAuth 2.0 and OpenID Connect power authentication on most modern web applications. When you click "Sign in with Google" or "Login with GitHub," you're using OAuth/OIDC. Every implementation is a potential attack surface, and the bugs you find here lead directly to account takeover — the vulnerability class that pays the highest bounties.</p>
+
+<p>The reason these bugs persist is complexity. OAuth 2.0 has multiple grant types, each with different security properties. OIDC adds an identity layer with ID tokens, claims, and discovery endpoints. Developers frequently misunderstand the spec, skip validation steps, or mix grant types inappropriately. As a bug bounty hunter, your job is to find where the implementation diverges from the spec.</p>
+
+<p>This guide covers the complete testing methodology: from mapping the OAuth/OIDC implementation to exploiting specific vulnerability classes. Every technique described here has produced real bounty payouts.</p>
+
+<h2>Understanding the Attack Surface</h2>
+
+<h3>OAuth 2.0 Grant Types You'll Encounter</h3>
+
+<p>Before testing, identify which grant type the application uses. Each has different attack vectors:</p>
+
+<ul>
+<li><strong>Authorization Code Flow</strong> — The most common for web apps. The client receives a code, exchanges it for tokens server-side. Attack vectors: code interception, redirect_uri manipulation, CSRF via missing state parameter.</li>
+<li><strong>Authorization Code + PKCE</strong> — Required by OAuth 2.1. Adds a code_verifier/code_challenge pair. Attack vectors: PKCE downgrade (removing code_challenge), weak code_challenge_method (plain instead of S256).</li>
+<li><strong>Implicit Flow</strong> — Deprecated in OAuth 2.1 but still widely deployed. Tokens returned directly in the URL fragment. Attack vectors: token leakage via referrer headers, open redirect token theft.</li>
+<li><strong>Client Credentials</strong> — Machine-to-machine. No user interaction. Attack vectors: client secret exposure, overly broad scopes.</li>
+<li><strong>Device Code Flow</strong> — Used for smart TVs, CLI tools. Attack vectors: user code brute-force, polling endpoint abuse, social engineering via phishing the verification URL.</li>
+</ul>
+
+<h3>OIDC-Specific Components</h3>
+
+<p>When OIDC is in play, you have additional attack surface:</p>
+
+<ul>
+<li><strong>ID Token (JWT)</strong> — Contains identity claims (sub, email, name). Attack vectors: signature bypass, claim injection, audience confusion.</li>
+<li><strong>UserInfo Endpoint</strong> — Returns user profile data. Attack vectors: IDOR if the endpoint doesn't validate the access token properly.</li>
+<li><strong>Discovery Endpoint</strong> (<code>/.well-known/openid-configuration</code>) — Publishes the provider's configuration. Attack vectors: SSRF if the relying party fetches this dynamically from user-controlled input.</li>
+<li><strong>Nonce Parameter</strong> — Prevents ID token replay. Attack vectors: nonce reuse, missing nonce validation.</li>
+</ul>
+
+<h2>Phase 1: Reconnaissance and Flow Mapping</h2>
+
+<h3>Identify the OAuth/OIDC Implementation</h3>
+
+<p>Start by mapping the complete authorization flow. Open Burp Suite, enable interception, and trigger the login flow:</p>
+
+<pre><code># Look for these endpoints in your proxy history:
+# Authorization endpoint
+GET /authorize?response_type=code&client_id=...&redirect_uri=...&scope=...&state=...
+
+# Token endpoint
+POST /oauth/token
+Content-Type: application/x-www-form-urlencoded
+grant_type=authorization_code&code=...&redirect_uri=...&client_id=...
+
+# OIDC discovery
+GET /.well-known/openid-configuration
+
+# UserInfo endpoint
+GET /userinfo
+Authorization: Bearer &lt;access_token&gt;
+</code></pre>
+
+<h3>Document Every Parameter</h3>
+
+<p>For each request in the flow, record:</p>
+
+<ul>
+<li>The <code>response_type</code> — tells you the grant type (<code>code</code>, <code>token</code>, <code>id_token</code>, or combinations)</li>
+<li>The <code>redirect_uri</code> — your primary attack vector for token theft</li>
+<li>The <code>scope</code> — what permissions are being requested</li>
+<li>The <code>state</code> parameter — if missing, you have a CSRF finding immediately</li>
+<li>The <code>code_challenge</code> and <code>code_challenge_method</code> — if missing, PKCE is not enforced</li>
+<li>The <code>nonce</code> — if missing from an OIDC flow, ID token replay is possible</li>
+</ul>
+
+<h3>Check the Discovery Endpoint</h3>
+
+<p>If the target uses OIDC, fetch the discovery document:</p>
+
+<pre><code>curl -s https://target.com/.well-known/openid-configuration | jq .
+</code></pre>
+
+<p>This reveals the authorization endpoint, token endpoint, supported grant types, supported scopes, JWKS URI, and supported signing algorithms. The <code>grant_types_supported</code> field tells you which flows to test. The <code>id_token_signing_alg_values_supported</code> field tells you if weak algorithms like <code>none</code> or <code>HS256</code> are accepted.</p>
+
+<h2>Phase 2: Redirect URI Manipulation</h2>
+
+<p>The <code>redirect_uri</code> is the most exploited parameter in OAuth. If you can redirect the authorization code or token to a domain you control, you have account takeover.</p>
+
+<h3>Test 1: Open Redirect on the Registered Domain</h3>
+
+<p>If the authorization server validates that <code>redirect_uri</code> starts with <code>https://app.target.com</code>, find an open redirect on that domain:</p>
+
+<pre><code># If app.target.com/redirect?url=https://attacker.com exists:
+redirect_uri=https://app.target.com/redirect?url=https://attacker.com/steal
+</code></pre>
+
+<p>The authorization server sees a valid domain. The open redirect forwards the code to your server.</p>
+
+<h3>Test 2: Path Traversal and Subdomain Matching</h3>
+
+<pre><code># Path traversal
+redirect_uri=https://app.target.com/../attacker.com
+redirect_uri=https://app.target.com/..%2F..%2Fattacker.com
+redirect_uri=https://app.target.com%2F%2Fattacker.com
+
+# Subdomain matching bypass
+redirect_uri=https://attacker.target.com  (register this subdomain)
+redirect_uri=https://app.target.com.attacker.com
+redirect_uri=https://app-target.com  (register lookalike domain)
+
+# Port manipulation
+redirect_uri=https://app.target.com:8443/callback
+
+# Fragment injection
+redirect_uri=https://app.target.com/callback#@attacker.com
+</code></pre>
+
+<h3>Test 3: Localhost and Special Schemes</h3>
+
+<p>Some authorization servers allow localhost for development. Test if this is enabled in production:</p>
+
+<pre><code>redirect_uri=http://localhost/callback
+redirect_uri=http://127.0.0.1/callback
+redirect_uri=http://[::1]/callback
+redirect_uri=http://0.0.0.0/callback
+</code></pre>
+
+<h3>Test 4: Implicit Flow Token Leakage</h3>
+
+<p>If the app uses the implicit flow (<code>response_type=token</code>), the access token is in the URL fragment. Any page the user navigates to after the redirect can read it via <code>document.location.hash</code>. Find an XSS on the redirect page, or a page that leaks the referrer.</p>
+
+<h2>Phase 3: State Parameter and CSRF</h2>
+
+<h3>Test 5: Missing State Parameter</h3>
+
+<p>Remove the <code>state</code> parameter from the authorization request entirely. If the flow completes successfully, the application is vulnerable to OAuth CSRF — an attacker can force a victim to link the attacker's account.</p>
+
+<pre><code># Original request
+GET /authorize?response_type=code&client_id=abc&redirect_uri=https://app.target.com/callback&scope=openid&state=random123
+
+# Modified — remove state
+GET /authorize?response_type=code&client_id=abc&redirect_uri=https://app.target.com/callback&scope=openid
+</code></pre>
+
+<p>If the callback endpoint doesn't validate the state, report it. This is typically a medium-severity finding but can be escalated to high if it enables account linking attacks.</p>
+
+<h3>Test 6: Predictable or Reused State</h3>
+
+<p>Collect multiple state values. Check if they are:</p>
+
+<ul>
+<li>Sequential or predictable (e.g., incrementing integers, timestamps)</li>
+<li>Reused across sessions (same state for every login)</li>
+<li>Short enough to brute-force</li>
+</ul>
+
+<h2>Phase 4: Authorization Code Attacks</h2>
+
+<h3>Test 7: Code Reuse</h3>
+
+<p>Capture a valid authorization code and try to use it twice at the token endpoint. Per the spec (RFC 6749 §4.1.2), codes MUST be single-use. If the second request succeeds, the implementation is non-compliant and vulnerable to code replay.</p>
+
+<h3>Test 8: Code Without PKCE</h3>
+
+<p>If the authorization request includes <code>code_challenge</code>, try submitting the token request without <code>code_verifier</code>:</p>
+
+<pre><code>POST /oauth/token
+grant_type=authorization_code&code=AUTH_CODE&redirect_uri=https://app.target.com/callback&client_id=abc
+# Note: no code_verifier parameter
+</code></pre>
+
+<p>If the token endpoint returns tokens without verifying the PKCE challenge, the PKCE implementation is broken.</p>
+
+<h3>Test 9: PKCE Downgrade</h3>
+
+<p>Send the authorization request without <code>code_challenge</code> at all. If the server issues a code and the token endpoint accepts it without PKCE, the server doesn't enforce PKCE — meaning an attacker who intercepts the code can exchange it.</p>
+
+<h3>Test 10: Weak Code Challenge Method</h3>
+
+<pre><code># Try plain instead of S256
+code_challenge_method=plain&code_challenge=my_verifier
+# Then at token endpoint:
+code_verifier=my_verifier
+</code></pre>
+
+<p>If <code>plain</code> is accepted, the code_challenge provides no security — an attacker who sees the challenge can derive the verifier trivially.</p>
+
+<h2>Phase 5: Scope Escalation</h2>
+
+<h3>Test 11: Request Additional Scopes</h3>
+
+<p>Modify the <code>scope</code> parameter to request permissions beyond what the application normally asks for:</p>
+
+<pre><code># Original
+scope=openid email profile
+
+# Escalated
+scope=openid email profile admin
+scope=openid email profile write:users
+scope=openid email profile read:billing
+</code></pre>
+
+<p>If the authorization server grants the additional scopes without user consent, or if the application's backend doesn't validate the granted scopes, you have a privilege escalation finding.</p>
+
+<h3>Test 12: Scope Manipulation at Token Refresh</h3>
+
+<p>When refreshing an access token, try adding scopes that weren't in the original grant:</p>
+
+<pre><code>POST /oauth/token
+grant_type=refresh_token&refresh_token=RT_VALUE&scope=openid email profile admin
+</code></pre>
+
+<p>The spec says refresh requests MUST NOT include scopes beyond the original grant. Many implementations don't enforce this.</p>
+
+<h2>Phase 6: Token Security</h2>
+
+<h3>Test 13: Token Storage</h3>
+
+<p>Check where the application stores tokens:</p>
+
+<ul>
+<li><strong>localStorage</strong> — Vulnerable to XSS. Any script on the page can read <code>localStorage.getItem('access_token')</code>. If you find XSS, you can steal the token.</li>
+<li><strong>sessionStorage</strong> — Same XSS risk, but doesn't persist across tabs.</li>
+<li><strong>Cookies without HttpOnly</strong> — Accessible via JavaScript, same as localStorage.</li>
+<li><strong>Cookies with HttpOnly + Secure + SameSite</strong> — Best practice. Not directly accessible via XSS.</li>
+</ul>
+
+<h3>Test 14: Refresh Token Rotation</h3>
+
+<p>Use a refresh token, then try using the same refresh token again. If the server issues new tokens both times without revoking the old refresh token, an attacker with a stolen refresh token has persistent access even after the legitimate user refreshes.</p>
+
+<h3>Test 15: Token Revocation</h3>
+
+<p>After the user logs out or changes their password, check if previously issued access tokens and refresh tokens are still valid. Many applications don't implement token revocation, meaning stolen tokens remain usable indefinitely.</p>
+
+<h2>Phase 7: OIDC-Specific Attacks</h2>
+
+<h3>Test 16: ID Token Signature Bypass</h3>
+
+<p>Decode the ID token (it's a JWT) and try:</p>
+
+<pre><code># Algorithm none attack
+# Change header to {"alg": "none"} and remove the signature
+# Use jwt_tool:
+python3 jwt_tool.py &lt;id_token&gt; -X a
+
+# Algorithm confusion (RS256 → HS256)
+# If the server uses RS256, try signing with HS256 using the public key as the HMAC secret
+python3 jwt_tool.py &lt;id_token&gt; -X k -pk public_key.pem
+</code></pre>
+
+<h3>Test 17: Claim Injection</h3>
+
+<p>If the relying party uses claims from the ID token (email, sub) to identify users without verifying the token signature or issuer, you can forge claims:</p>
+
+<pre><code># Modify the email claim to impersonate another user
+{
+  "sub": "attacker-id",
+  "email": "victim@target.com",
+  "aud": "client-id",
+  "iss": "https://auth.target.com"
+}
+</code></pre>
+
+<p>This works when the relying party trusts the email claim for account matching without verifying the token came from the expected issuer.</p>
+
+<h3>Test 18: Audience Confusion</h3>
+
+<p>If multiple applications share the same identity provider, an ID token issued for App A might be accepted by App B. Capture an ID token from one application and replay it to another:</p>
+
+<pre><code># Token issued for client_id=app-a
+# Send it to app-b's token validation endpoint
+# If app-b doesn't check the "aud" claim, you can authenticate as the user on app-b
+</code></pre>
+
+<h3>Test 19: Nonce Reuse and Replay</h3>
+
+<p>Capture an ID token with a valid nonce. Replay the entire authorization response (code + ID token) in a new session. If the relying party doesn't track used nonces, the replayed token is accepted.</p>
+
+<h2>Phase 8: Social Login-Specific Attacks</h2>
+
+<h3>Test 20: Account Linking Confusion</h3>
+
+<p>Many applications allow users to link multiple social accounts. Test this flow:</p>
+
+<ol>
+<li>Create Account A with email login</li>
+<li>Create Account B with Google login (using a different email)</li>
+<li>On Account A, initiate "Link Google Account" — but intercept the callback</li>
+<li>Send the callback to Account B's session</li>
+</ol>
+
+<p>If the application doesn't validate that the OAuth callback belongs to the session that initiated it (via the state parameter), you can link your Google account to another user's account — giving you access to their account via Google login.</p>
+
+<h3>Test 21: Email Verification Trust</h3>
+
+<p>Some applications trust the <code>email_verified</code> claim from social providers without checking it. Register a social account with an unverified email matching the victim's email. If the application auto-links accounts based on email without checking <code>email_verified</code>, you get access to the victim's account.</p>
+
+<h2>Tools for OAuth/OIDC Testing</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td>Burp Suite + AuthMatrix</td><td>Intercept and modify OAuth flows</td><td>Essential for all OAuth testing</td></tr>
+<tr><td>EsPReSSO (Burp Extension)</td><td>Automated SSO protocol testing</td><td>Detects common OAuth/SAML misconfigurations</td></tr>
+<tr><td>jwt_tool</td><td>JWT manipulation and attack automation</td><td>Covers alg:none, key confusion, claim tampering</td></tr>
+<tr><td>jwt.io</td><td>Quick JWT decode and inspection</td><td>Browser-based, good for initial analysis</td></tr>
+<tr><td>Postman / curl</td><td>Manual token endpoint testing</td><td>Useful for code reuse, scope escalation tests</td></tr>
+<tr><td>Browser DevTools</td><td>Inspect redirects, cookies, localStorage</td><td>Network tab shows full redirect chain</td></tr>
+</tbody>
+</table>
+
+<h2>Reporting OAuth/OIDC Vulnerabilities</h2>
+
+<p>OAuth bugs require clear proof of impact. Your report should include:</p>
+
+<ul>
+<li><strong>The exact flow</strong> — Which grant type, which endpoints, which parameters</li>
+<li><strong>Step-by-step reproduction</strong> — Every request/response in the attack chain</li>
+<li><strong>Impact statement</strong> — "An attacker can take over any user's account by..." or "An attacker can escalate privileges to admin by..."</li>
+<li><strong>Affected users</strong> — All users who authenticate via this flow, or a specific subset</li>
+<li><strong>Remediation</strong> — Reference the specific RFC section that the implementation violates</li>
+</ul>
+
+<p>For redirect_uri findings, include a working proof-of-concept URL that demonstrates the redirect to your controlled domain. For token manipulation findings, include the modified JWT and the server's response accepting it.</p>
+
+<h2>Common Pitfalls When Testing</h2>
+
+<ul>
+<li><strong>Don't test other users' accounts.</strong> All OAuth testing should use accounts you control. You're manipulating your own authorization flow, not accessing other people's data.</li>
+<li><strong>Don't confuse informational findings with vulnerabilities.</strong> An application using the implicit flow is not automatically a vulnerability — it's a design choice. The vulnerability is when the implicit flow enables token theft via a specific attack chain.</li>
+<li><strong>Don't ignore the token endpoint.</strong> Many hunters focus on the authorization endpoint and forget that the token endpoint has its own attack surface (code reuse, PKCE bypass, scope escalation on refresh).</li>
+<li><strong>Test the full chain.</strong> A redirect_uri bypass that only works with <code>response_type=code</code> is less impactful than one that works with <code>response_type=token</code>, because the code still needs to be exchanged server-side. Always demonstrate the complete attack path to token theft or account takeover.</li>
+</ul>
+
+<h2>Related Resources</h2>
+
+<ul>
+<li><a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass for Bug Bounty in 2026</a> — Broader auth testing methodology</li>
+<li><a href="/articles/account-takeover-methodology-bug-bounty-guide-2026/">Account Takeover Methodology for Bug Bounty in 2026</a> — Complete ATO hunting framework</li>
+<li><a href="/articles/jwt-attacks-bug-bounty-guide-2026/">JWT Attacks for Bug Bounty in 2026</a> — Deep dive on JWT-specific vulnerabilities</li>
+<li><a href="/articles/saml-attacks-bug-bounty-guide-2026/">SAML Attacks for Bug Bounty in 2026</a> — SSO testing for SAML implementations</li>
+<li><a href="/articles/2fa-bypass-bug-bounty-guide-2026/">2FA Bypass for Bug Bounty in 2026</a> — Testing multi-factor authentication</li>
+<li><a href="/articles/csrf-hunting-bug-bounty-guide-2026/">CSRF Hunting for Bug Bounty in 2026</a> — Cross-site request forgery (relevant to OAuth state parameter)</li>
+<li><a href="/articles/xss-hunting-bug-bounty-guide-2026/">XSS Hunting for Bug Bounty in 2026</a> — XSS enables token theft from localStorage</li>
+<li><a href="/articles/bug-bounty-resource-center-hub-2026/">Bug Bounty Resource Center</a> — All guides and starter kits</li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

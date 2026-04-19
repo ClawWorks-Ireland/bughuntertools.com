@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Move beyond manual bug bounty hunting. Learn how to automate recon, vulnerability scanning, and reporting workflows with practical scripts, tool chains, and automation frameworks used by top hunters in 2026.">
+    <title>Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bug-bounty-automation-scripts-tools-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bug-bounty-automation-scripts-tools-2026/">
+    <meta property="og:title" content="Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools">
+    <meta property="og:description" content="Move beyond manual bug bounty hunting. Learn how to automate recon, vulnerability scanning, and reporting workflows with practical scripts, tool chains, and automation frameworks used by top hunters in 2026.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bug-bounty-automation-scripts-tools-2026/">
+    <meta name="twitter:title" content="Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools">
+    <meta name="twitter:description" content="Move beyond manual bug bounty hunting. Learn how to automate recon, vulnerability scanning, and reporting workflows with practical scripts, tool chains, and automation frameworks used by top hunters in 2026.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools",
+      "description": "Move beyond manual bug bounty hunting. Learn how to automate recon, vulnerability scanning, and reporting workflows with practical scripts, tool chains, and automation frameworks used by top hunters in 2026.",
+      "url": "https://bughuntertools.com/articles/bug-bounty-automation-scripts-tools-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools",
+      "description": "Move beyond manual bug bounty hunting. Learn how to automate recon, vulnerability scanning, and reporting workflows with practical scripts, tool chains, and automation frameworks used by top hunters in 2026.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" },
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "mainEntityOfPage": "https://bughuntertools.com/articles/bug-bounty-automation-scripts-tools-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is automating bug bounty hunting allowed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, most bug bounty programs allow automation as long as you stay within scope, respect rate limits, and don't cause service disruption. Always read the program's rules before running automated tools. Some programs explicitly prohibit automated scanning — skip those or hunt manually."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What programming language is best for bug bounty automation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Bash for gluing tools together, Python for custom logic and API interaction, and Go for performance-critical tools. Most top hunters use a combination. Start with Bash pipelines wrapping existing tools, then graduate to Python when you need custom parsing or logic."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much of bug bounty hunting can be automated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Recon (subdomain enumeration, port scanning, technology fingerprinting) can be 90%+ automated. Vulnerability scanning can be 60-70% automated for known vulnerability classes. But the creative part — chaining findings into exploitable bugs and writing quality reports — still requires human judgment. The best hunters automate the boring parts so they can spend more time on the creative parts."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools should I automate first?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Start with recon: subfinder + httpx + nuclei is the classic pipeline. Automate subdomain discovery, alive checking, and known-CVE scanning first. This alone will find low-hanging fruit across large scopes. Then add technology fingerprinting (Wappalyzer/webanalyze), screenshot capture (gowitness), and custom nuclei templates for your specialty."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Build a Bug Bounty Automation Pipeline",
+      "description": "Step-by-step guide to automating your bug bounty recon and scanning workflow.",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Set Up Your Tool Chain",
+          "text": "Install the core tools: subfinder for subdomain enumeration, httpx for alive checking, nuclei for vulnerability scanning, and notify for alerts. Use Go-based tools where possible for speed."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Build a Recon Pipeline",
+          "text": "Chain tools together with Bash pipes: subfinder -d target.com | httpx -silent | nuclei -t cves/. Save output to dated files for diffing between runs."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add Continuous Monitoring",
+          "text": "Run your pipeline on a cron schedule (daily or weekly). Use diff-based alerting to notify you only when new subdomains or vulnerabilities appear."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Write Custom Nuclei Templates",
+          "text": "Create templates for vulnerability patterns you find repeatedly. Custom templates are your competitive advantage — they find bugs that generic scanners miss."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Scale Across Programs",
+          "text": "Maintain a target list of all your active programs. Run your pipeline against all of them. Use notification channels (Slack, Discord, Telegram) to route findings by severity."
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Bug Bounty Automation in 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>Bug Bounty Automation in 2026: How to Scale Your Hunting With Custom Scripts and Tools</h1>
+
+<p class="meta">By Sage Elliston · April 13, 2026 · 12 min read</p>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Automate recon first — subdomain enumeration, alive checking, and known-CVE scanning are the highest-ROI automation targets</li>
+<li>The subfinder → httpx → nuclei pipeline is the foundation most top hunters build on</li>
+<li>Continuous monitoring with diff-based alerts finds bugs that one-time scans miss — new assets are where fresh vulnerabilities live</li>
+<li>Custom nuclei templates are your competitive edge — generic templates find what everyone else finds</li>
+<li>Automation handles the boring parts so you can focus on creative exploitation and report writing</li>
+</ul>
+</div>
+
+<h2>Why Automate Your Bug Bounty Hunting?</h2>
+
+<p>If you've been hunting manually for a few months, you've probably noticed the pattern: most of your time goes to recon, not exploitation. You're running the same subdomain enumeration commands, checking the same ports, fingerprinting the same technologies — over and over, across every new program.</p>
+
+<p>That's the work that should be automated. Not because automation finds better bugs (it doesn't), but because it frees you to spend your limited hunting hours on the creative work that actually pays: chaining findings, testing business logic, and writing reports that get triaged quickly.</p>
+
+<p>The math is simple. A manual recon pass on a medium-scope program takes 2-4 hours. An automated pipeline does it in 10-15 minutes. If you're hunting across 5 programs, that's 10-20 hours saved per week — time you can redirect to actually finding and exploiting vulnerabilities.</p>
+
+<h2>The Core Automation Pipeline</h2>
+
+<p>Every bug bounty automation setup starts with the same three stages: <strong>discover</strong>, <strong>filter</strong>, <strong>scan</strong>. Here's the minimal pipeline that most top hunters run:</p>
+
+<h3>Stage 1: Subdomain Discovery</h3>
+
+<p>Use multiple sources to maximize coverage. <a href="/articles/subdomain-enumeration-tools-2026/">Subdomain enumeration tools</a> like subfinder aggregate results from certificate transparency logs, DNS datasets, and search engines:</p>
+
+<pre><code>subfinder -d target.com -all -silent | sort -u > subs.txt</code></pre>
+
+<p>For better coverage, combine multiple tools and deduplicate:</p>
+
+<pre><code>cat targets.txt | while read domain; do
+  subfinder -d "$domain" -silent
+  amass enum -passive -d "$domain" 2>/dev/null
+  findomain -t "$domain" -q
+done | sort -u > all-subs.txt</code></pre>
+
+<h3>Stage 2: Alive Checking and Fingerprinting</h3>
+
+<p>Not every subdomain resolves to a live web server. Filter down to what's actually running:</p>
+
+<pre><code>cat all-subs.txt | httpx -silent -status-code -title -tech-detect -o alive.txt</code></pre>
+
+<p>This gives you live hosts with their HTTP status codes, page titles, and detected technologies — all in one pass.</p>
+
+<h3>Stage 3: Vulnerability Scanning</h3>
+
+<p>Run nuclei against your alive hosts with templates matched to the technologies you found:</p>
+
+<pre><code>cat alive.txt | nuclei -t cves/ -t exposures/ -t misconfiguration/ -severity medium,high,critical -o findings.txt</code></pre>
+
+<p>For a deeper dive into writing your own templates, see our <a href="/articles/nuclei-template-writing-guide-2026/">nuclei template writing guide</a>.</p>
+
+<h2>Continuous Monitoring: Where the Real Bugs Are</h2>
+
+<p>One-time scans find what's already there. Continuous monitoring finds what's <em>new</em> — and new assets are where fresh vulnerabilities live. When a company deploys a new subdomain, it often hasn't gone through the same security hardening as their main properties.</p>
+
+<p>The simplest approach: run your recon pipeline on a cron schedule and diff the results.</p>
+
+<pre><code>#!/bin/bash
+# daily-recon.sh — run via cron: 0 6 * * * /path/to/daily-recon.sh
+
+TARGETS="$HOME/bounty/targets.txt"
+OUTDIR="$HOME/bounty/recon/$(date +%Y-%m-%d)"
+PREV="$HOME/bounty/recon/latest"
+mkdir -p "$OUTDIR"
+
+# Discover
+cat "$TARGETS" | while read d; do subfinder -d "$d" -silent; done | sort -u > "$OUTDIR/subs.txt"
+
+# Diff against previous run
+if [ -d "$PREV" ]; then
+  comm -13 "$PREV/subs.txt" "$OUTDIR/subs.txt" > "$OUTDIR/new-subs.txt"
+  NEW_COUNT=$(wc -l < "$OUTDIR/new-subs.txt")
+  if [ "$NEW_COUNT" -gt 0 ]; then
+    echo "$NEW_COUNT new subdomains found" | notify -silent
+    cat "$OUTDIR/new-subs.txt" | httpx -silent | nuclei -t cves/ -severity high,critical | notify -silent
+  fi
+fi
+
+# Update latest symlink
+ln -sfn "$OUTDIR" "$PREV"</code></pre>
+
+<p>The <code>notify</code> tool (from ProjectDiscovery) sends alerts to Slack, Discord, Telegram, or email. Configure it once and you'll get pinged whenever your pipeline finds something new.</p>
+
+<h2>Custom Nuclei Templates: Your Competitive Edge</h2>
+
+<p>Generic nuclei templates find what everyone else finds. The hunters who consistently earn top payouts write custom templates for patterns they've seen before.</p>
+
+<p>Common patterns worth templating:</p>
+
+<ul>
+<li><strong>Exposed admin panels</strong> — /admin, /wp-admin, /administrator with default credentials or no auth</li>
+<li><strong>Debug endpoints</strong> — /debug, /trace, /actuator, /graphql with introspection enabled</li>
+<li><strong>API versioning gaps</strong> — /api/v1/ endpoints that bypass /api/v2/ security controls</li>
+<li><strong>Technology-specific misconfigs</strong> — Laravel debug mode, Django DEBUG=True, Spring Boot actuator exposure</li>
+<li><strong>Information disclosure</strong> — .env files, .git directories, backup files, source maps</li>
+</ul>
+
+<p>A simple custom template for finding exposed .env files:</p>
+
+<pre><code>id: exposed-env-file
+info:
+  name: Exposed .env File
+  severity: high
+  description: Application .env file is publicly accessible
+  tags: exposure,config
+
+requests:
+  - method: GET
+    path:
+      - "/.env"
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - "DB_PASSWORD"
+          - "APP_KEY"
+          - "SECRET"
+        condition: or
+      - type: status
+        status:
+          - 200</code></pre>
+
+<p>Build a library of these over time. Each template you write is a reusable detector that runs across every program you hunt on.</p>
+
+<h2>Scaling Across Multiple Programs</h2>
+
+<p>Once your pipeline works for one target, scaling to many is straightforward. Maintain a structured target list:</p>
+
+<pre><code># targets.txt — one root domain per line, grouped by program
+# HackerOne - Program A
+target-a.com
+assets.target-a.com
+
+# Bugcrowd - Program B
+target-b.com
+*.target-b.io</code></pre>
+
+<p>For hunters working across many programs, consider organizing by platform. Our <a href="/articles/bug-bounty-platforms-comparison-2026/">platform comparison guide</a> covers the differences between HackerOne, Bugcrowd, Intigriti, and YesWeHack scopes and rules.</p>
+
+<h2>Python for Custom Logic</h2>
+
+<p>Bash pipelines handle 80% of automation needs. For the other 20% — custom parsing, API interaction, conditional logic — Python is the right tool:</p>
+
+<pre><code>#!/usr/bin/env python3
+"""Check for subdomain takeover candidates."""
+import subprocess, json
+
+def check_cnames(subs_file):
+    """Find subdomains with dangling CNAMEs."""
+    takeover_candidates = []
+    with open(subs_file) as f:
+        for sub in f:
+            sub = sub.strip()
+            try:
+                result = subprocess.run(
+                    ["dig", "+short", "CNAME", sub],
+                    capture_output=True, text=True, timeout=5
+                )
+                cname = result.stdout.strip()
+                if cname and any(svc in cname for svc in [
+                    "amazonaws.com", "azurewebsites.net",
+                    "herokuapp.com", "github.io",
+                    "shopify.com", "fastly.net"
+                ]):
+                    # Check if CNAME target resolves
+                    nxcheck = subprocess.run(
+                        ["dig", "+short", cname],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    if not nxcheck.stdout.strip():
+                        takeover_candidates.append({
+                            "subdomain": sub,
+                            "cname": cname,
+                            "status": "NXDOMAIN — possible takeover"
+                        })
+            except subprocess.TimeoutExpired:
+                continue
+    return takeover_candidates</code></pre>
+
+<h2>What NOT to Automate</h2>
+
+<p>Automation has limits. These parts of bug bounty hunting still require human judgment:</p>
+
+<ul>
+<li><strong>Business logic testing</strong> — IDOR, privilege escalation, payment bypass. These require understanding how the application is supposed to work.</li>
+<li><strong>Report writing</strong> — A well-written report with clear reproduction steps and impact assessment is the difference between a $500 and $5,000 payout. See our <a href="/articles/how-to-write-bug-bounty-reports-2026/">report writing guide</a>.</li>
+<li><strong>Scope interpretation</strong> — Automated tools don't understand program rules. Always verify scope manually before scanning.</li>
+<li><strong>Chaining vulnerabilities</strong> — The highest-value bugs come from combining multiple low-severity findings into a critical chain. This is creative work.</li>
+</ul>
+
+<h2>Responsible Automation: Rules of Engagement</h2>
+
+<p>Automated scanning can cause real damage if done carelessly. Follow these rules:</p>
+
+<ol>
+<li><strong>Read the program rules first</strong> — some programs explicitly prohibit automated scanning</li>
+<li><strong>Respect rate limits</strong> — use <code>-rate-limit</code> flags on all tools. 10-50 requests/second is a safe default</li>
+<li><strong>Don't scan out of scope</strong> — validate your target list against the program's scope before every run</li>
+<li><strong>Log everything</strong> — keep records of what you scanned, when, and what you found. This protects you if questions arise</li>
+<li><strong>Test on your own infrastructure first</strong> — before running a new script against a live target, test it against a lab environment. Our <a href="/articles/bug-bounty-recon-workflow-2026/">recon workflow guide</a> covers setting this up</li>
+</ol>
+
+<h2>Getting Started: Your First Automated Session</h2>
+
+<p>If you're new to automation, start small. Pick one program you're already familiar with and automate just the recon phase:</p>
+
+<ol>
+<li>Install subfinder, httpx, and nuclei (all available via <code>go install</code> or binary releases)</li>
+<li>Run the basic pipeline: <code>subfinder -d target.com | httpx -silent | nuclei -t cves/</code></li>
+<li>Review the output manually — understand what each tool found and why</li>
+<li>Save the output and run again tomorrow — diff the results to see what changed</li>
+<li>Gradually add more tools and custom templates as you learn what works for your targets</li>
+</ol>
+
+<p>For a complete walkthrough of the recon phase, see our <a href="/articles/bug-bounty-recon-workflow-2026/">recon workflow guide</a>. For the full hunting methodology from recon to payout, check our <a href="/articles/bug-bounty-methodology-guide-2026/">methodology framework</a>.</p>
+
+<h2>Recommended Tool Stack (2026)</h2>
+
+<table>
+<thead>
+<tr><th>Category</th><th>Tool</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td>Subdomain Discovery</td><td>subfinder, amass, findomain</td><td>Passive subdomain enumeration from multiple sources</td></tr>
+<tr><td>Alive Checking</td><td>httpx</td><td>HTTP probing with tech detection</td></tr>
+<tr><td>Port Scanning</td><td>naabu, masscan</td><td>Fast port discovery across large ranges</td></tr>
+<tr><td>Vulnerability Scanning</td><td>nuclei</td><td>Template-based scanning for known CVEs and misconfigs</td></tr>
+<tr><td>Screenshots</td><td>gowitness, aquatone</td><td>Visual recon for manual review</td></tr>
+<tr><td>Notifications</td><td>notify</td><td>Route findings to Slack/Discord/Telegram</td></tr>
+<tr><td>Fuzzing</td><td>ffuf, feroxbuster</td><td>Directory and parameter discovery</td></tr>
+<tr><td>Subdomain Takeover</td><td>subjack, nuclei takeover templates</td><td>Detect dangling DNS records</td></tr>
+</tbody>
+</table>
+
+<p>For AI-assisted hunting workflows that complement automation, see our <a href="/articles/ai-tools-bug-bounty-hunting-2026/">AI tools for bug bounty hunting</a> guide.</p>
+
+<h2>FAQ</h2>
+
+<h3>Is automating bug bounty hunting allowed?</h3>
+<p>Yes, most programs allow automation as long as you stay within scope, respect rate limits, and don't cause service disruption. Always read the program's rules before running automated tools. Some programs explicitly prohibit automated scanning — skip those or hunt manually.</p>
+
+<h3>What programming language is best for bug bounty automation?</h3>
+<p>Bash for gluing tools together, Python for custom logic and API interaction, and Go for performance-critical tools. Most top hunters use a combination. Start with Bash pipelines wrapping existing tools, then graduate to Python when you need custom parsing or logic.</p>
+
+<h3>How much of bug bounty hunting can be automated?</h3>
+<p>Recon can be 90%+ automated. Vulnerability scanning can be 60-70% automated for known vulnerability classes. But the creative part — chaining findings into exploitable bugs and writing quality reports — still requires human judgment. The best hunters automate the boring parts so they can spend more time on the creative parts.</p>
+
+<h3>What tools should I automate first?</h3>
+<p>Start with recon: subfinder + httpx + nuclei is the classic pipeline. Automate subdomain discovery, alive checking, and known-CVE scanning first. Then add technology fingerprinting, screenshot capture, and custom nuclei templates for your specialty.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

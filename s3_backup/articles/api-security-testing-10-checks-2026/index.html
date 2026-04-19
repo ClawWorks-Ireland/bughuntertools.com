@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="APIs are the most common attack surface in modern applications. Here are the 10 security checks every API needs — from authentication and authorization to rate limiting and input validation — with practical testing methods for each.">
+    <title>API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/api-security-testing-10-checks-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/api-security-testing-10-checks-2026/">
+    <meta property="og:title" content="API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production">
+    <meta property="og:description" content="APIs are the most common attack surface in modern applications. Here are the 10 security checks every API needs — from authentication and authorization to rate limiting and input validation — with practical testing methods for each.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/api-security-testing-10-checks-2026/">
+    <meta name="twitter:title" content="API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production">
+    <meta name="twitter:description" content="APIs are the most common attack surface in modern applications. Here are the 10 security checks every API needs — from authentication and authorization to rate limiting and input validation — with practical testing methods for each.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production",
+      "description": "APIs are the most common attack surface in modern applications. Here are the 10 security checks every API needs — from authentication and authorization to rate limiting and input validation — with practical testing methods for each.",
+      "url": "https://bughuntertools.com/articles/api-security-testing-10-checks-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "API Security Testing in 2026: The 10 Checks Every API Needs Before Going to Production",
+  "description": "The 10 security checks every API needs before production, with practical testing methods for each.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are the most common API security vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most common API vulnerabilities are Broken Object Level Authorization (BOLA/IDOR), Broken Authentication, Excessive Data Exposure, Lack of Rate Limiting, and Broken Function Level Authorization. These map to the OWASP API Security Top 10 and are found in the majority of API security assessments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you test an API for security vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Test APIs by: (1) mapping all endpoints from documentation and traffic analysis, (2) testing authentication mechanisms for bypass, (3) testing authorization by accessing resources with different user roles, (4) testing input validation with injection payloads, (5) checking rate limiting on sensitive endpoints, and (6) verifying that responses don't expose excessive data."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>API Security Testing in 2026: The 10 Checks Every API Needs</h1>
+
+<p class="article-meta">Published April 7, 2026 · 11 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>BOLA/IDOR is the #1 API vulnerability — test authorization on every endpoint before launch</li>
+    <li>APIs need 10 specific security checks covering auth, input validation, rate limiting, and data exposure</li>
+    <li>Automated scanners catch injection and misconfig but miss business logic flaws — manual testing is essential</li>
+    <li>Rate limiting on authentication and sensitive endpoints prevents credential stuffing and abuse</li>
+  </ul>
+</div>
+
+
+<p>APIs are the primary attack surface for modern applications. Your mobile app talks to an API. Your single-page app talks to an API. Your microservices talk to each other through APIs. If your API security is weak, everything built on top of it is vulnerable.</p>
+
+<p>These are the 10 checks that catch the most common API vulnerabilities. They're ordered by impact — the first few checks catch the bugs that lead to data breaches.</p>
+
+<nav>
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#bola">Check 1: Broken Object Level Authorization (BOLA)</a></li>
+    <li><a href="#auth">Check 2: Authentication Bypass</a></li>
+    <li><a href="#data">Check 3: Excessive Data Exposure</a></li>
+    <li><a href="#rate">Check 4: Rate Limiting</a></li>
+    <li><a href="#bfla">Check 5: Broken Function Level Authorization</a></li>
+    <li><a href="#mass">Check 6: Mass Assignment</a></li>
+    <li><a href="#injection">Check 7: Injection</a></li>
+    <li><a href="#cors">Check 8: CORS Misconfiguration</a></li>
+    <li><a href="#versioning">Check 9: API Versioning and Deprecation</a></li>
+    <li><a href="#errors">Check 10: Error Handling and Information Disclosure</a></li>
+  </ol>
+</nav>
+
+<h2 id="bola">Check 1: Broken Object Level Authorization (BOLA)</h2>
+
+<p><strong>What it is</strong>: The API lets you access other users' data by changing the resource ID in the request. Also known as IDOR (Insecure Direct Object Reference).</p>
+
+<p><strong>Why it's #1</strong>: BOLA is the most common API vulnerability and the most impactful. It leads directly to unauthorized data access — reading other users' profiles, orders, messages, or financial data.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Authenticate as User A</li>
+  <li>Make a request to <code>GET /api/users/123/profile</code> (User A's profile)</li>
+  <li>Change the ID: <code>GET /api/users/456/profile</code> (User B's profile)</li>
+  <li>If you get User B's data, the API has BOLA</li>
+</ol>
+
+<p><strong>Test every endpoint that takes a resource ID</strong>: user IDs, order IDs, document IDs, message IDs. Test with sequential IDs, UUIDs (try guessing patterns), and IDs from other authenticated sessions.</p>
+
+<p><strong>Fix</strong>: Verify that the authenticated user has permission to access the requested resource on every request. Don't rely on the client to send the correct ID.</p>
+
+<h2 id="auth">Check 2: Authentication Bypass</h2>
+
+<p><strong>What it is</strong>: The API can be accessed without valid authentication, or the authentication mechanism can be bypassed.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>Remove the <code>Authorization</code> header entirely — does the endpoint still respond with data?</li>
+  <li>Send an expired token — does the API reject it?</li>
+  <li>Send a token signed with a different algorithm (JWT algorithm confusion: change <code>RS256</code> to <code>HS256</code>)</li>
+  <li>Send a token with <code>"alg": "none"</code> — some JWT libraries accept unsigned tokens</li>
+  <li>Test token refresh flow — can you reuse a refresh token after it should be invalidated?</li>
+</ul>
+
+<p><strong>Fix</strong>: Validate tokens on every request. Reject expired tokens. Use a well-tested JWT library with algorithm whitelisting. Implement token revocation for logout and password changes.</p>
+
+<h2 id="data">Check 3: Excessive Data Exposure</h2>
+
+<p><strong>What it is</strong>: The API returns more data than the client needs. The frontend filters what to display, but the full response contains sensitive fields.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Intercept API responses (Burp Suite, browser DevTools)</li>
+  <li>Compare what the UI shows vs what the API returns</li>
+  <li>Look for fields like: <code>password_hash</code>, <code>ssn</code>, <code>internal_id</code>, <code>admin_notes</code>, <code>api_key</code></li>
+  <li>Check list endpoints — does <code>GET /api/users</code> return all user fields for every user?</li>
+</ol>
+
+<p><strong>Fix</strong>: Return only the fields the client needs. Use response schemas (DTOs) that explicitly define which fields are included. Never rely on the frontend to filter sensitive data.</p>
+
+<h2 id="rate">Check 4: Rate Limiting</h2>
+
+<p><strong>What it is</strong>: The API doesn't limit how many requests a client can make, enabling brute-force attacks, credential stuffing, and resource exhaustion.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>Send 100 login requests in 10 seconds — does the API throttle you?</li>
+  <li>Send 1000 requests to a search endpoint — does it slow down or return 429?</li>
+  <li>Check if rate limiting is per-IP, per-user, or per-API-key (try rotating IPs)</li>
+  <li>Test password reset endpoint — can you enumerate valid emails by brute-forcing?</li>
+</ul>
+
+<p><strong>Critical endpoints that MUST have rate limiting</strong>: login, password reset, OTP verification, signup, search, and any endpoint that triggers email/SMS.</p>
+
+<p><strong>Fix</strong>: Implement rate limiting at the API gateway level. Use sliding window counters. Return <code>429 Too Many Requests</code> with a <code>Retry-After</code> header.</p>
+
+<h2 id="bfla">Check 5: Broken Function Level Authorization</h2>
+
+<p><strong>What it is</strong>: A regular user can access admin-only API endpoints. The API checks authentication (who you are) but not authorization (what you're allowed to do).</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Authenticate as a regular user</li>
+  <li>Try accessing admin endpoints: <code>GET /api/admin/users</code>, <code>POST /api/admin/settings</code>, <code>DELETE /api/users/456</code></li>
+  <li>Try changing HTTP methods: if <code>GET /api/users/456</code> works, try <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code></li>
+  <li>Check for predictable admin paths: <code>/api/v1/admin</code>, <code>/api/internal</code>, <code>/api/management</code></li>
+</ol>
+
+<p><strong>Fix</strong>: Implement role-based access control (RBAC) at the API layer. Check permissions on every endpoint, not just at the route level. Deny by default — only allow explicitly permitted actions.</p>
+
+<h2 id="mass">Check 6: Mass Assignment</h2>
+
+<p><strong>What it is</strong>: The API accepts and processes fields that the client shouldn't be able to set. A user can escalate privileges by including <code>"role": "admin"</code> in a profile update request.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Find a <code>PUT</code> or <code>PATCH</code> endpoint (profile update, settings change)</li>
+  <li>Add extra fields to the request body: <code>"role": "admin"</code>, <code>"is_verified": true</code>, <code>"balance": 99999</code></li>
+  <li>Check if the extra fields were accepted and persisted</li>
+  <li>Try setting fields that appear in <code>GET</code> responses but aren't in the UI form</li>
+</ol>
+
+<p><strong>Fix</strong>: Use allowlists for accepted fields on every endpoint. Never bind request bodies directly to database models without filtering.</p>
+
+<h2 id="injection">Check 7: Injection</h2>
+
+<p><strong>What it is</strong>: API parameters are passed to backend queries (SQL, NoSQL, LDAP, OS commands) without proper sanitization.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>SQL injection: test all parameters with <code>'</code>, <code>1 OR 1=1</code>, <code>UNION SELECT</code> (see our <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQLi detection guide</a>)</li>
+  <li>NoSQL injection: test with <code>{"$gt": ""}</code>, <code>{"$ne": null}</code> in JSON parameters</li>
+  <li>GraphQL injection: test for query depth attacks, introspection, and batch query abuse</li>
+  <li>Command injection: test parameters that might reach system commands (file paths, hostnames)</li>
+</ul>
+
+<p>For XSS in API responses, see our <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">XSS detection guide</a>.</p>
+
+<p><strong>Fix</strong>: Use parameterized queries for all database operations. Validate and sanitize all input. Use an ORM correctly (don't build raw queries with string concatenation).</p>
+
+<h2 id="cors">Check 8: CORS Misconfiguration</h2>
+
+<p><strong>What it is</strong>: The API's Cross-Origin Resource Sharing configuration allows unauthorized domains to make authenticated requests.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Send a request with <code>Origin: https://evil.com</code></li>
+  <li>Check if the response includes <code>Access-Control-Allow-Origin: https://evil.com</code></li>
+  <li>Check if <code>Access-Control-Allow-Credentials: true</code> is set with a permissive origin</li>
+  <li>Test with <code>Origin: null</code> — some APIs allow the null origin</li>
+</ol>
+
+<p><strong>The dangerous combination</strong>: <code>Access-Control-Allow-Origin: *</code> with <code>Access-Control-Allow-Credentials: true</code>. This lets any website make authenticated requests to your API using the victim's cookies.</p>
+
+<p><strong>Fix</strong>: Whitelist specific allowed origins. Never reflect the <code>Origin</code> header back without validation. Don't use <code>*</code> with credentials.</p>
+
+<h2 id="versioning">Check 9: API Versioning and Deprecation</h2>
+
+<p><strong>What it is</strong>: Old API versions remain accessible and may have vulnerabilities that were fixed in newer versions.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>If the current API is <code>/api/v3/</code>, try <code>/api/v2/</code> and <code>/api/v1/</code></li>
+  <li>Check if old versions have weaker authentication or authorization</li>
+  <li>Check if old versions expose endpoints that were removed in newer versions</li>
+  <li>Test if old versions have the same rate limiting as current versions</li>
+</ul>
+
+<p><strong>Fix</strong>: Deprecate and remove old API versions on a defined schedule. If old versions must remain, apply the same security controls as the current version.</p>
+
+<h2 id="errors">Check 10: Error Handling and Information Disclosure</h2>
+
+<p><strong>What it is</strong>: API error responses leak internal information — stack traces, database queries, file paths, server versions.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>Send malformed requests (invalid JSON, wrong content type, missing required fields)</li>
+  <li>Send requests that trigger server errors (very long strings, special characters, null bytes)</li>
+  <li>Check if error responses include: stack traces, SQL queries, file paths, internal IP addresses, framework versions</li>
+  <li>Test 404 responses — do they reveal the web framework?</li>
+</ul>
+
+<p><strong>Fix</strong>: Return generic error messages to clients. Log detailed errors server-side only. Use a consistent error response format that never includes internal details.</p>
+
+<h2>Putting It Together</h2>
+
+<p>These 10 checks cover the most common and impactful API vulnerabilities. Run them in order — BOLA and authentication bypass are the highest-impact findings, so test those first.</p>
+
+<p>For a broader web application testing workflow, see our <a href="/articles/web-app-security-testing-checklist-2026/">complete security testing checklist</a>. For automated API security scanning, SecurityClaw's <code>api-schema-discovery</code>, <code>idor-scanner</code>, and <code>apigw-cors-tester</code> skills cover checks 1, 5, and 8 — see our <a href="/articles/securityclaw-owasp-top-10-coverage-2026/">OWASP coverage analysis</a> for the full mapping.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

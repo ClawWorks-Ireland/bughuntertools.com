@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s guide to container security scanning in 2026 — comparing Trivy, Grype, Snyk Container, Docker Scout, and AWS ECR scanning for real-world DevSecOps pipelines.">
+    <title>Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/container-security-scanning-tools-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/container-security-scanning-tools-guide-2026/">
+    <meta property="og:title" content="Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters">
+    <meta property="og:description" content="A practitioner&#39;s guide to container security scanning in 2026 — comparing Trivy, Grype, Snyk Container, Docker Scout, and AWS ECR scanning for real-world DevSecOps pipelines.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/container-security-scanning-tools-guide-2026/">
+    <meta name="twitter:title" content="Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters">
+    <meta name="twitter:description" content="A practitioner&#39;s guide to container security scanning in 2026 — comparing Trivy, Grype, Snyk Container, Docker Scout, and AWS ECR scanning for real-world DevSecOps pipelines.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters",
+      "description": "A practitioner&#39;s guide to container security scanning in 2026 — comparing Trivy, Grype, Snyk Container, Docker Scout, and AWS ECR scanning for real-world DevSecOps pipelines.",
+      "url": "https://bughuntertools.com/articles/container-security-scanning-tools-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Container Security Scanning in 2026: Tools, Workflows, and What Actually Matters",
+      "description": "A practitioner's guide to container security scanning in 2026 — comparing Trivy, Grype, Snyk Container, Docker Scout, and AWS ECR scanning for real-world DevSecOps pipelines.",
+      "datePublished": "2026-04-12",
+      "dateModified": "2026-04-12",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is container security scanning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Container security scanning is the automated analysis of container images for known vulnerabilities (CVEs), misconfigurations, exposed secrets, and license compliance issues. Scanners inspect OS packages, application dependencies, Dockerfile instructions, and runtime configurations to identify risks before containers reach production."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best container security scanner in 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Trivy is the most popular open-source choice due to its speed, broad language support, and zero-config setup. Grype is a strong alternative with excellent SBOM integration via Syft. For commercial options, Snyk Container offers developer-friendly fix suggestions, and Docker Scout integrates natively with Docker Desktop. Most teams use Trivy or Grype in CI/CD and a registry-native scanner (ECR, GCR) as a second layer."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "When should I scan container images?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Scan at three points: during CI/CD (before pushing to a registry), at the registry level (admission control), and continuously in production (to catch newly disclosed CVEs against running images). Scanning only at build time misses vulnerabilities disclosed after deployment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between image scanning and runtime security?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Image scanning analyzes the static contents of a container image — packages, libraries, configs, and secrets baked into layers. Runtime security monitors container behavior during execution — syscalls, network connections, file access, and process execution. You need both: image scanning catches known vulnerabilities before deployment, runtime security catches exploitation attempts and zero-days in production."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I reduce false positives in container scanning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use distroless or minimal base images to reduce the attack surface and noise. Configure scanners to filter by severity threshold (e.g., only fail on HIGH/CRITICAL). Use VEX (Vulnerability Exploitability eXchange) documents to mark CVEs as not-affected when the vulnerable code path is unreachable. Regularly update base images so scanners aren't flagging already-patched packages."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Container Security Scanning Guide 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article class="article-content">
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li><strong>Trivy</strong> is the default open-source choice — fast, zero-config, covers OS packages + app dependencies + IaC + secrets in one binary.</li>
+<li><strong>Grype + Syft</strong> is the best option if you need SBOM-first workflows and CycloneDX/SPDX compliance.</li>
+<li><strong>Snyk Container</strong> gives the best developer experience with actionable fix suggestions and base image upgrade recommendations.</li>
+<li><strong>Docker Scout</strong> is the easiest on-ramp if your team already uses Docker Desktop — zero setup, integrated into <code>docker build</code>.</li>
+<li>Scan at <strong>three layers</strong>: CI/CD pipeline, container registry admission, and continuous production monitoring.</li>
+<li>The biggest real-world problem isn't finding vulnerabilities — it's <strong>triaging the noise</strong>. Use severity filters, VEX documents, and distroless base images.</li>
+</ul>
+</div>
+
+<h2>Why Container Security Scanning Matters in 2026</h2>
+
+<p>Containers are the default deployment unit for most teams. Kubernetes runs everything from startups to banks. And every container image you deploy is a frozen snapshot of every OS package, language runtime, and application dependency that existed at build time.</p>
+
+<p>The problem: vulnerabilities get disclosed <em>after</em> you build. A clean image today has CVEs tomorrow. And the average container image based on <code>ubuntu:22.04</code> or <code>node:20</code> ships with hundreds of packages your application never calls but attackers can exploit.</p>
+
+<p>Container security scanning solves this by automatically checking every layer of your images against vulnerability databases (NVD, GitHub Advisory Database, OS vendor feeds) and flagging what needs attention. The challenge isn't whether to scan — it's choosing the right tool and integrating it without drowning in false positives.</p>
+
+<h2>What Container Scanners Actually Check</h2>
+
+<p>Modern container scanners inspect multiple layers:</p>
+
+<ul>
+<li><strong>OS packages</strong> — apt, apk, yum packages installed in the base image. This is where most CVEs live.</li>
+<li><strong>Application dependencies</strong> — npm, pip, Maven, Go modules, Cargo, Composer packages. Language-specific vulnerability databases.</li>
+<li><strong>Dockerfile misconfigurations</strong> — running as root, exposing unnecessary ports, using <code>latest</code> tags, missing health checks.</li>
+<li><strong>Embedded secrets</strong> — API keys, passwords, tokens accidentally baked into image layers.</li>
+<li><strong>License compliance</strong> — identifying copyleft or restricted licenses in dependencies.</li>
+<li><strong>SBOM generation</strong> — producing a Software Bill of Materials for supply chain transparency.</li>
+</ul>
+
+<p>Not every scanner covers all of these. Here's what each tool actually does.</p>
+
+<h2>Tool Comparison: The 5 Scanners That Matter</h2>
+
+<h3>1. Trivy (Aqua Security)</h3>
+
+<p>Trivy is the Swiss Army knife of container scanning. Originally a vulnerability scanner, it now covers container images, filesystems, Git repos, Kubernetes clusters, IaC files (Terraform, CloudFormation), and secrets — all in one binary.</p>
+
+<p><strong>What it scans:</strong> OS packages, app dependencies (20+ languages), IaC misconfigs, secrets, licenses.<br>
+<strong>Vulnerability databases:</strong> NVD, GitHub Advisory, Red Hat, Debian, Ubuntu, Alpine, Amazon Linux, and more.<br>
+<strong>Output formats:</strong> Table, JSON, SARIF, CycloneDX, SPDX, GitHub dependency snapshot.<br>
+<strong>CI/CD integration:</strong> GitHub Actions, GitLab CI, Jenkins, CircleCI — all have official templates.<br>
+<strong>Speed:</strong> First scan downloads the DB (~30MB). Subsequent scans take 5-15 seconds for typical images.</p>
+
+<pre><code># Scan a container image
+trivy image nginx:1.25
+
+# Scan and fail CI if HIGH or CRITICAL vulns found
+trivy image --severity HIGH,CRITICAL --exit-code 1 myapp:latest
+
+# Generate SBOM in CycloneDX format
+trivy image --format cyclonedx --output sbom.json myapp:latest
+
+# Scan a Dockerfile for misconfigurations
+trivy config Dockerfile</code></pre>
+
+<p><strong>Strengths:</strong> Zero config, fast, covers more than just containers, excellent CI/CD templates, active development (weekly releases).<br>
+<strong>Weaknesses:</strong> Vulnerability database can lag 12-24 hours behind NVD for newly published CVEs. No built-in fix suggestions (just tells you what's wrong, not how to fix it).</p>
+
+<h3>2. Grype (Anchore)</h3>
+
+<p>Grype is Anchore's open-source vulnerability scanner, designed to pair with <strong>Syft</strong> (their SBOM generator). If your organization needs SBOM-first workflows — generate an SBOM once, scan it repeatedly — Grype is the natural choice.</p>
+
+<p><strong>What it scans:</strong> OS packages, app dependencies (15+ languages).<br>
+<strong>Vulnerability databases:</strong> NVD, GitHub Advisory, OS vendor feeds.<br>
+<strong>Output formats:</strong> Table, JSON, CycloneDX, SARIF.<br>
+<strong>Speed:</strong> Comparable to Trivy. DB download is ~50MB.</p>
+
+<pre><code># Scan an image directly
+grype nginx:1.25
+
+# Generate SBOM with Syft, then scan with Grype
+syft myapp:latest -o cyclonedx-json > sbom.json
+grype sbom:sbom.json
+
+# Fail on high severity
+grype myapp:latest --fail-on high</code></pre>
+
+<p><strong>Strengths:</strong> Best SBOM integration in the ecosystem. Syft + Grype is the gold standard for supply chain compliance workflows. Clean separation of concerns (SBOM generation vs. vulnerability matching).<br>
+<strong>Weaknesses:</strong> Narrower scope than Trivy — no IaC scanning, no secret detection, no Kubernetes scanning. You need additional tools for those.</p>
+
+<h3>3. Snyk Container</h3>
+
+<p>Snyk Container is the commercial option that prioritizes developer experience. Its killer feature: it doesn't just tell you a package is vulnerable — it tells you which base image upgrade would fix the most CVEs with the least effort.</p>
+
+<p><strong>What it scans:</strong> OS packages, app dependencies, Dockerfile instructions.<br>
+<strong>Fix suggestions:</strong> Recommends specific base image upgrades (e.g., "upgrade from node:18.12 to node:18.19 to fix 23 vulnerabilities").<br>
+<strong>Pricing:</strong> Free tier covers 200 container tests/month. Team plan starts at $25/dev/month.<br>
+<strong>Integration:</strong> Docker Desktop plugin, IDE extensions, CI/CD, container registries.</p>
+
+<pre><code># Scan an image
+snyk container test nginx:1.25
+
+# Monitor an image (continuous scanning)
+snyk container monitor myapp:latest
+
+# Scan with Dockerfile context for better fix suggestions
+snyk container test myapp:latest --file=Dockerfile</code></pre>
+
+<p><strong>Strengths:</strong> Best fix recommendations in the industry. Base image upgrade suggestions save hours of manual research. Good IDE integration for shift-left workflows.<br>
+<strong>Weaknesses:</strong> Free tier is limited. Vulnerability database is proprietary — you can't verify how it differs from NVD. Requires account creation and authentication.</p>
+
+<h3>4. Docker Scout</h3>
+
+<p>Docker Scout is Docker's native security scanning solution, built into Docker Desktop and the Docker CLI. If your team already uses Docker Desktop, Scout requires zero additional setup.</p>
+
+<p><strong>What it scans:</strong> OS packages, app dependencies.<br>
+<strong>Integration:</strong> Built into <code>docker build</code>, Docker Desktop GUI, Docker Hub.<br>
+<strong>Pricing:</strong> Free for Docker Personal (limited scans). Pro/Team/Business plans include more capacity.</p>
+
+<pre><code># Scan during build
+docker scout cves myapp:latest
+
+# Quick overview
+docker scout quickview myapp:latest
+
+# Compare two images
+docker scout compare myapp:v1 myapp:v2</code></pre>
+
+<p><strong>Strengths:</strong> Zero friction for Docker users. Image comparison feature is unique and useful for tracking vulnerability changes between releases.<br>
+<strong>Weaknesses:</strong> Tied to Docker ecosystem. Less flexible than Trivy/Grype for non-Docker container runtimes (Podman, containerd). Scanning depth and database coverage are less transparent than open-source alternatives.</p>
+
+<h3>5. AWS ECR Image Scanning</h3>
+
+<p>If you're running containers on AWS (ECS, EKS, Fargate), ECR offers two scanning modes: <strong>Basic scanning</strong> (free, uses Clair) and <strong>Enhanced scanning</strong> (powered by Amazon Inspector, costs per scan).</p>
+
+<p><strong>Basic scanning:</strong> OS package CVEs only. Triggered on push or manual. Free.<br>
+<strong>Enhanced scanning:</strong> OS packages + app dependencies (Java, Python, Node.js, .NET, Go, Ruby). Continuous scanning — re-scans when new CVEs are published. Costs ~$0.09/image/month for continuous.</p>
+
+<pre><code># Enable enhanced scanning for a repository
+aws ecr put-registry-scanning-configuration \
+  --scan-type ENHANCED \
+  --rules '[{"repositoryFilters":[{"filter":"*","filterType":"WILDCARD"}],"scanFrequency":"CONTINUOUS_SCAN"}]'
+
+# Get scan findings
+aws ecr describe-image-scan-findings \
+  --repository-name myapp \
+  --image-id imageTag=latest</code></pre>
+
+<p><strong>Strengths:</strong> Native AWS integration. Enhanced scanning with continuous monitoring catches new CVEs against already-deployed images. Findings feed into AWS Security Hub for centralized visibility.<br>
+<strong>Weaknesses:</strong> AWS-only. Basic scanning is too limited for production use. Enhanced scanning costs add up with large image registries.</p>
+
+<h2>Head-to-Head Comparison</h2>
+
+<table>
+<thead>
+<tr><th>Feature</th><th>Trivy</th><th>Grype</th><th>Snyk Container</th><th>Docker Scout</th><th>ECR Enhanced</th></tr>
+</thead>
+<tbody>
+<tr><td>OS package scanning</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>App dependency scanning</td><td>✅ (20+ langs)</td><td>✅ (15+ langs)</td><td>✅</td><td>✅</td><td>✅ (6 langs)</td></tr>
+<tr><td>IaC scanning</td><td>✅</td><td>❌</td><td>Separate product</td><td>❌</td><td>❌</td></tr>
+<tr><td>Secret detection</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+<tr><td>SBOM generation</td><td>✅</td><td>✅ (via Syft)</td><td>✅</td><td>✅</td><td>❌</td></tr>
+<tr><td>Fix suggestions</td><td>❌</td><td>❌</td><td>✅ (best in class)</td><td>✅</td><td>❌</td></tr>
+<tr><td>Continuous monitoring</td><td>❌ (CI only)</td><td>❌ (CI only)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>Kubernetes scanning</td><td>✅</td><td>❌</td><td>Separate product</td><td>❌</td><td>❌</td></tr>
+<tr><td>License compliance</td><td>✅</td><td>❌</td><td>✅</td><td>✅</td><td>❌</td></tr>
+<tr><td>Cost</td><td>Free</td><td>Free</td><td>Free tier / $25+/dev/mo</td><td>Free tier / Docker plan</td><td>~$0.09/image/mo</td></tr>
+<tr><td>CI/CD integration</td><td>Excellent</td><td>Good</td><td>Excellent</td><td>Good (Docker-centric)</td><td>AWS-only</td></tr>
+</tbody>
+</table>
+
+<h2>Building a Container Scanning Pipeline</h2>
+
+<p>The most effective approach layers multiple scan points:</p>
+
+<h3>Layer 1: CI/CD Pipeline (Pre-Registry)</h3>
+
+<p>Scan every image before it reaches your container registry. This is your first gate.</p>
+
+<pre><code># GitHub Actions example with Trivy
+name: Container Security Scan
+on: [push]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t myapp:${{ github.sha }} .
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: myapp:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          format: sarif
+          output: trivy-results.sarif
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif</code></pre>
+
+<h3>Layer 2: Registry Admission (Post-Push)</h3>
+
+<p>Enable scanning at the registry level as a safety net. Images that bypass CI/CD (manual pushes, third-party images) still get scanned.</p>
+
+<h3>Layer 3: Continuous Production Monitoring</h3>
+
+<p>New CVEs are published daily. An image that was clean last week might have critical vulnerabilities today. Use continuous scanning (Snyk Monitor, ECR Enhanced, or a cron job running Trivy against your registry) to catch these.</p>
+
+<h2>Reducing Noise: The Real Challenge</h2>
+
+<p>A typical <code>node:20</code> image has 200+ packages. Scanning it will produce dozens of findings, most of which are in OS packages your application never touches. Here's how to manage the noise:</p>
+
+<ul>
+<li><strong>Use minimal base images.</strong> <code>node:20-alpine</code> has ~50 packages vs. ~400 in <code>node:20</code>. Distroless images (Google's <code>gcr.io/distroless</code>) have even fewer. Fewer packages = fewer CVEs = less triage.</li>
+<li><strong>Set severity thresholds.</strong> Only fail CI on HIGH and CRITICAL. Track MEDIUM in dashboards but don't block deployments.</li>
+<li><strong>Use VEX documents.</strong> The Vulnerability Exploitability eXchange format lets you annotate CVEs as "not affected" when the vulnerable code path is unreachable in your application. Trivy and Grype both support VEX.</li>
+<li><strong>Pin and update base images regularly.</strong> Don't use <code>:latest</code>. Pin to a specific digest, and automate base image updates (Renovate, Dependabot) so you're always on patched versions.</li>
+<li><strong>Separate build-time and runtime dependencies.</strong> Use multi-stage Docker builds so build tools (compilers, dev dependencies) don't end up in the final image.</li>
+</ul>
+
+<h2>Multi-Stage Dockerfile: Security Best Practices</h2>
+
+<pre><code># Build stage — has all the dev tools
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+# Runtime stage — minimal attack surface
+FROM gcr.io/distroless/nodejs20-debian12
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+USER nonroot
+EXPOSE 3000
+CMD ["dist/server.js"]</code></pre>
+
+<p>This pattern cuts your vulnerability surface dramatically. The runtime image has no shell, no package manager, no build tools — just the Node.js runtime and your application code.</p>
+
+<h2>How SecurityClaw Complements Container Scanning</h2>
+
+<p>Container scanners find known vulnerabilities in packages. They don't test whether your application has logic flaws, injection vulnerabilities, or authentication bypasses. <a href="/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">SecurityClaw</a> fills this gap by testing the application layer — SQL injection, XSS, SSRF, IDOR, and more — that container scanners can't reach.</p>
+
+<p>The combination matters: a container scanner might tell you your base image is clean, but SecurityClaw will find the SSRF vulnerability that lets an attacker hit the cloud metadata endpoint from inside your "secure" container. Use both.</p>
+
+<h2>Which Scanner Should You Choose?</h2>
+
+<ul>
+<li><strong>Small team, just getting started:</strong> Trivy. One binary, zero config, covers containers + IaC + secrets. Add it to your CI/CD in 10 minutes.</li>
+<li><strong>Enterprise with SBOM/compliance requirements:</strong> Grype + Syft. Generate SBOMs with Syft, scan with Grype, feed into your compliance platform.</li>
+<li><strong>Developer-focused team that wants fix guidance:</strong> Snyk Container. The base image upgrade recommendations alone justify the cost for teams that don't have dedicated security engineers.</li>
+<li><strong>All-Docker shop:</strong> Docker Scout. Zero friction, built into the tools you already use.</li>
+<li><strong>AWS-native infrastructure:</strong> ECR Enhanced Scanning + Trivy in CI/CD. Native integration with Security Hub and Inspector, plus open-source scanning as a first gate.</li>
+</ul>
+
+<p>Most mature teams end up with two layers: an open-source scanner (Trivy or Grype) in CI/CD, plus a registry-native or commercial scanner for continuous monitoring. The tools are cheap or free — the real investment is building the triage workflow so findings actually get fixed.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

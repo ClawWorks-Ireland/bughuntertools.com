@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Trivy, the security scanner used by millions to detect vulnerabilities, was itself compromised in a supply-chain attack. TeamPCP backdoored v0.69.4 and hijacked 75 GitHub Actions tags, then followed up with CanisterWorm — a self-propagating npm worm with blockchain C2. Plus: VoidStealer becomes the first infostealer to extract Chrome&#39;s master key using hardware debugger breakpoints.">
+    <title>The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">
+    <meta property="og:title" content="The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows">
+    <meta property="og:description" content="Trivy, the security scanner used by millions to detect vulnerabilities, was itself compromised in a supply-chain attack. TeamPCP backdoored v0.69.4 and hijacked 75 GitHub Actions tags, then followed up with CanisterWorm — a self-propagating npm worm with blockchain C2. Plus: VoidStealer becomes the first infostealer to extract Chrome&#39;s master key using hardware debugger breakpoints.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">
+    <meta name="twitter:title" content="The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows">
+    <meta name="twitter:description" content="Trivy, the security scanner used by millions to detect vulnerabilities, was itself compromised in a supply-chain attack. TeamPCP backdoored v0.69.4 and hijacked 75 GitHub Actions tags, then followed up with CanisterWorm — a self-propagating npm worm with blockchain C2. Plus: VoidStealer becomes the first infostealer to extract Chrome&#39;s master key using hardware debugger breakpoints.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows",
+      "description": "Trivy, the security scanner used by millions to detect vulnerabilities, was itself compromised in a supply-chain attack. TeamPCP backdoored v0.69.4 and hijacked 75 GitHub Actions tags, then followed up with CanisterWorm — a self-propagating npm worm with blockchain C2. Plus: VoidStealer becomes the first infostealer to extract Chrome&#39;s master key using hardware debugger breakpoints.",
+      "url": "https://bughuntertools.com/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows",
+  "description": "Trivy, the security scanner used by millions to detect vulnerabilities, was itself compromised in a supply-chain attack. TeamPCP backdoored v0.69.4 and hijacked 75 GitHub Actions tags, then followed up with CanisterWorm — a self-propagating npm worm with blockchain C2. Plus: VoidStealer becomes the first infostealer to extract Chrome's master key using hardware debugger breakpoints.",
+  "datePublished": "2026-03-22",
+  "dateModified": "2026-03-22",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<article>
+    <h1>The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</h1>
+
+    <div class="meta">
+        <span>Published: March 22, 2026</span>
+        <span>•</span>
+        <span>Reading time: 14 minutes</span>
+        <span>•</span>
+        <span style="color: #f44336; font-weight: bold;">🚨 BREAKING — ACTIVE INCIDENT</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>On March 21, 2026, Trivy — the most widely deployed open-source vulnerability scanner in the container and Kubernetes ecosystem — became the vulnerability. A threat actor known as TeamPCP compromised Aqua Security's build pipeline, backdoored Trivy v0.69.4, hijacked 75 of 76 GitHub Actions tags in the trivy-action repository, and used the resulting access to push credential-stealing malware to every CI/CD pipeline running Trivy. The malicious release was live for approximately three hours. Affected GitHub Actions tags remained active for up to twelve hours. Any organization that ran Trivy during that window should assume their environment is fully compromised.</strong></p>
+
+        <p>The attack is a masterclass in supply chain exploitation: target the tool that everyone trusts to find supply chain threats, compromise it upstream, let the world's security pipelines deliver your malware for you. It's also the second breach of Aqua Security's Trivy infrastructure in March — a March 1 incident exfiltrated credentials that were not fully contained, and those same credentials enabled this follow-on attack.</p>
+
+        <p>This post covers the full attack chain, what the infostealer collected, how the follow-up CanisterWorm campaign works (including its novel blockchain C2 via Internet Computer canisters), what detection and remediation look like, and — separately — the first in-the-wild Chrome Application-Bound Encryption bypass using hardware debugger breakpoints, disclosed today by Gen Digital's threat research team.</p>
+    </div>
+
+    <nav class="toc" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 32px 0; border-left: 4px solid #667eea;">
+        <h2 style="margin-top: 0; font-size: 1rem;">In This Article</h2>
+        <ol>
+            <li><a href="#what-happened">What Happened: The Trivy Supply Chain Compromise</a></li>
+            <li><a href="#attack-chain">The Attack Chain: From Credential Breach to Mass Exfiltration</a></li>
+            <li><a href="#what-was-stolen">What the Infostealer Collected</a></li>
+            <li><a href="#canisterworm">CanisterWorm: The Blockchain-C2 Follow-Up Campaign</a></li>
+            <li><a href="#am-i-affected">Am I Affected? Detection and Indicators</a></li>
+            <li><a href="#remediation">Remediation: What to Do Now</a></li>
+            <li><a href="#voidstealer">Bonus: VoidStealer — The First Chrome ABE Bypass in the Wild</a></li>
+        </ol>
+    </nav>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Trivy v0.69.4 was backdoored on March 21, 2026 — if you ran it that day, treat your environment as compromised and rotate all credentials</li>
+        <li>Attack succeeded due to incomplete credential rotation from a prior breach — "we rotated secrets" ≠ "we contained the breach"</li>
+        <li>GitHub Actions tag pinning is mutable and exploitable — pin workflows to full commit SHAs, not tag names</li>
+        <li>VoidStealer bypasses Chrome's ABE using hardware debugger breakpoints — first in-the-wild exploitation with no public patch</li>
+      </ul>
+    </div>
+
+    <section id="what-happened">
+        <h2>1. What Happened: The Trivy Supply Chain Compromise</h2>
+
+        <p>Trivy, developed by Aqua Security, is the de facto standard container and Kubernetes security scanner. It detects CVEs in container images, misconfigurations in infrastructure-as-code, exposed secrets in code repositories, and compliance violations across cloud environments. According to Aqua Security's own data, Trivy is downloaded more than 20 million times per month. It runs in the CI/CD pipelines of companies across the Fortune 500.</p>
+
+        <p>That ubiquity is exactly why it was targeted.</p>
+
+        <p>On March 21, 2026, the threat actor TeamPCP (also tracked as DeadCatx3, PCPcat, and ShellForce) used credentials stolen in an earlier March 1 breach to access Aqua Security's GitHub build infrastructure. They made two primary modifications:</p>
+
+        <ol>
+            <li><strong>Trojanized the Trivy v0.69.4 release binary</strong> — replacing the official build with a version that included an infostealer payload</li>
+            <li><strong>Force-pushed malicious commits to 75 of 76 version tags</strong> in the <code>aquasecurity/trivy-action</code> GitHub repository, replacing the legitimate <code>entrypoint.sh</code> with a malicious version</li>
+        </ol>
+
+        <p>The trivy-action repository is the official GitHub Action that organizations use to integrate Trivy into their GitHub Actions workflows. A typical workflow looks like this:</p>
+
+        <pre><code>- name: Run Trivy vulnerability scanner
+  uses: aquasecurity/trivy-action@v0.24.0  # ← this tag was compromised
+  with:
+    image-ref: 'docker.io/library/nginx:latest'
+    format: 'sarif'</code></pre>
+
+        <p>Because GitHub Actions workflows pin to version tags (not commit hashes), and because TeamPCP force-pushed malicious commits to 75 tags, any workflow using a tag other than the single unaffected one automatically ran the malicious entrypoint during the exposure window. The malicious code executed <em>before</em> running the legitimate Trivy scan — so the pipeline completed normally, produced real Trivy results, and gave no obvious indication that anything had gone wrong.</p>
+
+        <p>Aqua Security confirmed the incident and the March 1 link:</p>
+        <blockquote style="border-left: 4px solid #e9ecef; padding-left: 16px; margin: 16px 0; color: #666;">
+            "This was a follow up from the recent incident (2026-03-01) which exfiltrated credentials. Our containment of the first incident was incomplete. We rotated secrets and tokens, but the process wasn't atomic and attackers may have been privy to refreshed tokens." — Aqua Security, GitHub Discussions #10425
+        </blockquote>
+
+        <p>The malicious release was live for approximately three hours. The compromised GitHub Actions tags remained active for up to twelve hours before Aqua Security completed remediation.</p>
+    </section>
+
+    <section id="attack-chain">
+        <h2>2. The Attack Chain: From Credential Breach to Mass Exfiltration</h2>
+
+        <p>The full attack chain across both incidents:</p>
+
+        <h3>March 1: Initial Breach — Credential Exfiltration</h3>
+        <p>TeamPCP (a documented cloud-native threat actor known for targeting misconfigured Docker APIs, Kubernetes dashboards, and Redis servers) gained access to Trivy's build environment and exfiltrated credentials. Aqua Security detected this incident and initiated a credential rotation process. The rotation was incomplete — likely because Aqua Security didn't know the full scope of what was exfiltrated, so not all secrets were invalidated.</p>
+
+        <h3>March 21: Follow-On Attack — Build Pipeline Compromise</h3>
+        <p>Using credentials from the March 1 exfiltration (either non-rotated secrets or newly issued tokens captured before rotation completed), TeamPCP pushed to the Trivy GitHub repository with write access. Their modifications targeted two surfaces:</p>
+
+        <h4>Surface 1: The Official Release Binary (v0.69.4)</h4>
+        <p>The attacker replaced the legitimate Trivy binary with a trojanized version that included the infostealer payload. The payload was uploaded to VirusTotal (hash: <code>18a24f83e807479438dcab7a1804c51a00dafc1d526698a66e0640d1e5dd671a</code>). On developer machines that downloaded and ran v0.69.4, the binary performed credential harvesting in addition to its normal scanning function.</p>
+
+        <h4>Surface 2: GitHub Actions Tags</h4>
+        <p>In the <code>aquasecurity/trivy-action</code> repository, the attacker force-pushed malicious commits to 75 of 76 version tags. The legitimate <code>entrypoint.sh</code> was replaced with a version that:</p>
+        <ol>
+            <li>Ran credential harvesting against the CI/CD runner's environment</li>
+            <li>Then executed the real Trivy scanner (to avoid detection)</li>
+        </ol>
+        <p>This is a critical design choice: the malware intentionally allows the scan to complete normally. The pipeline green-lights, Trivy produces real output, and the secret exfiltration happens silently in the background.</p>
+
+        <h3>Exfiltration Infrastructure</h3>
+        <p>Collected data was encrypted and stored as <code>tpcp.tar.gz</code>, then exfiltrated to a typosquatted command-and-control server: <code>scan.aquasecurtiy[.]org</code> (note the deliberate misspelling of "security" as "securtiy"). This domain mimics Aqua Security's legitimate domain <code>aquasecurity.github.io</code>, making it plausible in DNS logs for defenders who aren't looking carefully.</p>
+
+        <p>If exfiltration to the C2 failed, the malware fell back to creating a public repository named <code>tpcp-docs</code> in the victim's own GitHub account and pushing the stolen data there. This is an elegant fallback: if egress to external C2 is blocked, the attacker's data goes to the victim's own GitHub, where it's accessible publicly and doesn't require any outbound connection that could be blocked.</p>
+
+        <h3>Persistence</h3>
+        <p>On developer machines, the trojanized binary established persistence by dropping a Python payload to <code>~/.config/systemd/user/sysmon.py</code> and registering it as a systemd user service. The service checks a remote server for additional payloads — giving TeamPCP ongoing access to any developer machine that ran v0.69.4, even after the malicious binary was removed from GitHub.</p>
+    </section>
+
+    <section id="what-was-stolen">
+        <h2>3. What the Infostealer Collected</h2>
+
+        <p>Analysis by Socket and Wiz identified the full scope of credential and data types targeted. The list is comprehensive and illustrates exactly why CI/CD environments are high-value targets:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 10px; text-align: left;">Category</th>
+                    <th style="padding: 10px; text-align: left;">Specific Targets</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 10px;"><strong>Reconnaissance</strong></td>
+                    <td style="padding: 10px;">hostname, whoami, uname, network config, environment variables</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6; background: #fff8f8;">
+                    <td style="padding: 10px;"><strong>SSH</strong></td>
+                    <td style="padding: 10px;">Private and public keys, SSH config files</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 10px;"><strong>Cloud / Infrastructure</strong></td>
+                    <td style="padding: 10px;">AWS, GCP, Azure credentials; Kubernetes kubeconfig; Docker credentials</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6; background: #fff8f8;">
+                    <td style="padding: 10px;"><strong>Environment files</strong></td>
+                    <td style="padding: 10px;">.env and variants — where most application secrets live</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 10px;"><strong>Database credentials</strong></td>
+                    <td style="padding: 10px;">PostgreSQL, MySQL/MariaDB, MongoDB, Redis config files</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6; background: #fff8f8;">
+                    <td style="padding: 10px;"><strong>CI/CD configs</strong></td>
+                    <td style="padding: 10px;">Terraform state, Jenkins credentials, GitLab CI tokens</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 10px;"><strong>TLS/Crypto</strong></td>
+                    <td style="padding: 10px;">TLS private keys, VPN configs, cryptocurrency wallets</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6; background: #fff8f8;">
+                    <td style="padding: 10px;"><strong>Communication tokens</strong></td>
+                    <td style="padding: 10px;">Slack and Discord webhooks and bot tokens</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 10px;"><strong>System files</strong></td>
+                    <td style="padding: 10px;">/etc/passwd, /etc/shadow, auth logs, shell history</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dee2e6; background: #fff8f8;">
+                    <td style="padding: 10px;"><strong>GitHub Actions secrets</strong></td>
+                    <td style="padding: 10px;">Memory scan of Runner.Worker process for <code>"isSecret":true</code> JSON strings</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>That last entry is particularly notable: the malware actively scanned the GitHub Actions Runner.Worker process memory for the specific JSON structure that GitHub uses to pass secrets to workflow steps. This means <strong>even secrets that were never written to disk and were only passed as environment variables could be captured</strong>. If your pipeline injected AWS credentials, Docker registry tokens, or signing keys as GitHub Actions secrets, those may have been captured directly from runner memory.</p>
+
+        <p>For CI/CD security fundamentals — including how to minimize secret exposure in automated pipelines — <a href="https://www.amazon.com/dp/1098132912/?tag=bughuntertools-20">Hacking the Cloud</a> covers the practical attack surface across AWS, GCP, and Azure environments that attackers target after gaining CI/CD credentials like these.</p>
+    </section>
+
+    <section id="canisterworm">
+        <h2>4. CanisterWorm: The Blockchain-C2 Follow-Up Campaign</h2>
+
+        <p>Researchers at Aikido Security linked the same TeamPCP threat actor to a follow-up campaign that began using stolen npm tokens from the Trivy compromise to deploy a novel self-propagating worm in the npm ecosystem.</p>
+
+        <p>CanisterWorm is technically interesting in two ways: its propagation mechanism and its C2 infrastructure.</p>
+
+        <h3>Propagation: Self-Replicating via Stolen npm Tokens</h3>
+        <p>Once the worm obtains an npm authentication token from a compromised developer environment, it runs a <code>deploy.js</code> payload that:</p>
+        <ol>
+            <li>Uses the stolen token to authenticate with the npm registry as the victim user</li>
+            <li>Enumerates all packages the victim account has publish rights to</li>
+            <li>Bumps the patch version of each package</li>
+            <li>Publishes malicious versions of all enumerated packages to the npm registry</li>
+        </ol>
+
+        <p>Aikido observed this process deploying across 28 packages in under 60 seconds. Because these packages are published under legitimate maintainer accounts with real histories and real users, downstream projects that automatically update dependencies will receive the malicious versions without any obvious warning signs. The worm then repeats the cycle when those downstream developers' machines are compromised — propagating through the npm dependency graph.</p>
+
+        <h3>C2 Infrastructure: Internet Computer (ICP) Canisters</h3>
+        <p>This is the technically novel part. Rather than using a traditional HTTP C2 server (which can be taken down via domain seizure or IP blocking), CanisterWorm uses the <a href="https://internetcomputer.org/">Internet Computer Protocol (ICP)</a> blockchain's "canister" smart contracts as its command-and-control mechanism.</p>
+
+        <p>ICP canisters are WebAssembly programs that run on the Internet Computer blockchain. They're persistent, decentralized, and — critically — can only be shut down by their own controller. Law enforcement cannot seize the domain because there is no domain. There is no IP to block. The C2 "server" is a smart contract running on a decentralized network of nodes.</p>
+
+        <p>The canister acts as a dead-drop resolver: the malware calls the canister, which returns URLs pointing to additional payloads. Even if those payload URLs are taken down, the attacker can update the canister to point to new URLs. The only way to truly shut down the C2 is to compromise the canister's controller key.</p>
+
+        <p>The malware also establishes persistence via the same systemd user service pattern as the Trivy trojan: <code>~/.config/systemd/user/sysmon.py</code> checks the ICP canister for instructions at regular intervals.</p>
+
+        <p>This represents a meaningful escalation in attacker C2 infrastructure sophistication. Security teams that rely on domain-blocklists and IP-based threat intelligence will find that traditional C2 detection approaches are ineffective against blockchain-based command-and-control.</p>
+    </section>
+
+    <section id="am-i-affected">
+        <h2>5. Am I Affected? Detection and Indicators</h2>
+
+        <h3>Were You Running Trivy During the Window?</h3>
+        <p>The exposure window was approximately:</p>
+        <ul>
+            <li><strong>Trojanized binary (v0.69.4):</strong> Available for ~3 hours on March 21, 2026</li>
+            <li><strong>Compromised GitHub Actions tags:</strong> Active for up to ~12 hours on March 21, 2026</li>
+        </ul>
+        <p>If any of your CI/CD pipelines or development machines ran Trivy during this window — whether via the GitHub Action, via direct binary download, or via container image — treat the environment as compromised.</p>
+
+        <h3>Key Indicators of Compromise</h3>
+
+        <p><strong>File system indicators:</strong></p>
+        <ul>
+            <li><code>~/.config/systemd/user/sysmon.py</code> — persistence payload</li>
+            <li><code>tpcp.tar.gz</code> in any temp or home directory — staged exfiltration archive</li>
+            <li>Unexpected public repository named <code>tpcp-docs</code> in your GitHub account</li>
+        </ul>
+
+        <p><strong>Network indicators:</strong></p>
+        <ul>
+            <li>DNS queries or HTTP requests to <code>scan.aquasecurtiy[.]org</code> (note misspelling)</li>
+            <li>Outbound connections to ICP canister endpoints (Internet Computer blockchain)</li>
+            <li>Unexpected npm publish activity from your account</li>
+        </ul>
+
+        <p><strong>GitHub indicators:</strong></p>
+        <ul>
+            <li>Review your GitHub Actions workflow runs for March 21 — look for unusual file operations or network activity in the pre-scan steps</li>
+            <li>Check your GitHub account's repository list for any unexpected public repositories</li>
+            <li>Review your npm publish history at <code>npmjs.com/~youruser</code> for unauthorized publications</li>
+        </ul>
+
+        <p><strong>Process indicators:</strong></p>
+        <pre><code># Check for the persistence service
+systemctl --user list-units | grep sysmon
+ls -la ~/.config/systemd/user/sysmon.py
+
+# Check for unexpected npm packages published by your account
+npm whoami && npm search --maintainer $(npm whoami) --json | jq '.[].date'</code></pre>
+
+        <h3>Trivy Hash Verification</h3>
+        <p>If you downloaded Trivy recently, verify you're running a clean build. The malicious binary was v0.69.4. Check:</p>
+        <pre><code>trivy --version
+# Output should show v0.69.3 or v0.69.5+
+
+# If you have v0.69.4, verify against official checksums at:
+# https://github.com/aquasecurity/trivy/releases/tag/v0.69.5
+# (Aqua Security pulled v0.69.4 and published v0.69.5 as clean replacement)</code></pre>
+    </section>
+
+    <section id="remediation">
+        <h2>6. Remediation: What to Do Now</h2>
+
+        <p>If you ran Trivy during the exposure window or cannot rule it out, follow this remediation checklist. The scope of what the infostealer collected means you should treat this as a broad credential compromise, not a targeted one.</p>
+
+        <h3>Immediate Actions (Do These First)</h3>
+
+        <ol>
+            <li>
+                <strong>Rotate all cloud provider credentials</strong> — AWS access keys, GCP service account keys, Azure service principals. Revoke the old credentials before or simultaneously with creating new ones. Check CloudTrail / GCP Audit Logs / Azure Activity Logs for unauthorized API calls using the potentially stolen credentials.
+            </li>
+            <li>
+                <strong>Rotate all GitHub tokens, npm tokens, and container registry credentials.</strong> Revoke all personal access tokens (PATs) associated with accounts that ran affected workflows. Check your GitHub account's "Authorized OAuth Apps" and "Personal access tokens" pages.
+            </li>
+            <li>
+                <strong>Rotate SSH keys.</strong> The infostealer specifically targeted <code>~/.ssh/</code>. Generate new keys, update authorized_keys on all servers, and revoke the old keys.
+            </li>
+            <li>
+                <strong>Audit and rotate all secrets in .env files and secret managers.</strong> HashiCorp Vault, AWS Secrets Manager, GitHub Actions secrets — rotate everything that was accessible in the build environment.
+            </li>
+            <li>
+                <strong>Remove the persistence payload.</strong> Check for <code>~/.config/systemd/user/sysmon.py</code> on all affected machines and CI/CD runners. Disable and remove the service if present:
+                <pre><code>systemctl --user stop sysmon 2>/dev/null
+systemctl --user disable sysmon 2>/dev/null
+rm -f ~/.config/systemd/user/sysmon.py
+rm -f ~/.config/systemd/user/sysmon.service</code></pre>
+            </li>
+        </ol>
+
+        <h3>CI/CD Hardening (Prevent Recurrence)</h3>
+
+        <p>This attack succeeded in part because GitHub Actions workflows pinned to <em>tag names</em> rather than <em>commit hashes</em>. Tag names are mutable — they can be force-pushed to point to different commits. Commit hashes are immutable.</p>
+
+        <p>The hardened pattern:</p>
+        <pre><code># Vulnerable — tag can be force-pushed to malicious commit:
+uses: aquasecurity/trivy-action@v0.24.0
+
+# Hardened — commit hash cannot be changed:
+uses: aquasecurity/trivy-action@a20de5420d57c4102486cdd9349b532415f5d7b7</code></pre>
+
+        <p>GitHub's own documentation recommends pinning to full commit SHAs for third-party actions. Tools like <a href="https://github.com/step-security/harden-runner">StepSecurity Harden-Runner</a> and <a href="https://github.com/rhysd/actionlint">actionlint</a> can enforce this across your workflow files.</p>
+
+        <p>Additional CI/CD hardening measures:</p>
+        <ul>
+            <li><strong>Minimal permissions:</strong> GitHub Actions tokens should use <code>permissions:</code> blocks to restrict access to only what each workflow requires. A scanner workflow does not need <code>id-token: write</code> or <code>packages: write</code>.</li>
+            <li><strong>OIDC for cloud credentials:</strong> Use GitHub's OIDC provider to assume cloud IAM roles rather than storing long-lived credentials as secrets. A stolen OIDC token is scoped to a specific workflow run — it cannot be replayed indefinitely.</li>
+            <li><strong>Egress filtering for CI runners:</strong> Self-hosted runners should have egress filtered to known-good endpoints. The C2 domain <code>scan.aquasecurtiy[.]org</code> would have been blocked by any reasonably configured egress filter.</li>
+        </ul>
+
+        <p>For a comprehensive treatment of how attackers move from CI/CD compromise to cloud account takeover — and how to architect pipelines that minimize blast radius — <a href="https://www.amazon.com/dp/1098132912/?tag=bughuntertools-20">Hacking the Cloud</a> and <a href="https://www.amazon.com/dp/1492078050/?tag=bughuntertools-20">Container Security</a> are the reference texts used by red teams doing this work professionally.</p>
+
+        <h3>Long-Term: Supply Chain Verification</h3>
+        <p>Aqua Security has committed to signing all future Trivy releases with Sigstore's cosign tooling, enabling cryptographic verification of release provenance. Once implemented, you can verify:</p>
+        <pre><code>cosign verify-blob trivy \
+  --certificate-identity="https://github.com/aquasecurity/trivy/.github/workflows/release.yaml@refs/tags/v0.69.5" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  --bundle trivy.bundle</code></pre>
+        <p>This approach — Software Bill of Materials (SBOM) + provenance attestation via Sigstore — is now the recommended standard for high-assurance binary distribution in the supply chain security community.</p>
+    </section>
+
+    <section id="voidstealer">
+        <h2>7. Bonus: VoidStealer — The First Chrome ABE Bypass in the Wild</h2>
+
+        <p>Breaking independently today from Gen Digital (Avast/AVG/Norton parent company): VoidStealer, a Malware-as-a-Service infostealer first advertised on dark web forums in December 2025, has become the first infostealer observed in the wild to successfully bypass Chrome's Application-Bound Encryption (ABE) using hardware debugger breakpoints.</p>
+
+        <h3>What Is Application-Bound Encryption?</h3>
+        <p>Google introduced ABE in Chrome 127 (June 2024) as a direct response to the infostealer epidemic targeting browser-stored credentials and cookies. Before ABE, Chrome stored sensitive data encrypted with keys that any process running as the logged-in user could access — enabling the wave of "cookie theft" malware that bypassed MFA by stealing authenticated session cookies.</p>
+
+        <p>ABE addresses this by requiring Google Chrome's Elevation Service (which runs as SYSTEM) to participate in decrypting the master key. User-level processes cannot decrypt ABE-protected data directly — they need the Elevation Service to validate and perform the decryption on their behalf. For malware running at user privilege level, this appeared to close the cookie theft pathway.</p>
+
+        <h3>How VoidStealer's Debugger Bypass Works</h3>
+        <p>VoidStealer's breakthrough is a debugger-based attack that exploits a brief window when Chrome's master key exists in plaintext in process memory:</p>
+
+        <ol>
+            <li><strong>Spawn a suspended, hidden browser process</strong> — VoidStealer launches a new Chrome process in suspended state, making it invisible to the user</li>
+            <li><strong>Attach as a debugger</strong> — The malware attaches to the new process with debugging privileges (no admin required — any process can debug its own children, or processes it spawns)</li>
+            <li><strong>Wait for the target DLL</strong> — Monitor for <code>chrome.dll</code> to load in the new process</li>
+            <li><strong>Scan DLL for the target instruction</strong> — Locate a specific string and the LEA (Load Effective Address) instruction that references it</li>
+            <li><strong>Set hardware breakpoints</strong> — Rather than injecting code (which AV/EDR detects), set hardware breakpoints on the instruction's address across all browser threads using the CPU's debug registers</li>
+            <li><strong>Wait for breakpoint trigger</strong> — During browser startup, Chrome decrypts ABE-protected cookies using the <code>v20_master_key</code>. When the breakpointed instruction executes during this decryption, execution pauses at the hardware breakpoint</li>
+            <li><strong>Read the master key</strong> — Use <code>ReadProcessMemory</code> to read the register pointing to the plaintext master key at the moment of breakpoint trigger</li>
+        </ol>
+
+        <p>The key insight: Chrome briefly holds the master key in memory in plaintext during startup decryption. The hardware breakpoint catches Chrome in that exact moment, before the key is re-encrypted or cleared. The approach was pioneered in the open-source ChromeKatz project (<code>ElevationKatz</code> component), which demonstrated the weakness over a year ago. VoidStealer v2.0 is the first malware observed deploying it operationally.</p>
+
+        <h3>Why This Matters More Than Previous ABE Bypasses</h3>
+        <p>Previous ABE bypasses required either privilege escalation or code injection — both of which are reliably detected by modern EDR tools. VoidStealer's hardware breakpoint approach requires neither:</p>
+
+        <ul>
+            <li><strong>No privilege escalation</strong> — Debugging a child process is permitted for any user-level process</li>
+            <li><strong>No code injection</strong> — Hardware breakpoints are set via debug APIs, not by writing shellcode into the target process</li>
+            <li><strong>No interaction with the Elevation Service</strong> — The key is extracted from memory rather than requesting decryption through the protected service pathway</li>
+        </ul>
+
+        <p>EDR products that rely on detecting privilege escalation attempts or code injection patterns will not trigger on VoidStealer's technique. Detection requires monitoring for unusual use of Windows debug APIs (<code>DebugActiveProcess</code>, hardware breakpoint configuration via <code>SetThreadContext</code>) against browser processes.</p>
+
+        <p>Google has been contacted by BleepingComputer for comment and had not responded by the time of publication.</p>
+
+        <h3>What Bug Hunters Should Know</h3>
+        <p>The VoidStealer technique opens a new research area: using hardware breakpoints as a non-injecting, non-privileged method for extracting in-memory secrets from protected processes. If you're working on browser security research or red team engagements where browser credential extraction is in scope, the ChromeKatz/ElevationKatz open-source tooling is worth studying as a foundation — it documents the specific Chrome code paths and data structures involved. <a href="https://www.amazon.com/dp/1492070122/?tag=bughuntertools-20">The Web Application Hacker's Handbook</a> provides the conceptual grounding for browser security models that makes this class of attack legible in context.</p>
+    </section>
+
+    <section class="summary-box" style="background: #f0f4ff; padding: 24px; border-radius: 8px; margin: 32px 0; border-left: 4px solid #667eea;">
+        <h2 style="margin-top: 0;">Key Takeaways</h2>
+        <ul>
+            <li><strong>Trivy v0.69.4 was backdoored (March 21, 2026).</strong> If you ran Trivy or the trivy-action GitHub Action on March 21, treat your environment as compromised. Rotate all cloud credentials, SSH keys, GitHub/npm tokens, and secrets manager contents immediately.</li>
+            <li><strong>The attack succeeded because of an incomplete credential rotation from a March 1 breach.</strong> "We rotated secrets" is not the same as "we contained the breach." Verify full rotation, revoke all tokens (not just the ones you know about), and audit for persistence before declaring an incident closed.</li>
+            <li><strong>GitHub Actions tag pinning is mutable and exploitable.</strong> Pin workflows to full commit SHAs, not tag names. Tools like actionlint can enforce this automatically.</li>
+            <li><strong>CanisterWorm uses ICP blockchain canisters as C2.</strong> Traditional domain/IP blocklists and domain seizure orders are ineffective. Detection requires monitoring for ICP endpoint communication and anomalous npm publish activity.</li>
+            <li><strong>VoidStealer bypasses Chrome's ABE without privilege escalation or code injection</strong> — using hardware debugger breakpoints to extract the master key during the brief startup window when it exists in plaintext. This is the first in-the-wild exploitation of the technique. Google has no public patch.</li>
+        </ul>
+    </section>
+
+    <section class="related-reading">
+        <h2>Related Reading</h2>
+        <ul>
+            <li><a href="/demos/securityclaw-trivy-dependency-scanner-demo-2026/">100 CVEs in 63 Milliseconds: What's Actually Hiding in Your Dependencies (Trivy Demo)</a></li>
+            <li><a href="/articles/stryker-intune-wipe-handala-iran-living-off-the-land-2026/">No Malware, No Problem: How Hackers Wiped 80,000 Stryker Devices Using Microsoft's Own Admin Tools</a></li>
+            <li><a href="/articles/north-korea-stegabin-npm-packages-pastebin-steganography-c2/">North Korea StegaBin — npm Supply Chain Attack via Steganographic Pastebin C2</a></li>
+            <li><a href="/demos/securityclaw-gitleaks-secret-detection-demo-2026/">We Deleted the Key. Gitleaks Found It Anyway. Here's Why.</a></li>
+        </ul>
+    </section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

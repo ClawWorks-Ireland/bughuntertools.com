@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CORS misconfigurations are one of the most common API security issues. Wildcard origins, credentialed wildcards, and origin reflection can expose your users&#39; data to any website. Here&#39;s what to test and how to fix it.">
+    <title>CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/cors-misconfiguration-security-testing-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/cors-misconfiguration-security-testing-guide-2026/">
+    <meta property="og:title" content="CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong">
+    <meta property="og:description" content="CORS misconfigurations are one of the most common API security issues. Wildcard origins, credentialed wildcards, and origin reflection can expose your users&#39; data to any website. Here&#39;s what to test and how to fix it.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/cors-misconfiguration-security-testing-guide-2026/">
+    <meta name="twitter:title" content="CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong">
+    <meta name="twitter:description" content="CORS misconfigurations are one of the most common API security issues. Wildcard origins, credentialed wildcards, and origin reflection can expose your users&#39; data to any website. Here&#39;s what to test and how to fix it.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong",
+      "description": "CORS misconfigurations are one of the most common API security issues. Wildcard origins, credentialed wildcards, and origin reflection can expose your users&#39; data to any website. Here&#39;s what to test and how to fix it.",
+      "url": "https://bughuntertools.com/articles/cors-misconfiguration-security-testing-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong",
+  "description": "CORS misconfigurations are one of the most common API security issues. Here is what to test and how to fix it.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is CORS and why does it matter for security?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CORS (Cross-Origin Resource Sharing) is a browser security mechanism that controls which websites can make requests to your API. By default, browsers block cross-origin requests — a page on attacker.com cannot read data from your-api.com. CORS headers relax this restriction for legitimate use cases. When misconfigured, CORS can allow any website to read your users' data, steal authentication tokens, or perform actions on their behalf."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is Access-Control-Allow-Origin: * dangerous?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A wildcard origin (Access-Control-Allow-Origin: *) tells the browser that any website can read responses from your API. For public, unauthenticated APIs this is fine. But if your API returns user-specific data or accepts authentication cookies, a wildcard origin means any malicious website can read that data. The most dangerous variant is wildcard + Access-Control-Allow-Credentials: true, which allows any site to make authenticated requests and read the responses."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you test for CORS misconfigurations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Send requests with a crafted Origin header and check the response. Key tests: (1) Send Origin: https://attacker.com and check if it's reflected in Access-Control-Allow-Origin, (2) Check if Access-Control-Allow-Credentials: true is set alongside a wildcard or reflected origin, (3) Send Origin: null to test iframe sandbox bypass, (4) Send a suffix-confused origin like https://your-api.com.attacker.com to test for regex mistakes in origin validation."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong</h1>
+
+<p class="article-meta">Published April 2026 · 9 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>Bug bounty success depends on systematic methodology, not just tool knowledge</li>
+    <li>Document everything — clear reports with reproduction steps get paid faster</li>
+    <li>Automated scanning catches common patterns but manual testing finds logic flaws</li>
+  </ul>
+</div>
+
+
+<p>CORS — Cross-Origin Resource Sharing — is the browser mechanism that decides which websites can talk to your API. Get it right and your API works securely across domains. Get it wrong and any website on the internet can read your users' data.</p>
+
+<p>CORS misconfigurations are consistently in the top 10 findings on bug bounty platforms. They're easy to introduce (one wrong header value), hard to detect without testing (the application works fine from the user's perspective), and the impact ranges from information disclosure to full account takeover.</p>
+
+<p>This article covers what CORS is, the five most dangerous misconfigurations, how to test for them, and how to fix them.</p>
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#how-cors-works">How CORS Works (30-Second Version)</a></li>
+    <li><a href="#five-misconfigs">The Five CORS Misconfigurations That Matter</a></li>
+    <li><a href="#testing">How to Test for CORS Issues</a></li>
+    <li><a href="#cloud-cors">CORS on Cloud API Gateways</a></li>
+    <li><a href="#fixing">How to Fix CORS Properly</a></li>
+    <li><a href="#checklist">CORS Security Checklist</a></li>
+  </ol>
+</nav>
+
+<h2 id="how-cors-works">1. How CORS Works (30-Second Version)</h2>
+
+<p>When JavaScript on <code>app.example.com</code> makes a request to <code>api.example.com</code>, the browser adds an <code>Origin</code> header. The API responds with <code>Access-Control-Allow-Origin</code> (ACAO) to tell the browser whether the requesting origin is allowed to read the response.</p>
+
+<p>If the ACAO header matches the requesting origin (or is <code>*</code>), the browser allows JavaScript to read the response. If it doesn't match, the browser blocks it. The request still reaches the server — CORS is enforced by the browser, not the server.</p>
+
+<p>For requests that include credentials (cookies, auth headers), the server must also return <code>Access-Control-Allow-Credentials: true</code> (ACAC). The browser will not send cookies cross-origin unless ACAC is true.</p>
+
+<h2 id="five-misconfigs">2. The Five CORS Misconfigurations That Matter</h2>
+
+<h3>Misconfiguration 1: Wildcard Origin with Credentials (CRITICAL)</h3>
+
+<pre><code>Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true</code></pre>
+
+<p>This is the worst CORS misconfiguration. It tells the browser: "any website can make authenticated requests to this API and read the responses." An attacker's page can steal session data, read private user information, and perform actions as the authenticated user.</p>
+
+<p>Note: modern browsers actually block this specific combination — the spec says ACAO cannot be <code>*</code> when ACAC is <code>true</code>. But some older browsers and non-browser HTTP clients don't enforce this, and the intent behind the configuration is clearly wrong.</p>
+
+<h3>Misconfiguration 2: Origin Reflection (HIGH)</h3>
+
+<pre><code># Request
+Origin: https://attacker.com
+
+# Response
+Access-Control-Allow-Origin: https://attacker.com
+Access-Control-Allow-Credentials: true</code></pre>
+
+<p>The server reflects whatever origin the client sends. This is functionally equivalent to a wildcard — any website is allowed. Developers often implement this as a shortcut ("just reflect the origin back") without realising it defeats the entire purpose of CORS.</p>
+
+<h3>Misconfiguration 3: Null Origin Acceptance (HIGH)</h3>
+
+<pre><code># Request
+Origin: null
+
+# Response
+Access-Control-Allow-Origin: null
+Access-Control-Allow-Credentials: true</code></pre>
+
+<p>The <code>null</code> origin is sent by browsers in several contexts: sandboxed iframes, local file:// pages, and certain redirect chains. If the server accepts <code>null</code> as a valid origin, an attacker can use a sandboxed iframe to make credentialed requests from a null origin.</p>
+
+<h3>Misconfiguration 4: Regex Bypass (MEDIUM)</h3>
+
+<pre><code># Server validates: origin ends with "example.com"
+# Attacker sends: Origin: https://example.com.attacker.com
+# Server accepts it ✓ (suffix match, not exact match)</code></pre>
+
+<p>Many CORS implementations use regex or string matching to validate origins. Common mistakes: matching the suffix instead of the full domain, forgetting to anchor the regex, or not escaping dots (so <code>example.com</code> matches <code>exampleXcom</code>).</p>
+
+<h3>Misconfiguration 5: Wildcard on Authenticated Endpoints (MEDIUM)</h3>
+
+<pre><code>Access-Control-Allow-Origin: *</code></pre>
+
+<p>A wildcard without credentials is safe for public APIs. But if the endpoint returns user-specific data based on an API key in the URL or a custom header (not cookies), the wildcard allows any website to read that data. The browser won't send cookies, but other authentication mechanisms aren't protected by CORS.</p>
+
+<h2 id="testing">3. How to Test for CORS Issues</h2>
+
+<p>CORS testing is straightforward with curl:</p>
+
+<pre><code># Test 1: Does the server reflect arbitrary origins?
+curl -s -I -H "Origin: https://attacker.com" https://your-api.com/endpoint \
+  | grep -i "access-control"
+
+# Test 2: Does it accept null origin?
+curl -s -I -H "Origin: null" https://your-api.com/endpoint \
+  | grep -i "access-control"
+
+# Test 3: Suffix confusion
+curl -s -I -H "Origin: https://your-api.com.attacker.com" https://your-api.com/endpoint \
+  | grep -i "access-control"
+
+# Test 4: Preflight check
+curl -s -I -X OPTIONS \
+  -H "Origin: https://attacker.com" \
+  -H "Access-Control-Request-Method: POST" \
+  https://your-api.com/endpoint \
+  | grep -i "access-control"</code></pre>
+
+<p>What to look for in responses:</p>
+
+<ul>
+  <li><code>Access-Control-Allow-Origin: *</code> — wildcard (check if endpoint is authenticated)</li>
+  <li><code>Access-Control-Allow-Origin: https://attacker.com</code> — origin reflection (always bad)</li>
+  <li><code>Access-Control-Allow-Origin: null</code> — null acceptance (always bad)</li>
+  <li><code>Access-Control-Allow-Credentials: true</code> — combined with any of the above = exploitable</li>
+</ul>
+
+<h2 id="cloud-cors">4. CORS on Cloud API Gateways</h2>
+
+<p>Cloud API gateways (AWS API Gateway, CloudFront, Azure API Management) add their own CORS handling, which can conflict with application-level CORS headers.</p>
+
+<h3>AWS API Gateway</h3>
+
+<p>API Gateway can be configured to add CORS headers at the gateway level. The most common mistake: enabling CORS with <code>*</code> origin at the gateway while the application also sets CORS headers. This can result in duplicate headers or the gateway's permissive configuration overriding the application's restrictive one.</p>
+
+<h3>CloudFront</h3>
+
+<p>CloudFront can cache CORS responses. If the first request comes from an allowed origin, the cached response (with that origin in ACAO) is served to all subsequent requests — including requests from disallowed origins. Fix: include the <code>Origin</code> header in the CloudFront cache key.</p>
+
+<h3>nginx Reverse Proxy</h3>
+
+<p>nginx configurations often add CORS headers with <code>add_header</code> directives. The gotcha: <code>add_header</code> in a <code>location</code> block overrides all <code>add_header</code> directives from parent blocks. If you add CORS headers in a location block, you lose all other security headers set at the server level.</p>
+
+<h2 id="fixing">5. How to Fix CORS Properly</h2>
+
+<h3>Rule 1: Use an Explicit Allowlist</h3>
+
+<pre><code>ALLOWED_ORIGINS = {
+    'https://app.example.com',
+    'https://admin.example.com',
+}
+
+def cors_headers(request):
+    origin = request.headers.get('Origin')
+    if origin in ALLOWED_ORIGINS:
+        return {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true',
+            'Vary': 'Origin',
+        }
+    return {}  # No CORS headers = browser blocks the request</code></pre>
+
+<h3>Rule 2: Always Set Vary: Origin</h3>
+
+<p>If your CORS response varies by origin (which it should), set <code>Vary: Origin</code>. This tells caches (CDNs, proxies) that the response depends on the Origin header and shouldn't be served to requests with different origins.</p>
+
+<h3>Rule 3: Never Reflect the Origin</h3>
+
+<p>Don't do <code>response.headers['ACAO'] = request.headers['Origin']</code>. Always validate against an allowlist first.</p>
+
+<h3>Rule 4: Never Accept null</h3>
+
+<p>Remove <code>null</code> from your allowed origins list. There is no legitimate reason for a production application to accept the null origin.</p>
+
+<h3>Rule 5: Use * Only for Truly Public APIs</h3>
+
+<p>Wildcard is fine for public, unauthenticated APIs (CDN resources, public data feeds). If the endpoint returns any user-specific data or accepts any form of authentication, don't use wildcard.</p>
+
+<h2 id="checklist">6. CORS Security Checklist</h2>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Check</th><th>Expected Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>Send <code>Origin: https://attacker.com</code></td><td>ACAO does not reflect attacker origin</td></tr>
+    <tr><td>2</td><td>Send <code>Origin: null</code></td><td>ACAO does not return <code>null</code></td></tr>
+    <tr><td>3</td><td>Check for <code>ACAO: *</code> on authenticated endpoints</td><td>No wildcard on endpoints that return user data</td></tr>
+    <tr><td>4</td><td>Check for <code>ACAC: true</code> with wildcard or reflected origin</td><td>ACAC only set with explicit allowlisted origins</td></tr>
+    <tr><td>5</td><td>Send suffix-confused origin</td><td>Origin validation uses exact match, not suffix</td></tr>
+    <tr><td>6</td><td>Check <code>Vary: Origin</code> header</td><td>Present when ACAO varies by request origin</td></tr>
+    <tr><td>7</td><td>Test OPTIONS preflight</td><td>Preflight returns same CORS policy as actual request</td></tr>
+    <tr><td>8</td><td>Check CDN/proxy caching</td><td>Origin included in cache key</td></tr>
+  </tbody>
+</table>
+
+<h2>Bottom Line</h2>
+
+<p>CORS is a security mechanism that developers often treat as a development obstacle — something to "fix" by making it as permissive as possible. The result is APIs that technically work across domains but expose user data to any website that asks.</p>
+
+<p>The fix is simple: explicit origin allowlists, no reflection, no null, no wildcard on authenticated endpoints. Eight checks, five rules, and your CORS configuration goes from "works but insecure" to "works and secure."</p>
+
+<p>For the full API security testing guide: <a href="/articles/api-security-testing-10-checks-2026/">API Security Testing in 2026: The 10 Checks Every API Needs</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

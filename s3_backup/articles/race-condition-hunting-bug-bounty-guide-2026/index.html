@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find and exploit race conditions including TOCTOU bugs, double-spend vulnerabilities, and timing attacks. Practical techniques with Turbo Intruder and custom scripts.">
+    <title>Race Condition Hunting: TOCTOU Exploits, Double-Spend Bugs, and Timing Attacks</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/race-condition-hunting-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/race-condition-hunting-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Race Condition Hunting: TOCTOU Exploits, Double-Spend Bugs, and Timing Attacks">
+    <meta property="og:description" content="Find and exploit race conditions including TOCTOU bugs, double-spend vulnerabilities, and timing attacks. Practical techniques with Turbo Intruder and custom scripts.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/race-condition-hunting-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Race Condition Hunting: TOCTOU Exploits, Double-Spend Bugs, and Timing Attacks">
+    <meta name="twitter:description" content="Find and exploit race conditions including TOCTOU bugs, double-spend vulnerabilities, and timing attacks. Practical techniques with Turbo Intruder and custom scripts.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Race Condition Hunting: TOCTOU Exploits, Double-Spend Bugs, and Timing Attacks",
+      "description": "Find and exploit race conditions including TOCTOU bugs, double-spend vulnerabilities, and timing attacks. Practical techniques with Turbo Intruder and custom scripts.",
+      "url": "https://bughuntertools.com/articles/race-condition-hunting-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Race Condition Hunting: TOCTOU Exploits, Double-Spend Bugs, and Timing Attacks</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Race Condition Hunting for Bug Bounty in 2026: How to Find and Exploit TOCTOU Bugs in Real Targets",
+      "description": "A practical guide to finding race condition vulnerabilities in bug bounty programs. Covers TOCTOU attacks, limit-bypass exploits, parallel request techniques, and report writing.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" },
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "mainEntityOfPage": "https://bughuntertools.com/articles/race-condition-hunting-bug-bounty-guide-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a race condition vulnerability in web applications?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A race condition occurs when an application's behavior depends on the timing of events that are not properly synchronized. In web apps, this typically means two or more requests hit a check-then-act sequence simultaneously, bypassing validation that works correctly for sequential requests. The classic pattern is TOCTOU — Time of Check to Time of Use — where the state changes between when the app checks a condition and when it acts on it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do race conditions pay in bug bounty programs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Race conditions typically pay Medium to High severity depending on impact. A race condition that bypasses payment validation or creates duplicate financial transactions can pay Critical. Coupon/discount abuse and limit bypasses usually land at Medium. The key is demonstrating real business impact — triagers need to see that the race window is exploitable in practice, not just in theory."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools do I need to test for race conditions?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Burp Suite's Turbo Intruder is the go-to tool — it can send dozens of requests in a single TCP packet using HTTP/2 single-packet attack. For free alternatives, use Python with asyncio and aiohttp, or the race-the-web Go tool. curl supports HTTP/2 multiplexing which can also work. The key is minimizing network jitter so your requests arrive at the server simultaneously."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Hunt for Race Conditions in Bug Bounty",
+      "step": [
+        { "@type": "HowToStep", "name": "Identify state-changing endpoints", "text": "Map all endpoints that modify server-side state: balance transfers, coupon redemptions, account upgrades, vote submissions, follow/unfollow actions, and any operation with a limit." },
+        { "@type": "HowToStep", "name": "Analyze the check-then-act pattern", "text": "For each endpoint, determine what validation happens before the action. If the check and action are separate database operations without proper locking, there is a potential race window." },
+        { "@type": "HowToStep", "name": "Send parallel requests", "text": "Use Turbo Intruder or HTTP/2 single-packet attack to send 10-50 identical requests simultaneously. Compare the results against what a single request produces." },
+        { "@type": "HowToStep", "name": "Verify the impact", "text": "Check whether the race produced duplicate state changes — extra money, duplicate items, bypassed limits. Document the before and after state clearly." },
+        { "@type": "HowToStep", "name": "Write the report with proof", "text": "Include timestamps, request/response pairs, and database state changes. Show the race window size and success rate across multiple attempts." }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Race conditions exploit the gap between when an app <strong>checks</strong> a condition and when it <strong>acts</strong> on it — the TOCTOU window</li>
+<li>The HTTP/2 single-packet attack technique sends multiple requests in one TCP packet, eliminating network jitter and making races reliable</li>
+<li>High-value targets: payment processing, coupon redemption, account balance transfers, voting systems, and any endpoint with a "once per user" limit</li>
+<li>Most web frameworks do NOT protect against race conditions by default — developers must explicitly implement locking or idempotency</li>
+<li>You don't need exotic tools — Burp Turbo Intruder, Python asyncio, or even curl with HTTP/2 multiplexing can trigger races</li>
+</ul>
+</div>
+
+<h2>What Are Race Conditions and Why Should Bug Bounty Hunters Care?</h2>
+
+<p>A race condition happens when an application assumes requests arrive one at a time — but you send them simultaneously. The server checks a condition (do you have enough balance?), then acts on it (deduct the balance). If two requests hit the check before either reaches the act, both pass validation and both execute.</p>
+
+<p>This is the TOCTOU pattern: <strong>Time of Check to Time of Use</strong>. The state is valid at check time but changes before use time — except when two requests race, neither sees the other's changes.</p>
+
+<p>Bug bounty programs care because race conditions cause real financial damage. A race on a payment endpoint can drain accounts. A race on a coupon endpoint means unlimited discounts. A race on a "one free trial per user" endpoint means infinite free trials. These are not theoretical — they happen on production systems every day.</p>
+
+<h2>The Five Race Condition Patterns That Pay</h2>
+
+<h3>1. Limit Bypass — "Once Per User" Becomes "Many Per User"</h3>
+
+<p>Any feature that limits an action to once per user (or N times per user) is a race target. The app checks "has this user already done X?" and then records "user did X." Race the check.</p>
+
+<p><strong>Examples:</strong></p>
+<ul>
+<li>Coupon codes: "This code can only be used once" — apply it 20 times simultaneously</li>
+<li>Referral bonuses: "One bonus per referred user" — submit the referral 10 times in parallel</li>
+<li>Free trial activation: "One trial per account" — hit the activation endpoint 5 times at once</li>
+<li>Voting: "One vote per user" — send 50 votes in a single packet</li>
+</ul>
+
+<h3>2. Balance / Inventory Double-Spend</h3>
+
+<p>The classic financial race. You have $100. You send two $100 transfers simultaneously. Both requests check your balance ($100 >= $100 ✓), both deduct, and the recipient gets $200 while your balance goes to -$100 (or wraps to $0 if unsigned).</p>
+
+<p><strong>Where to look:</strong></p>
+<ul>
+<li>Wallet-to-wallet transfers</li>
+<li>In-app currency purchases</li>
+<li>Gift card balance redemption</li>
+<li>Marketplace item purchases (buy the last item twice)</li>
+</ul>
+
+<h3>3. Privilege Escalation via State Race</h3>
+
+<p>Some applications check your role, then perform an action. If you can change your role between the check and the action — or if two requests with different roles race — you can escalate privileges.</p>
+
+<p><strong>Example:</strong> An admin removes your moderator role while you simultaneously perform a moderator action. The role check passes (you're still a moderator when checked), but by the time the action executes, the removal has also completed. The result depends on execution order — sometimes the action succeeds after the role is gone.</p>
+
+<h3>4. Multi-Endpoint Races (Business Logic)</h3>
+
+<p>Not all races happen on a single endpoint. Some require racing two different endpoints that share state.</p>
+
+<p><strong>Example:</strong> Endpoint A checks your subscription status and grants access to premium content. Endpoint B processes your subscription cancellation and refund. Race them: get the refund AND keep access, because each endpoint only locks its own operation.</p>
+
+<h3>5. File Upload / Processing Races</h3>
+
+<p>Applications that upload a file, validate it, then process it have a race window between validation and processing. Upload a valid file, then immediately overwrite it with a malicious one before processing begins.</p>
+
+<p>This is less common in modern cloud architectures (where files get unique keys), but still appears in legacy systems and self-hosted platforms.</p>
+
+<h2>Tools and Techniques</h2>
+
+<h3>HTTP/2 Single-Packet Attack (The Gold Standard)</h3>
+
+<p>Network jitter is the enemy of race condition testing. If your 10 requests arrive over a 50ms window, the server processes them sequentially and the race never triggers. The HTTP/2 single-packet attack solves this.</p>
+
+<p>HTTP/2 multiplexes multiple requests over a single TCP connection. By withholding the final bytes of all requests and then sending them in a single TCP packet, all requests arrive at the server's HTTP/2 layer simultaneously. The server must process them in parallel — there is no network jitter to separate them.</p>
+
+<p><strong>Burp Turbo Intruder setup:</strong></p>
+
+<pre><code>def queueRequests(target, wordlists):
+    engine = RequestEngine(endpoint=target.endpoint,
+                           concurrentConnections=1,
+                           engine=Engine.BURP2)  # HTTP/2 engine
+
+    # Queue 20 identical requests
+    for i in range(20):
+        engine.queue(target.req)
+
+    # Send all at once — single-packet attack
+    engine.openGate('race1')
+
+def handleResponse(req, interesting):
+    table.add(req)</code></pre>
+
+<p>The key is <code>concurrentConnections=1</code> — all requests go through one connection, one packet.</p>
+
+<h3>Python + asyncio (Free Alternative)</h3>
+
+<pre><code>import asyncio
+import aiohttp
+
+async def send_request(session, url, data, headers):
+    async with session.post(url, json=data, headers=headers) as resp:
+        return resp.status, await resp.text()
+
+async def race(url, data, headers, count=20):
+    async with aiohttp.ClientSession() as session:
+        tasks = [send_request(session, url, data, headers) for _ in range(count)]
+        results = await asyncio.gather(*tasks)
+        for status, body in results:
+            print(f"{status}: {body[:100]}")
+
+asyncio.run(race(
+    "https://target.com/api/redeem-coupon",
+    {"code": "SAVE50"},
+    {"Authorization": "Bearer &lt;token&gt;", "Content-Type": "application/json"},
+    count=20
+))</code></pre>
+
+<p>This is not as precise as the single-packet attack (asyncio introduces microsecond-level jitter), but it works surprisingly often because many race windows are milliseconds wide.</p>
+
+<h3>curl with HTTP/2 Multiplexing</h3>
+
+<pre><code># Send 10 parallel requests over a single HTTP/2 connection
+seq 1 10 | xargs -P10 -I{} curl -s -o /dev/null -w "%{http_code}\n" \
+  --http2 \
+  -X POST https://target.com/api/apply-coupon \
+  -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"SAVE50"}'</code></pre>
+
+<h2>Step-by-Step: Hunting for Race Conditions</h2>
+
+<h3>Step 1: Map State-Changing Endpoints</h3>
+
+<p>Crawl the target and identify every endpoint that modifies server-side state. Focus on:</p>
+<ul>
+<li>POST/PUT/PATCH/DELETE requests (not GET)</li>
+<li>Endpoints with words like: redeem, transfer, apply, activate, claim, vote, follow, purchase, upgrade</li>
+<li>Any endpoint that returns a different result the second time you call it ("already redeemed", "limit reached")</li>
+</ul>
+
+<p>If calling an endpoint twice gives you an error the second time, that endpoint has a limit — and limits are race targets.</p>
+
+<h3>Step 2: Understand the Expected Behavior</h3>
+
+<p>Before racing, establish the baseline. Send the request once normally. What happens? Send it again. What error do you get? This tells you what the check-then-act pattern looks like.</p>
+
+<p><strong>Example baseline:</strong></p>
+<ul>
+<li>First request: 200 OK, "Coupon applied, $10 discount"</li>
+<li>Second request: 400 Bad Request, "Coupon already used"</li>
+</ul>
+
+<p>The race goal: get multiple 200 OK responses instead of one 200 and one 400.</p>
+
+<h3>Step 3: Fire the Race</h3>
+
+<p>Send 10-50 identical requests simultaneously using your chosen tool. Count the successes.</p>
+
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>More successful responses than expected (e.g., 5 × "coupon applied" instead of 1)</li>
+<li>Database state that doesn't match — balance lower than it should be, duplicate records created</li>
+<li>Inconsistent response bodies — some requests see pre-race state, others see post-race state</li>
+</ul>
+
+<h3>Step 4: Increase Confidence</h3>
+
+<p>One successful race could be a fluke. Run it 5-10 times and track your success rate. If you get duplicate state changes in 3 out of 10 attempts, that's a reliable race condition — not a one-off glitch.</p>
+
+<p>Also vary the parallelism. Some races only trigger with exactly 2 concurrent requests. Others need 20+. Start with 10 and adjust.</p>
+
+<h3>Step 5: Measure the Impact</h3>
+
+<p>Triagers need to see business impact, not just "I sent requests fast." Quantify it:</p>
+<ul>
+<li>"Applied a single-use coupon 4 times, receiving $40 in discounts instead of $10"</li>
+<li>"Transferred $500 from a $100 balance by racing 5 transfer requests"</li>
+<li>"Created 12 votes from a single account on a one-vote-per-user poll"</li>
+</ul>
+
+<h2>Common Defenses (And How to Test If They Work)</h2>
+
+<h3>Database-Level Locking</h3>
+
+<p><code>SELECT ... FOR UPDATE</code> locks the row until the transaction commits. This is the strongest defense. Test it by racing — if the app uses proper row locking, you'll get exactly one success and the rest will block or fail.</p>
+
+<h3>Unique Constraints</h3>
+
+<p>A unique index on (user_id, coupon_id) prevents duplicate redemptions at the database level. The race will produce duplicate key errors for the losing requests. This works but only protects against exact duplicates — it won't catch balance races.</p>
+
+<h3>Idempotency Keys</h3>
+
+<p>The client sends a unique key with each request. The server rejects duplicate keys. Test by sending the same idempotency key in parallel — if the defense works, only one succeeds. Then test WITHOUT the key (or with different keys) to see if the race still works.</p>
+
+<h3>Application-Level Mutexes</h3>
+
+<p>Redis locks, in-memory mutexes, or distributed locks. These are often implemented incorrectly — the lock might not cover the entire check-then-act window, or it might use a non-atomic check-and-set operation (which is itself raceable). Always test even when you see locking code.</p>
+
+<h2>Writing the Report</h2>
+
+<p>Race condition reports get rejected more than most vulnerability types because triagers can't easily reproduce them. Make reproduction foolproof:</p>
+
+<ol>
+<li><strong>State the precondition:</strong> "Account has $100 balance" or "Coupon SAVE50 has not been used"</li>
+<li><strong>Provide the exact tool and config:</strong> Include your Turbo Intruder script or Python code</li>
+<li><strong>Show before and after:</strong> Screenshot the balance/state before the race, then after</li>
+<li><strong>Include all request/response pairs:</strong> Show that multiple requests got success responses</li>
+<li><strong>Quantify the success rate:</strong> "Succeeded in 7 out of 10 attempts with 20 parallel requests"</li>
+<li><strong>State the business impact:</strong> Don't say "race condition exists." Say "attacker can generate unlimited store credit at $10 per race attempt"</li>
+</ol>
+
+<h2>Real-World Patterns From Public Disclosures</h2>
+
+<h3>GitHub — Duplicate Sponsorship Charges</h3>
+<p>Researchers found that racing the GitHub Sponsors payment endpoint could create duplicate charges. The check for "already sponsored this month" and the "create sponsorship" action were not atomic. GitHub paid this as a High severity finding.</p>
+
+<h3>Shopify — Gift Card Double-Spend</h3>
+<p>Multiple researchers have reported gift card balance races on Shopify stores. Apply a $50 gift card to two orders simultaneously — both orders get the discount, but the card is only debited once. This is the textbook double-spend pattern.</p>
+
+<h3>HackerOne — Invitation Acceptance Race</h3>
+<p>Racing the "accept program invitation" endpoint could add a researcher to a program multiple times, bypassing the single-acceptance check. Low severity but a clean example of the limit-bypass pattern.</p>
+
+<h2>Checklist: Race Condition Hunting</h2>
+
+<ul>
+<li>☐ Map all state-changing endpoints (POST/PUT/PATCH/DELETE)</li>
+<li>☐ Identify endpoints with limits ("once per user", "one active session", balance checks)</li>
+<li>☐ Establish baseline: what happens on first request vs. second request?</li>
+<li>☐ Test with HTTP/2 single-packet attack (Turbo Intruder) or asyncio</li>
+<li>☐ Vary parallelism: try 2, 10, 20, 50 concurrent requests</li>
+<li>☐ Check database state after each race attempt</li>
+<li>☐ Test multi-endpoint races (two different endpoints sharing state)</li>
+<li>☐ Verify defenses: does the app use row locking, unique constraints, or idempotency keys?</li>
+<li>☐ Document success rate across multiple attempts</li>
+<li>☐ Quantify business impact in dollar terms or privilege terms</li>
+</ul>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Do I need Burp Suite Pro to test for race conditions?</h3>
+<p>No. Turbo Intruder is a free Burp extension that works with Burp Community Edition. You can also use Python with asyncio/aiohttp, the race-the-web Go tool, or curl with HTTP/2 multiplexing. Burp Pro's Repeater group-send feature is convenient but not required.</p>
+
+<h3>How wide is a typical race window?</h3>
+<p>It varies enormously. A race between two SQL queries in the same request handler might have a window of 1-5 milliseconds. A race involving an external API call or queue processing might have a window of 100ms+. The single-packet attack works because it eliminates network jitter — your requests arrive within microseconds of each other, which is enough for most windows.</p>
+
+<h3>Will race condition testing break the target application?</h3>
+<p>It can. Double-spend races can create negative balances or orphaned records. Always test on staging environments when available, use test accounts, and start with low-impact endpoints (voting, following) before testing financial operations. If the program's policy prohibits automated testing, ask before running race tests.</p>
+
+<h3>Are race conditions out of scope for most programs?</h3>
+<p>No — most programs accept race conditions if you can demonstrate real impact. However, some programs explicitly exclude "theoretical" race conditions or require proof of financial impact. Read the program policy. If it says "no automated testing," the single-packet attack might violate that rule — clarify with the program first.</p>
+
+<h3>What's the difference between a race condition and a TOCTOU bug?</h3>
+<p>TOCTOU (Time of Check to Time of Use) is a specific type of race condition where the vulnerability is in the gap between checking a condition and acting on it. All TOCTOU bugs are race conditions, but not all race conditions are TOCTOU — some involve ordering issues, deadlocks, or atomicity failures that don't follow the check-then-act pattern.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

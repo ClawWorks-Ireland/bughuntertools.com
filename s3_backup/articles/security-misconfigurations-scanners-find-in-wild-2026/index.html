@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Directory listings, exposed .env files, .git directory leaks, default admin panels, verbose error pages, and backup file exposure. These are the misconfigurations that automated scanners find on real targets every day. Here&#39;s what each one looks like, why it matters, and how to fix it.">
+    <title>6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/security-misconfigurations-scanners-find-in-wild-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/security-misconfigurations-scanners-find-in-wild-2026/">
+    <meta property="og:title" content="6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)">
+    <meta property="og:description" content="Directory listings, exposed .env files, .git directory leaks, default admin panels, verbose error pages, and backup file exposure. These are the misconfigurations that automated scanners find on real targets every day. Here&#39;s what each one looks like, why it matters, and how to fix it.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/security-misconfigurations-scanners-find-in-wild-2026/">
+    <meta name="twitter:title" content="6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)">
+    <meta name="twitter:description" content="Directory listings, exposed .env files, .git directory leaks, default admin panels, verbose error pages, and backup file exposure. These are the misconfigurations that automated scanners find on real targets every day. Here&#39;s what each one looks like, why it matters, and how to fix it.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)",
+      "description": "Directory listings, exposed .env files, .git directory leaks, default admin panels, verbose error pages, and backup file exposure. These are the misconfigurations that automated scanners find on real targets every day. Here&#39;s what each one looks like, why it matters, and how to fix it.",
+      "url": "https://bughuntertools.com/articles/security-misconfigurations-scanners-find-in-wild-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "6 Security Misconfigurations That Automated Scanners Actually Find in the Wild",
+  "description": "Directory listings, exposed .env files, .git leaks, default admin panels, verbose errors, and backup files. What they look like, why they matter, and how to fix them.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<article>
+  <h1>6 Security Misconfigurations That Automated Scanners Actually Find in the Wild (And How to Fix Them)</h1>
+
+  <div class="meta">
+    <span>Published: April 7, 2026</span>
+    <span>Reading time: 14 min</span>
+  </div>
+
+  <div class="affiliate-disclosure">
+    <p><em>Some links in this article may be affiliate links. We may earn a commission if you purchase through them, at no extra cost to you.</em></p>
+  </div>
+
+  <div class="intro">
+    <p><strong>OWASP A05 (Security Misconfiguration) is the broadest category in the Top 10. It covers everything from default credentials to missing security headers to exposed debug endpoints. But when you point an automated scanner at a real target, which misconfigurations actually show up? We built SecurityClaw's security-misconfiguration-checker to detect the 6 most common ones. This article covers what each misconfiguration looks like in the wild, why it's dangerous, and exactly how to fix it.</strong></p>
+  </div>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+    <li>Directory listings, exposed .env files, and .git leaks are the top misconfigs scanners find on real targets</li>
+    <li>These six misconfigurations appear in the majority of automated security assessments</li>
+    <li>Each misconfiguration has a simple fix — most require a single config line change</li>
+    <li>Automated scanners reliably catch these issues, making them low-hanging fruit for security teams</li>
+  </ul>
+  </div>
+
+
+  <nav class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#why-a05">Why A05 Is the Most Common Finding Category</a></li>
+      <li><a href="#directory-listing">1. Directory Listing Enabled</a></li>
+      <li><a href="#env-exposure">2. .env File Exposure</a></li>
+      <li><a href="#git-exposure">3. .git Directory Exposure</a></li>
+      <li><a href="#default-admin">4. Default Admin Panels Accessible</a></li>
+      <li><a href="#verbose-errors">5. Verbose Error Pages</a></li>
+      <li><a href="#backup-files">6. Backup File Exposure</a></li>
+      <li><a href="#scanning">How to Scan for All 6</a></li>
+    </ol>
+  </nav>
+
+  <section id="why-a05">
+    <h2>Why A05 Is the Most Common Finding Category</h2>
+
+    <p>Security misconfiguration isn't a single vulnerability — it's a class of mistakes that happen when software ships with insecure defaults and nobody changes them. Every web server, every framework, every CMS has default settings that prioritize ease of setup over security. When those defaults make it to production, they become attack surface.</p>
+
+    <p>The reason A05 is so common is that it's not a coding bug. You can write perfect application code and still be vulnerable if your web server has directory listing enabled, or your deployment script left a <code>.env</code> file in the web root, or your error handler shows stack traces to users.</p>
+
+    <p>These are configuration problems, not code problems. And they're the easiest class of vulnerability for automated scanners to detect — because the scanner just needs to request a known path and check the response. No injection, no authentication bypass, no complex logic. Just: "Is this file accessible? It shouldn't be."</p>
+  </section>
+
+  <section id="directory-listing">
+    <h2>1. Directory Listing Enabled</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <p>Request any directory path on the server. If you see an HTML page titled "Index of /uploads/" with a list of files, directory listing is enabled.</p>
+
+    <pre><code>GET /uploads/ HTTP/1.1
+Host: example.com
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;Index of /uploads/&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Index of /uploads/&lt;/h1&gt;
+&lt;pre&gt;
+&lt;a href="invoice-2026-03.pdf"&gt;invoice-2026-03.pdf&lt;/a&gt;     2026-03-15 14:22  1.2M
+&lt;a href="customer-export.csv"&gt;customer-export.csv&lt;/a&gt;     2026-03-20 09:11  4.8M
+&lt;a href="backup.sql.gz"&gt;backup.sql.gz&lt;/a&gt;               2026-03-22 02:00  89M
+&lt;/pre&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h3>Why It Matters</h3>
+
+    <p>Directory listing turns your web server into a file browser. Every file in that directory — including ones you didn't intend to be public — is now discoverable. Attackers don't need to guess filenames; the server lists them.</p>
+
+    <p>Common finds in directory listings: database backups, configuration files, customer data exports, internal documentation, deployment scripts, and source code archives. One directory listing can expose more sensitive data than a SQL injection.</p>
+
+    <h3>How to Fix It</h3>
+
+    <p><strong>Apache:</strong> Add to <code>.htaccess</code> or <code>httpd.conf</code>:</p>
+    <pre><code>Options -Indexes</code></pre>
+
+    <p><strong>Nginx:</strong> Ensure <code>autoindex</code> is off (it's off by default, but check):</p>
+    <pre><code>location / {
+    autoindex off;
+}</code></pre>
+
+    <p><strong>Express.js:</strong> Don't use <code>serveIndex</code> middleware in production. If you're using <code>express.static()</code>, it doesn't enable directory listing by default — but check for any <code>serve-index</code> middleware in your stack.</p>
+
+    <h3>Detection</h3>
+
+    <p>The scanner requests <code>/</code>, <code>/images/</code>, <code>/uploads/</code>, <code>/assets/</code>, and <code>/static/</code>. If any response contains "Index of" in the body, it's flagged. Simple, reliable, zero false positives.</p>
+  </section>
+
+  <section id="env-exposure">
+    <h2>2. .env File Exposure</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <pre><code>GET /.env HTTP/1.1
+Host: example.com
+
+HTTP/1.1 200 OK
+Content-Type: text/plain
+
+APP_NAME=MyApp
+APP_ENV=production
+APP_KEY=base64:xK9m2...
+DB_CONNECTION=mysql
+DB_HOST=rds-prod.abc123.us-east-1.rds.amazonaws.com
+DB_DATABASE=myapp_prod
+DB_USERNAME=admin
+DB_PASSWORD=Pr0d_P@ssw0rd!2026
+MAIL_PASSWORD=smtp_secret_key
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=wJalr...</code></pre>
+
+    <h3>Why It Matters</h3>
+
+    <p>The <code>.env</code> file is the single most dangerous file that can be exposed on a web server. It typically contains every secret the application needs: database credentials, API keys, encryption keys, SMTP passwords, cloud provider credentials. One exposed <code>.env</code> file can give an attacker full access to the application's database, email system, and cloud infrastructure.</p>
+
+    <p>This happens because frameworks like Laravel, Rails, and Node.js use <code>.env</code> files for configuration, and deployment processes sometimes copy the entire project directory — including <code>.env</code> — into the web root.</p>
+
+    <h3>How to Fix It</h3>
+
+    <p><strong>Immediate:</strong> Block access to dotfiles at the web server level:</p>
+
+    <p><strong>Nginx:</strong></p>
+    <pre><code>location ~ /\. {
+    deny all;
+    return 404;
+}</code></pre>
+
+    <p><strong>Apache:</strong></p>
+    <pre><code>&lt;FilesMatch "^\."&gt;
+    Require all denied
+&lt;/FilesMatch&gt;</code></pre>
+
+    <p><strong>Long-term:</strong> Don't put <code>.env</code> files in the web root at all. Use environment variables injected by your deployment system (AWS Parameter Store, Kubernetes secrets, Docker env vars). The <code>.env</code> file should exist only in development.</p>
+
+    <h3>Detection</h3>
+
+    <p>The scanner requests <code>/.env</code> and checks for common environment variable patterns: <code>APP_KEY=</code>, <code>DB_PASSWORD=</code>, <code>AWS_SECRET_ACCESS_KEY=</code>, <code>SECRET_KEY=</code>. If any pattern matches, it's flagged as HIGH severity. The check is passive — it only reads the response, never modifies anything.</p>
+  </section>
+
+  <section id="git-exposure">
+    <h2>3. .git Directory Exposure</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <pre><code>GET /.git/HEAD HTTP/1.1
+Host: example.com
+
+HTTP/1.1 200 OK
+Content-Type: text/plain
+
+ref: refs/heads/main</code></pre>
+
+    <h3>Why It Matters</h3>
+
+    <p>If <code>/.git/HEAD</code> is accessible, the entire Git repository is likely accessible. An attacker can reconstruct the full source code, commit history, and — critically — any secrets that were ever committed and later removed. "Removed" from Git doesn't mean gone; it means it's in the history.</p>
+
+    <p>Tools like <a href="https://github.com/arthaud/git-dumper">git-dumper</a> can reconstruct a full repository from an exposed <code>.git</code> directory. This gives the attacker:</p>
+    <ul>
+      <li>Complete source code (including server-side logic)</li>
+      <li>Commit history (including "oops, remove API key" commits where the key is still in the diff)</li>
+      <li>Branch names (revealing feature development and internal naming)</li>
+      <li>Author emails (useful for social engineering)</li>
+    </ul>
+
+    <h3>How to Fix It</h3>
+
+    <p>Same as <code>.env</code> — block all dotfiles at the web server level. The Nginx and Apache rules above cover this.</p>
+
+    <p><strong>Additionally:</strong> Don't deploy by running <code>git clone</code> into the web root. Use a build step that copies only the built artifacts, not the <code>.git</code> directory. If you're using CI/CD, your deployment pipeline should never include <code>.git</code> in the deployed artifact.</p>
+
+    <h3>Detection</h3>
+
+    <p>The scanner requests <code>/.git/HEAD</code> and checks if the response starts with <code>ref: refs/heads/</code>. This is a definitive indicator — no other file would contain this string. Zero false positive risk.</p>
+  </section>
+
+  <section id="default-admin">
+    <h2>4. Default Admin Panels Accessible</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <p>The scanner checks common admin paths and looks for login pages or admin interfaces:</p>
+
+    <ul>
+      <li><code>/admin/</code> — generic admin panel</li>
+      <li><code>/phpmyadmin/</code> — phpMyAdmin database management</li>
+      <li><code>/wp-admin/</code> — WordPress admin</li>
+      <li><code>/manager/html</code> — Apache Tomcat Manager</li>
+    </ul>
+
+    <p>If any of these return a 200 status with a login form or admin interface, the path is accessible.</p>
+
+    <h3>Why It Matters</h3>
+
+    <p>Accessible admin panels are the starting point for brute-force attacks. phpMyAdmin with default credentials gives direct database access. Tomcat Manager with default credentials (<code>tomcat/tomcat</code>) gives remote code execution via WAR file deployment. WordPress admin with a weak password gives full site control.</p>
+
+    <p>The misconfiguration isn't that the admin panel exists — it's that it's accessible from the public internet without IP restrictions or additional authentication layers.</p>
+
+    <h3>How to Fix It</h3>
+
+    <p><strong>IP restriction:</strong> Limit admin panel access to known IP ranges:</p>
+
+    <p><strong>Nginx:</strong></p>
+    <pre><code>location /admin/ {
+    allow 10.0.0.0/8;
+    allow 192.168.1.0/24;
+    deny all;
+}</code></pre>
+
+    <p><strong>VPN/Zero Trust:</strong> Put admin panels behind a VPN or zero-trust network access (ZTNA) solution. The admin panel should never be directly accessible from the public internet.</p>
+
+    <p><strong>Remove defaults:</strong> If you're not using phpMyAdmin, remove it. If Tomcat Manager isn't needed, disable it. Every admin panel you don't need is attack surface you don't need.</p>
+
+    <h3>Detection</h3>
+
+    <p>The scanner requests each admin path and checks for 200 responses containing login form indicators (<code>&lt;form</code>, <code>password</code>, <code>login</code>). A 200 response alone isn't enough — the content must indicate an actual admin interface. 403 and 404 responses are correctly ignored.</p>
+  </section>
+
+  <section id="verbose-errors">
+    <h2>5. Verbose Error Pages</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <pre><code>GET /nonexistent-page HTTP/1.1
+Host: example.com
+
+HTTP/1.1 500 Internal Server Error
+
+Traceback (most recent call last):
+  File "/app/views.py", line 42, in get_page
+    page = Page.objects.get(slug=slug)
+  File "/usr/lib/python3.11/site-packages/django/db/models/manager.py", line 87
+    ...
+django.core.exceptions.ObjectDoesNotExist: Page matching query does not exist.
+
+Environment:
+  SERVER_SOFTWARE: gunicorn/21.2.0
+  DJANGO_SETTINGS_MODULE: myapp.settings.production
+  DATABASE_URL: postgres://admin:password@db.internal:5432/myapp</code></pre>
+
+    <h3>Why It Matters</h3>
+
+    <p>Verbose error pages leak internal information: framework version, file paths, database connection strings, environment variables, and sometimes credentials. This information helps attackers understand the technology stack and find specific vulnerabilities to exploit.</p>
+
+    <p>Django's debug mode, Rails' development error pages, and PHP's <code>display_errors</code> are the most common culprits. They're invaluable during development and catastrophic in production.</p>
+
+    <h3>How to Fix It</h3>
+
+    <p><strong>Django:</strong> Set <code>DEBUG = False</code> in production settings. Configure a custom 500 error template.</p>
+
+    <p><strong>Rails:</strong> Ensure <code>config.consider_all_requests_local = false</code> in <code>production.rb</code>.</p>
+
+    <p><strong>PHP:</strong> Set <code>display_errors = Off</code> and <code>log_errors = On</code> in <code>php.ini</code>.</p>
+
+    <p><strong>Node.js/Express:</strong> Don't pass error details to <code>res.send()</code> in production. Use a generic error handler:</p>
+    <pre><code>app.use((err, req, res, next) => {
+  console.error(err.stack); // Log internally
+  res.status(500).send('Something went wrong'); // Generic response
+});</code></pre>
+
+    <h3>Detection</h3>
+
+    <p>The scanner triggers error responses (404, 500) and checks for stack trace patterns: <code>Traceback</code>, <code>at line</code>, <code>Exception in</code>, framework-specific error signatures, and server version strings. The check distinguishes between custom error pages (safe) and framework debug pages (vulnerable).</p>
+  </section>
+
+  <section id="backup-files">
+    <h2>6. Backup File Exposure</h2>
+
+    <h3>What It Looks Like</h3>
+
+    <pre><code>GET /index.php.bak HTTP/1.1
+Host: example.com
+
+HTTP/1.1 200 OK
+Content-Type: application/octet-stream
+
+&lt;?php
+// Database configuration
+$db_host = 'rds-prod.abc123.us-east-1.rds.amazonaws.com';
+$db_user = 'admin';
+$db_pass = 'Pr0d_P@ssw0rd!2026';
+...</code></pre>
+
+    <h3>Why It Matters</h3>
+
+    <p>Backup files are created by text editors (<code>file.php~</code>, <code>file.php.swp</code>), manual backups (<code>file.php.bak</code>, <code>file.php.old</code>), and deployment processes (<code>web.config.old</code>, <code>.htaccess.bak</code>). Unlike the original files, backup files are often served as plain text — meaning the web server sends the raw source code instead of executing it.</p>
+
+    <p>A <code>.php</code> file is executed by the PHP interpreter and only the output is sent to the client. A <code>.php.bak</code> file is served as-is — including all the source code, database credentials, and business logic.</p>
+
+    <h3>How to Fix It</h3>
+
+    <p><strong>Block common backup extensions:</strong></p>
+
+    <p><strong>Nginx:</strong></p>
+    <pre><code>location ~* \.(bak|old|orig|save|swp|swo|tmp|temp|backup|dist|copy)$ {
+    deny all;
+    return 404;
+}</code></pre>
+
+    <p><strong>Prevention:</strong> Configure your text editor to store swap/backup files outside the project directory. In Vim: <code>set backupdir=~/.vim/backup//</code>. In VS Code: this isn't an issue (no swap files in the project directory).</p>
+
+    <p><strong>CI/CD:</strong> Add a deployment step that removes backup files from the build artifact. A simple <code>find . -name "*.bak" -delete</code> in your build script prevents this class of exposure entirely.</p>
+
+    <h3>Detection</h3>
+
+    <p>The scanner checks for common backup file patterns: <code>index.php.bak</code>, <code>web.config.old</code>, <code>.htaccess.bak</code>, <code>config.php.orig</code>, and similar. If any return a 200 response with content that looks like source code or configuration, it's flagged.</p>
+  </section>
+
+  <section id="scanning">
+    <h2>How to Scan for All 6</h2>
+
+    <p>SecurityClaw's <code>security-misconfiguration-checker</code> skill checks all 6 misconfiguration types in a single scan. It's a passive skill — no injection, no state modification, no approval required. You can run it in CI/CD without worrying about breaking anything.</p>
+
+    <p>The skill makes approximately 20 HTTP requests per target (checking various paths and file patterns). Total scan time is typically under 5 seconds. Every finding includes the specific path, the evidence found, and the severity level.</p>
+
+    <p>For teams that want to check these manually, here's a quick checklist:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5em 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Check</th>
+          <th style="padding:10px; text-align:left;">Request</th>
+          <th style="padding:10px; text-align:left;">Vulnerable If</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:10px;">Directory listing</td><td style="padding:10px;"><code>GET /uploads/</code></td><td style="padding:10px;">Response contains "Index of"</td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding:10px;">.env exposure</td><td style="padding:10px;"><code>GET /.env</code></td><td style="padding:10px;">Response contains <code>APP_KEY=</code> or <code>DB_PASSWORD=</code></td></tr>
+        <tr><td style="padding:10px;">.git exposure</td><td style="padding:10px;"><code>GET /.git/HEAD</code></td><td style="padding:10px;">Response starts with <code>ref: refs/heads/</code></td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding:10px;">Admin panels</td><td style="padding:10px;"><code>GET /admin/</code></td><td style="padding:10px;">200 response with login form</td></tr>
+        <tr><td style="padding:10px;">Verbose errors</td><td style="padding:10px;"><code>GET /nonexistent</code></td><td style="padding:10px;">Response contains stack trace</td></tr>
+        <tr style="background:#f9f9f9;"><td style="padding:10px;">Backup files</td><td style="padding:10px;"><code>GET /index.php.bak</code></td><td style="padding:10px;">200 response with source code</td></tr>
+      </tbody>
+    </table>
+
+    <p>If any of these checks return a positive result on your production server, fix it today. These are the lowest-hanging fruit in web security — easy to find, easy to exploit, and easy to fix.</p>
+  </section>
+
+  <section id="conclusion">
+    <h2>The Bottom Line</h2>
+
+    <p>Security misconfiguration (A05) is the most common vulnerability category because it doesn't require a coding mistake — just a deployment oversight. The 6 misconfigurations covered here are found on real production servers every day. They're all detectable with simple HTTP requests and fixable with a few lines of web server configuration.</p>
+
+    <p>The fix pattern is the same for all 6: block access to files and paths that should never be public. A few Nginx or Apache rules, applied once, prevent the entire class of vulnerability. The hard part isn't the fix — it's knowing to check in the first place.</p>
+
+    <p>That's what automated scanners are for.</p>
+  </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

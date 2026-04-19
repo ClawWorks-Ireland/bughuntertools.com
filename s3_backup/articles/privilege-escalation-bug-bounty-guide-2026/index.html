@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master vertical and horizontal privilege escalation techniques. Covers IDOR chains, role manipulation, token abuse, and real-world privesc patterns that earn top bounties.">
+    <title>Privilege Escalation Techniques: Vertical and Horizontal Privesc That Pay Top Bounties</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/privilege-escalation-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/privilege-escalation-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Privilege Escalation Techniques: Vertical and Horizontal Privesc That Pay Top Bounties">
+    <meta property="og:description" content="Master vertical and horizontal privilege escalation techniques. Covers IDOR chains, role manipulation, token abuse, and real-world privesc patterns that earn top bounties.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/privilege-escalation-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Privilege Escalation Techniques: Vertical and Horizontal Privesc That Pay Top Bounties">
+    <meta name="twitter:description" content="Master vertical and horizontal privilege escalation techniques. Covers IDOR chains, role manipulation, token abuse, and real-world privesc patterns that earn top bounties.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Privilege Escalation Techniques: Vertical and Horizontal Privesc That Pay Top Bounties",
+      "description": "Master vertical and horizontal privilege escalation techniques. Covers IDOR chains, role manipulation, token abuse, and real-world privesc patterns that earn top bounties.",
+      "url": "https://bughuntertools.com/articles/privilege-escalation-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Privilege Escalation Techniques: Vertical and Horizontal Privesc That Pay Top Bounties</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Privilege Escalation for Bug Bounty in 2026: How to Find Vertical and Horizontal Privesc in Real Targets",
+      "description": "A practical guide to finding privilege escalation vulnerabilities in bug bounty programs.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "datePublished": "2026-04-13",
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the difference between vertical and horizontal privilege escalation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Vertical privilege escalation means gaining higher-level access (e.g., user to admin). Horizontal privilege escalation means accessing another user's resources at the same privilege level (e.g., user A accessing user B's data)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I test for privilege escalation in bug bounty programs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Create two accounts with different roles. Capture authenticated requests from the lower-privileged account and replay them with modified parameters, tokens, or role identifiers. Check if the application enforces authorization on every endpoint, not just the UI."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools help find privilege escalation bugs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Burp Suite's Autorize extension automates access control testing by replaying requests with different session tokens. AuthMatrix helps test role-based access. For JWT-based apps, jwt_tool and jwt.io help identify claim tampering opportunities."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h2>Key Takeaways</h2>
+
+<ul>
+  <li>Privilege escalation is consistently rated high/critical severity — it's one of the highest-paying bug classes in bounty programs</li>
+  <li>Most privesc bugs exist because authorization is enforced in the UI but not on the server — always test the API directly</li>
+  <li>Two-account testing (one low-priv, one high-priv) is the foundation of every privesc hunt</li>
+  <li>JWT claim tampering, IDOR-to-admin chains, and role parameter manipulation are the three most common vectors</li>
+  <li>Autorize (Burp extension) automates the tedious part — use it on every target with role-based access</li>
+</ul>
+
+<h2>Why Privilege Escalation Pays Well</h2>
+
+<p>Privilege escalation sits at the intersection of access control and business logic — two areas where automated scanners consistently fail. A scanner can find a reflected XSS in seconds, but it cannot understand that changing <code>role=user</code> to <code>role=admin</code> in a POST body grants full administrative access. That's why privesc bugs command high payouts: they require human reasoning, and they almost always have direct business impact.</p>
+
+<p>In 2026, broken access control remains the #1 category in the OWASP Top 10. Programs on HackerOne and Bugcrowd routinely pay $1,000–$15,000+ for privilege escalation findings, depending on impact.</p>
+
+<h2>Vertical vs. Horizontal Privilege Escalation</h2>
+
+<p><strong>Vertical privilege escalation</strong> means moving up the permission hierarchy — user to moderator, moderator to admin, admin to superadmin. These are typically critical severity because they give an attacker capabilities they were never intended to have.</p>
+
+<p><strong>Horizontal privilege escalation</strong> means accessing resources belonging to another user at the same privilege level — viewing another user's profile, modifying their settings, or reading their private data. These are typically high severity and often overlap with IDOR.</p>
+
+<p>The most impactful findings chain both: start with horizontal access to discover an admin user's ID, then use that ID to escalate vertically.</p>
+
+<h2>The Two-Account Method</h2>
+
+<p>Every privilege escalation test starts with two accounts:</p>
+
+<ol>
+  <li><strong>Account A</strong> — the highest-privilege role you can access (admin, manager, team lead)</li>
+  <li><strong>Account B</strong> — the lowest-privilege role (free user, viewer, guest)</li>
+</ol>
+
+<p>The workflow:</p>
+
+<ol>
+  <li>Log in as Account A and map every endpoint, action, and API call available to that role</li>
+  <li>Log in as Account B in a separate browser or Burp session</li>
+  <li>Replay Account A's requests using Account B's session token</li>
+  <li>Any request that succeeds is a privilege escalation bug</li>
+</ol>
+
+<p>This sounds simple, and it is — but most hunters skip it because it's tedious. Autorize automates step 3.</p>
+
+<h2>Setting Up Autorize for Automated Testing</h2>
+
+<p>Autorize is a Burp Suite extension that replays every request with a lower-privileged session cookie automatically. Setup:</p>
+
+<ol>
+  <li>Install Autorize from the BApp Store</li>
+  <li>Log in as Account B (low-priv) and copy the session cookie</li>
+  <li>Paste the cookie into Autorize's configuration</li>
+  <li>Browse the application as Account A (high-priv)</li>
+  <li>Autorize replays every request with Account B's cookie and flags responses that match — meaning the low-priv user got the same data</li>
+</ol>
+
+<p>Color coding: <strong>red</strong> = enforced (access denied), <strong>orange</strong> = possible bypass (similar response), <strong>green</strong> = confirmed bypass (identical response). Focus on the green and orange results.</p>
+
+<h2>Common Privilege Escalation Vectors</h2>
+
+<h3>1. Role Parameter Manipulation</h3>
+
+<p>Some applications include the user's role in the request body during registration or profile updates:</p>
+
+<pre><code>POST /api/users/register
+{"email": "user@example.com", "password": "...", "role": "user"}</code></pre>
+
+<p>Change <code>"role": "user"</code> to <code>"role": "admin"</code>. If the server doesn't validate this server-side, you've just created an admin account. This is more common than you'd expect — especially in applications built with frameworks that auto-bind request parameters to database models (mass assignment).</p>
+
+<h3>2. JWT Claim Tampering</h3>
+
+<p>JWTs often contain role or permission claims in the payload:</p>
+
+<pre><code>{"sub": "12345", "role": "user", "iat": 1713000000}</code></pre>
+
+<p>Attack vectors:</p>
+<ul>
+  <li><strong>Algorithm confusion</strong> — change <code>"alg": "RS256"</code> to <code>"alg": "HS256"</code> and sign with the public key</li>
+  <li><strong>None algorithm</strong> — set <code>"alg": "none"</code> and remove the signature</li>
+  <li><strong>Claim modification</strong> — change <code>"role": "user"</code> to <code>"role": "admin"</code> with a weak or known signing key</li>
+  <li><strong>kid injection</strong> — manipulate the <code>kid</code> header to point to a file you control or to <code>/dev/null</code></li>
+</ul>
+
+<p>Use <a href="https://github.com/ticarpi/jwt_tool">jwt_tool</a> to automate these checks: <code>python3 jwt_tool.py &lt;token&gt; -M at</code> runs all known attack modes.</p>
+
+<h3>3. IDOR-to-Admin Chains</h3>
+
+<p>Sometimes you can't directly escalate your role, but you can access admin resources through predictable IDs:</p>
+
+<ol>
+  <li>Find an endpoint like <code>GET /api/users/123/settings</code></li>
+  <li>Enumerate user IDs (often sequential) to find admin accounts</li>
+  <li>Access admin-specific endpoints using the discovered admin user ID</li>
+  <li>Modify admin settings, reset admin passwords, or extract admin API keys</li>
+</ol>
+
+<h3>4. Forced Browsing to Admin Panels</h3>
+
+<p>The UI hides admin links from regular users, but the endpoints still exist:</p>
+
+<ul>
+  <li><code>/admin</code>, <code>/admin/dashboard</code>, <code>/admin/users</code></li>
+  <li><code>/api/admin/settings</code>, <code>/api/internal/users</code></li>
+  <li><code>/graphql</code> with admin mutations exposed</li>
+</ul>
+
+<p>Use wordlists like SecLists' <code>raft-medium-directories.txt</code> with ffuf or feroxbuster. Then test each discovered endpoint with your low-priv session token.</p>
+
+<h3>5. HTTP Method Switching</h3>
+
+<p>Some applications enforce authorization on GET but not on PUT, POST, or DELETE for the same endpoint:</p>
+
+<pre><code>GET /api/users/456 → 403 Forbidden
+PUT /api/users/456 → 200 OK (modifies the user)</code></pre>
+
+<p>Always test multiple HTTP methods on every endpoint you find.</p>
+
+<h3>6. Path Traversal in Authorization</h3>
+
+<p>Middleware that checks paths may be bypassable with path manipulation:</p>
+
+<ul>
+  <li><code>/api/admin/users</code> → blocked</li>
+  <li><code>/api/./admin/users</code> → allowed</li>
+  <li><code>/api/admin/./users</code> → allowed</li>
+  <li><code>/api/v1/../admin/users</code> → allowed</li>
+  <li><code>/API/ADMIN/USERS</code> → allowed (case sensitivity mismatch)</li>
+</ul>
+
+<h2>Testing GraphQL for Privilege Escalation</h2>
+
+<p>GraphQL APIs are particularly prone to privesc because:</p>
+
+<ul>
+  <li>Introspection often reveals admin mutations that aren't exposed in the UI</li>
+  <li>Nested queries can traverse relationships to access unauthorized data</li>
+  <li>Batch queries can bypass rate limiting on authorization checks</li>
+</ul>
+
+<p>Start with introspection: <code>{"query": "{__schema{types{name,fields{name}}}}"}</code>. Look for mutations like <code>updateUserRole</code>, <code>deleteUser</code>, <code>adminSettings</code>, or any field containing "admin", "role", "permission".</p>
+
+<h2>Multi-Step Escalation Chains</h2>
+
+<p>The highest-paying privesc bugs aren't single-step — they're chains. A realistic example:</p>
+
+<ol>
+  <li><strong>Information disclosure</strong> — enumerate user IDs via a public API endpoint</li>
+  <li><strong>Horizontal privesc</strong> — access another user's profile via IDOR</li>
+  <li><strong>Discover admin user</strong> — find a user with <code>"role": "admin"</code> in the response</li>
+  <li><strong>Password reset takeover</strong> — trigger a password reset for the admin account via an unprotected endpoint</li>
+  <li><strong>Vertical privesc</strong> — log in as admin with the new password</li>
+</ol>
+
+<p>Document every step with screenshots and HTTP request/response pairs. Chains that demonstrate full account takeover consistently receive critical severity ratings.</p>
+
+<h2>Proving Impact in Your Report</h2>
+
+<p>A privesc report that says "I can access admin endpoints" gets triaged as medium. A report that demonstrates concrete impact gets critical. Show:</p>
+
+<ul>
+  <li><strong>What data you accessed</strong> — "I read 47 other users' PII including email addresses and billing info"</li>
+  <li><strong>What actions you performed</strong> — "I modified another user's account settings" (with permission or on a test account)</li>
+  <li><strong>The business impact</strong> — "An attacker could escalate to admin and export the entire user database"</li>
+  <li><strong>Reproduction steps</strong> — exact HTTP requests with curl commands or Burp screenshots</li>
+</ul>
+
+<h2>Checklist: Privilege Escalation Testing</h2>
+
+<ol>
+  <li>☐ Create accounts at every available role level</li>
+  <li>☐ Map all endpoints accessible to the highest-privilege role</li>
+  <li>☐ Set up Autorize with the lowest-privilege session cookie</li>
+  <li>☐ Browse as high-priv and review Autorize results</li>
+  <li>☐ Test role parameters in registration and profile update endpoints</li>
+  <li>☐ Check JWT claims for role/permission fields and test tampering</li>
+  <li>☐ Enumerate user IDs and test IDOR on admin-specific endpoints</li>
+  <li>☐ Fuzz for hidden admin paths with ffuf/feroxbuster</li>
+  <li>☐ Test HTTP method switching on all restricted endpoints</li>
+  <li>☐ Try path traversal bypasses on authorization middleware</li>
+  <li>☐ If GraphQL: run introspection and test admin mutations</li>
+  <li>☐ Document chains with full request/response evidence</li>
+</ol>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Do I need multiple accounts to test for privilege escalation?</h3>
+<p>Yes. Two accounts minimum — one high-privilege and one low-privilege. Some programs provide test accounts; others let you create multiple accounts. If the program only allows one account, you can still test by modifying your own role parameters and JWT claims, but two-account testing is far more thorough.</p>
+
+<h3>Is horizontal privilege escalation worth reporting?</h3>
+<p>Absolutely. Accessing another user's data is a privacy violation and typically rated high severity. If you can chain it into vertical escalation or account takeover, it becomes critical.</p>
+
+<h3>What's the difference between IDOR and privilege escalation?</h3>
+<p>IDOR (Insecure Direct Object Reference) is a specific vulnerability type where changing an object identifier gives you access to another user's resource. Privilege escalation is the broader impact — IDOR is often the mechanism that enables it. An IDOR that lets you access admin resources is a privilege escalation.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SecurityClaw shipped 4 new scanning skills this week: a Next.js config extractor, an API Gateway CORS tester, a webmail CVE fingerprinter, and an authenticated portal IDOR tester. Here&#39;s what each one detects, why it matters, and how it fits into your recon workflow.">
+    <title>4 New SecurityClaw Skills That Change How You Recon Web Applications</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/securityclaw-4-new-skills-april-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/securityclaw-4-new-skills-april-2026/">
+    <meta property="og:title" content="4 New SecurityClaw Skills That Change How You Recon Web Applications">
+    <meta property="og:description" content="SecurityClaw shipped 4 new scanning skills this week: a Next.js config extractor, an API Gateway CORS tester, a webmail CVE fingerprinter, and an authenticated portal IDOR tester. Here&#39;s what each one detects, why it matters, and how it fits into your recon workflow.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/securityclaw-4-new-skills-april-2026/">
+    <meta name="twitter:title" content="4 New SecurityClaw Skills That Change How You Recon Web Applications">
+    <meta name="twitter:description" content="SecurityClaw shipped 4 new scanning skills this week: a Next.js config extractor, an API Gateway CORS tester, a webmail CVE fingerprinter, and an authenticated portal IDOR tester. Here&#39;s what each one detects, why it matters, and how it fits into your recon workflow.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "4 New SecurityClaw Skills That Change How You Recon Web Applications",
+      "description": "SecurityClaw shipped 4 new scanning skills this week: a Next.js config extractor, an API Gateway CORS tester, a webmail CVE fingerprinter, and an authenticated portal IDOR tester. Here&#39;s what each one detects, why it matters, and how it fits into your recon workflow.",
+      "url": "https://bughuntertools.com/articles/securityclaw-4-new-skills-april-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">4 New SecurityClaw Skills That Change How You Recon Web Applications</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "4 New SecurityClaw Skills That Change How You Recon Web Applications",
+  "description": "SecurityClaw shipped 4 new scanning skills: Next.js config extractor, API Gateway CORS tester, webmail CVE fingerprinter, and authenticated portal IDOR tester.",
+  "datePublished": "2026-04-10",
+  "dateModified": "2026-04-10",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Next.js __NEXT_DATA__ and why is it a security concern?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Next.js injects a JSON blob into every server-rendered page inside a script tag with id __NEXT_DATA__. This blob contains page props, route data, and often runtime configuration including API gateway URLs, NEXT_PUBLIC_ environment variables, and sometimes internal service endpoints. Because it's rendered in the HTML source, anyone can read it. Developers often assume server-side rendering hides this data, but it's visible in the page source to any browser."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What makes wildcard CORS on API Gateway dangerous?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "When an API Gateway returns Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true, any website can make authenticated cross-origin requests to that API. An attacker can host a page that silently calls the victim's API endpoints using the victim's session cookies, reading account data, changing settings, or performing actions on behalf of the user. This is especially dangerous on authentication and account management endpoints."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does SecurityClaw's webmail fingerprinter find CVEs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The skill extracts the webmail platform name and version from HTML titles, JavaScript variables, and file query strings. It then queries the NIST National Vulnerability Database (NVD) API to find known CVEs affecting that specific version. Results are ranked by CVSS severity score, giving you an instant view of the target's exposure to known vulnerabilities."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is IDOR and why does it require authenticated testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IDOR (Insecure Direct Object Reference) occurs when an application exposes internal object IDs in API endpoints (like /api/account/123) and doesn't verify that the requesting user owns that object. Testing for IDOR requires an authenticated session because the vulnerable endpoints are behind login walls — they return 403 to unauthenticated requests. You need to log in as one user and try accessing another user's resources to confirm the vulnerability."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>4 New SecurityClaw Skills That Change How You Recon Web Applications</h1>
+
+    <div class="meta">
+        <span>Published: April 10, 2026</span>
+        <span>•</span>
+        <span>Reading time: 8 minutes</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>SecurityClaw shipped 4 new scanning skills this week, all born from gaps discovered during a live campaign against a major ISP target. These aren't theoretical capabilities — they exist because the existing scanner hit a wall during real-world testing and needed new tools to go deeper.</strong></p>
+
+        <p>The new skills cover four distinct attack surfaces that most scanners miss entirely: Next.js runtime configuration leaks, API Gateway CORS misconfigurations, webmail version-to-CVE mapping, and authenticated customer portal IDOR testing. Together, they represent a significant expansion of what SecurityClaw can find without manual intervention.</p>
+
+        <p>Here's what each skill does, why it matters, and where it fits in a recon workflow.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>SecurityClaw is an AI-powered penetration testing platform built for automated security assessment</li>
+        <li>New scanning skills expand coverage across OWASP Top 10 vulnerability categories</li>
+        <li>Automated scanning catches common patterns but manual testing finds logic flaws</li>
+      </ul>
+    </div>
+
+
+    <nav class="toc" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 32px 0; border-left: 4px solid #667eea;">
+        <h2 style="margin-top: 0; font-size: 1rem;">In This Article</h2>
+        <ol>
+            <li><a href="#nextjs-recon">nextjs-recon: Next.js Runtime Config Extractor</a></li>
+            <li><a href="#apigw-cors">apigw-cors-tester: API Gateway CORS Vulnerability Tester</a></li>
+            <li><a href="#webmail-cve">webmail-cve-fingerprint: Webmail Version + CVE Lookup</a></li>
+            <li><a href="#auth-portal">auth-portal-tester: Authenticated Portal IDOR Tester</a></li>
+            <li><a href="#workflow">How They Fit Together in a Campaign</a></li>
+            <li><a href="#whats-next">What's Next</a></li>
+        </ol>
+    </nav>
+
+    <section id="nextjs-recon">
+        <h2>1. nextjs-recon: Next.js Runtime Config Extractor</h2>
+
+        <h3>The Problem</h3>
+
+        <p>SecurityClaw's existing JS bundle analyser fetches static JavaScript chunks and searches for hardcoded URLs, API keys, and secrets. That works well for React apps that bake configuration into the bundle at build time. But Next.js applications increasingly use <strong>runtime-injected configuration</strong> — API gateway URLs, auth endpoints, and <code>NEXT_PUBLIC_*</code> environment variables are injected at render time via server-side rendering, not compiled into static chunks.</p>
+
+        <p>During a recent campaign, the scanner found nothing in the static JS bundles of a Next.js target. The interesting configuration — internal API gateway URLs, CloudFront distribution endpoints, authentication service URLs — was all in the <code>__NEXT_DATA__</code> SSR JSON blob that the existing skill never looked at.</p>
+
+        <h3>What It Does</h3>
+
+        <p>The <code>nextjs-recon</code> skill specifically targets Next.js applications:</p>
+
+        <ul>
+            <li>Extracts the <code>&lt;script id="__NEXT_DATA__"&gt;</code> JSON blob from server-rendered pages and walks it recursively for URLs, API paths, client IDs, and <code>NEXT_PUBLIC_*</code> variables</li>
+            <li>Fetches the build manifest (<code>/_next/static/&lt;buildId&gt;/_buildManifest.js</code>) to enumerate every page route in the application — including routes not linked from the UI</li>
+            <li>Probes SSG (Static Site Generation) data routes (<code>/_next/data/&lt;buildId&gt;/&lt;route&gt;.json</code>) for unauthenticated access to pre-rendered page data</li>
+            <li>Analyses large JS chunks (>30KB) for hardcoded tokens and secrets that survived the build process</li>
+        </ul>
+
+        <h3>Why It Matters</h3>
+
+        <p>Next.js is the most popular React framework. A significant percentage of modern web applications are built on it. The <code>__NEXT_DATA__</code> blob is present on every server-rendered page and often contains internal infrastructure details that developers don't realize are publicly visible. The build manifest route enumeration is particularly valuable — it reveals every page in the application, including admin panels, API documentation pages, and internal tools that aren't linked from the main navigation.</p>
+
+        <h3>Where It Fits</h3>
+
+        <p>Run <code>nextjs-recon</code> early in the recon phase, right after technology fingerprinting confirms a Next.js target. Its output feeds directly into other skills: discovered API URLs become targets for the CORS tester, discovered routes become targets for the authenticated portal tester, and discovered secrets get flagged immediately.</p>
+    </section>
+
+    <section id="apigw-cors">
+        <h2>2. apigw-cors-tester: API Gateway CORS Vulnerability Tester</h2>
+
+        <h3>The Problem</h3>
+
+        <p>CORS misconfigurations are one of the most common and most impactful web security issues — and they're surprisingly hard to test systematically. The standard check (send an <code>Origin</code> header, see if it's reflected) catches the obvious cases, but misses subtler patterns: wildcard CORS with credentials, null origin acceptance, suffix confusion bypasses, and the specific behaviour of AWS API Gateway's CORS implementation.</p>
+
+        <p>During the same campaign, two AWS API Gateway endpoints serving customer authentication and account management returned <code>Access-Control-Allow-Origin: *</code>. This was a HIGH finding that required manual testing to confirm. A dedicated skill would catch this pattern automatically on every campaign.</p>
+
+        <h3>What It Does</h3>
+
+        <p>The <code>apigw-cors-tester</code> skill runs a battery of CORS tests against each target endpoint:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em;">
+            <tr style="background: #2c3e50; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Test</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">What It Catches</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Arbitrary origin reflection</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Server echoes back any Origin header — full bypass</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Wildcard + credentials</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>ACAO: *</code> with <code>ACAC: true</code> — CRITICAL, allows credentialed cross-origin requests</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Null origin acceptance</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>Origin: null</code> accepted — iframe sandbox bypass</td>
+            </tr>
+            <tr style="background: #fafafa;">
+                <td style="padding: 10px; border: 1px solid #ddd;">Suffix confusion</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><code>trusted.com.attacker.com</code> accepted — domain validation bypass</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">Gateway fingerprinting</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Identifies AWS APIGW, CloudFront, nginx from response headers</td>
+            </tr>
+        </table>
+
+        <p>When a wildcard CORS issue is confirmed, the skill generates a ready-to-use JavaScript proof-of-concept snippet demonstrating the exploit. This saves time during report writing and makes the finding immediately reproducible.</p>
+
+        <h3>Severity Classification</h3>
+
+        <ul>
+            <li><strong>CRITICAL</strong>: Wildcard CORS with credentials (<code>ACAO: *</code> + <code>ACAC: true</code>) — any site can make authenticated requests</li>
+            <li><strong>HIGH</strong>: Wildcard CORS on authentication or account management endpoints</li>
+            <li><strong>MEDIUM</strong>: Wildcard CORS on static or public-data endpoints</li>
+        </ul>
+
+        <h3>Where It Fits</h3>
+
+        <p>Run after endpoint discovery. The <code>nextjs-recon</code> skill discovers API URLs; the CORS tester checks each one. In SecurityClaw's Adaptive Campaign Graph, this chain happens automatically — when <code>nextjs-recon</code> outputs API URLs, the graph triggers <code>apigw-cors-tester</code> against each one.</p>
+    </section>
+
+    <section id="webmail-cve">
+        <h2>3. webmail-cve-fingerprint: Webmail Version + CVE Lookup</h2>
+
+        <h3>The Problem</h3>
+
+        <p>Webmail platforms (Roundcube, Zimbra, Horde, SquirrelMail, and proprietary solutions) frequently disclose their exact version in the HTML title, JavaScript variables, or file query strings. During the recent campaign, a target's webmail portal displayed <code>Securemail 3.0.133</code> right in the page title. The scanner saw it but couldn't do anything with it — there was no automated way to cross-reference that version against known CVEs.</p>
+
+        <h3>What It Does</h3>
+
+        <p>The <code>webmail-cve-fingerprint</code> skill combines version extraction with live CVE lookup:</p>
+
+        <ol>
+            <li><strong>Fingerprints the platform</strong> — identifies Roundcube, Zimbra, Horde, SOGo, SquirrelMail, and proprietary webmail from page content</li>
+            <li><strong>Extracts the version</strong> — checks HTML titles, JavaScript variables (<code>window.VERSION</code>, <code>window.APP_VERSION</code>), file query strings, and HTTP headers</li>
+            <li><strong>Queries the NVD</strong> — hits the NIST National Vulnerability Database API with the platform name and version to find known CVEs</li>
+            <li><strong>Ranks by severity</strong> — returns CVEs sorted by CVSS score, with a <code>has_critical</code> flag for immediate attention</li>
+        </ol>
+
+        <h3>Why It Matters</h3>
+
+        <p>Webmail is a high-value target on ISP and enterprise networks. These platforms handle email — which means password reset flows, two-factor codes, and sensitive communications all pass through them. A known CVE in the webmail platform can be the fastest path to account compromise. The skill turns a passive observation ("I see a version number") into an actionable finding ("this version has 3 known CVEs, the worst is CVSS 9.8").</p>
+
+        <h3>Where It Fits</h3>
+
+        <p>Run during the fingerprinting phase, alongside technology detection. When the scanner identifies a webmail login page, this skill automatically extracts the version and checks for known vulnerabilities. No manual CVE research needed.</p>
+    </section>
+
+    <section id="auth-portal">
+        <h2>4. auth-portal-tester: Authenticated Portal IDOR Tester</h2>
+
+        <h3>The Problem</h3>
+
+        <p>Customer self-service portals — ISP account management, SaaS dashboards, banking portals — are where the highest-value vulnerabilities live. They're also where most automated scanners stop. The portal returns 403 to unauthenticated requests, and the scanner moves on. But behind that 403 are endpoints handling account data, billing information, and personal details — all potentially vulnerable to IDOR (Insecure Direct Object Reference) and authorization bypass.</p>
+
+        <p>SecurityClaw already had individual skills for account registration, authenticated API sweeping, and IDOR scanning. What it lacked was a skill that orchestrated the full flow: log in → establish a session → discover endpoints → test for IDOR — all in one automated sequence.</p>
+
+        <h3>What It Does</h3>
+
+        <p>The <code>auth-portal-tester</code> skill runs a four-phase attack sequence:</p>
+
+        <ol>
+            <li><strong>Login</strong> — Handles form-based authentication including CSRF token extraction, cookie-based session management, and login verification</li>
+            <li><strong>Endpoint Discovery</strong> — Crawls authenticated pages (max depth 2, max 50 pages), extracts XHR/fetch API calls from JavaScript, and builds a map of all API endpoints with their HTTP methods</li>
+            <li><strong>IDOR Testing</strong> — For endpoints with ID parameters (sequential integers, UUIDs, account numbers), tests adjacent values and cross-account access. If a second test account is provided, it tests whether account 1 can access account 2's resources.</li>
+            <li><strong>Auth Bypass</strong> — Tests each authenticated endpoint with no session cookie and with modified/expired tokens to find missing authentication enforcement</li>
+        </ol>
+
+        <h3>Why It Matters</h3>
+
+        <p>IDOR is consistently one of the most reported vulnerability types on bug bounty platforms. It's also one of the hardest to find with automated tools because it requires authenticated access and cross-account testing. This skill bridges the gap between "the scanner found a login page" and "the scanner found that user A can read user B's account data." That's the difference between an informational finding and a critical vulnerability report.</p>
+
+        <h3>Security Note</h3>
+
+        <p>This skill handles credentials. By design, credentials are never logged, never stored in scan results, and never persisted beyond the active session. The skill was reviewed by the security team before merge specifically for credential handling safety.</p>
+
+        <h3>Where It Fits</h3>
+
+        <p>This is a late-stage skill — it runs after reconnaissance, fingerprinting, and endpoint discovery have identified a customer portal worth testing. It's the skill that turns a 403 wall into actionable findings. In the Adaptive Campaign Graph, it triggers when the scanner identifies a login page on a target that's in scope for authenticated testing.</p>
+    </section>
+
+    <section id="workflow">
+        <h2>5. How They Fit Together in a Campaign</h2>
+
+        <p>These four skills aren't isolated tools — they form a chain that SecurityClaw's Adaptive Campaign Graph can execute automatically:</p>
+
+        <ol>
+            <li><strong>Technology fingerprinting</strong> identifies a Next.js application behind CloudFront</li>
+            <li><strong>nextjs-recon</strong> extracts API gateway URLs, routes, and environment variables from <code>__NEXT_DATA__</code></li>
+            <li><strong>apigw-cors-tester</strong> tests each discovered API URL for CORS misconfigurations</li>
+            <li><strong>webmail-cve-fingerprint</strong> runs against any webmail subdomain discovered during DNS enumeration</li>
+            <li><strong>auth-portal-tester</strong> logs into the customer portal (if test credentials are available) and tests for IDOR and authorization bypass</li>
+        </ol>
+
+        <p>The campaign graph handles the chaining automatically. When <code>nextjs-recon</code> outputs API URLs, the graph triggers the CORS tester. When the CORS tester finds a wildcard on an auth endpoint, the graph escalates the severity. No manual intervention required — the scanner reasons about what to test next based on what it's already found.</p>
+
+        <p>This is the same pattern described in our <a href="/demos/securityclaw-phase-b-ai-campaign-engine-js-bundle-idor-scanner-demo-2026/">Phase B AI Campaign Engine article</a> — but with four new skills feeding into the graph, the scanner's coverage of modern web application attack surfaces is significantly broader.</p>
+    </section>
+
+    <section id="whats-next">
+        <h2>6. What's Next</h2>
+
+        <p>These skills were all born from gaps found during a single live campaign. That's the development model: run campaigns, hit walls, build skills to break through those walls, run the next campaign with more capability.</p>
+
+        <p>The immediate roadmap includes expanding the <code>nextjs-recon</code> skill to handle other SSR frameworks (Nuxt.js, SvelteKit, Remix), adding GraphQL introspection to the CORS tester, and building a credential-safe test account provisioning system for the auth portal tester.</p>
+
+        <p>For a deeper look at how SecurityClaw's campaign engine chains skills together, see our <a href="/articles/securityclaw-phase-c-hypothesis-engine/">Phase C Hypothesis Engine article</a>. For a comparison of SecurityClaw's approach against traditional scanning tools, check our <a href="/articles/owasp-zap-vs-burp-suite-2026/">ZAP vs Burp Suite comparison</a>.</p>
+    </section>
+
+    
+    <aside class="related-articles">
+        <h2>Related Articles</h2>
+        
+        <div class="related-article">
+            <h3><a href="/demos/securityclaw-phase-b-ai-campaign-engine-js-bundle-idor-scanner-demo-2026/">557 Milliseconds to CRITICAL: SecurityClaw&#39;s AI Campaign Engine</a></h3>
+            <p>SecurityClaw Phase B ships four AI modules: Adaptive Campaign Graph, JS Bundle Analyser, IDOR Scanner, and Campaign Director.</p>
+        </div>
+        
+        <div class="related-article">
+            <h3><a href="/articles/securityclaw-phase-c-hypothesis-engine/">SecurityClaw Phase C: Hypothesis Engine</a></h3>
+            <p>How SecurityClaw&#39;s hypothesis engine generates and tests security theories automatically.</p>
+        </div>
+        
+        <div class="related-article">
+            <h3><a href="/articles/owasp-zap-vs-burp-suite-2026/">OWASP ZAP vs Burp Suite in 2026</a></h3>
+            <p>An honest comparison of both tools for web application security testing in 2026.</p>
+        </div>
+        
+    </aside>
+    
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

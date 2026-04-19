@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to write custom Nuclei templates for vulnerability detection. Covers template structure, matchers, extractors, workflows, and real-world examples for HTTP, DNS, and network protocol scanning.">
+    <title>Writing Nuclei Templates: A Practical Guide for Security Teams (2026)</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/nuclei-template-writing-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/nuclei-template-writing-guide-2026/">
+    <meta property="og:title" content="Writing Nuclei Templates: A Practical Guide for Security Teams (2026)">
+    <meta property="og:description" content="Learn how to write custom Nuclei templates for vulnerability detection. Covers template structure, matchers, extractors, workflows, and real-world examples for HTTP, DNS, and network protocol scanning.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/nuclei-template-writing-guide-2026/">
+    <meta name="twitter:title" content="Writing Nuclei Templates: A Practical Guide for Security Teams (2026)">
+    <meta name="twitter:description" content="Learn how to write custom Nuclei templates for vulnerability detection. Covers template structure, matchers, extractors, workflows, and real-world examples for HTTP, DNS, and network protocol scanning.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Writing Nuclei Templates: A Practical Guide for Security Teams (2026)",
+      "description": "Learn how to write custom Nuclei templates for vulnerability detection. Covers template structure, matchers, extractors, workflows, and real-world examples for HTTP, DNS, and network protocol scanning.",
+      "url": "https://bughuntertools.com/articles/nuclei-template-writing-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Writing Nuclei Templates: A Practical Guide for Security Teams (2026)</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Writing Nuclei Templates: A Practical Guide for Security Teams (2026)",
+      "description": "Learn how to write custom Nuclei templates for vulnerability detection. Covers template structure, matchers, extractors, workflows, and real-world examples.",
+      "datePublished": "2026-04-08",
+      "dateModified": "2026-04-08",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What language are Nuclei templates written in?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nuclei templates are written in YAML. Each template defines an ID, metadata, one or more requests (HTTP, DNS, network, etc.), and matchers that determine whether the target is vulnerable."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does it take to write a Nuclei template?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A simple HTTP template checking for a specific response pattern takes 5-10 minutes. Complex templates with multiple requests, extractors, and conditional logic take 30-60 minutes. Most CVE detection templates fall in the 10-20 minute range."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can Nuclei templates test for authentication bypass?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Nuclei supports multi-step request flows where you can send an authenticated request, extract a session token, then test whether the same endpoint is accessible without the token. This is useful for testing broken access control (OWASP A01)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I test my Nuclei template before deploying it?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use 'nuclei -t your-template.yaml -u http://target -debug' to see the full request/response. The -validate flag checks template syntax without running it. For safe testing, use intentionally vulnerable applications like DVWA or Juice Shop."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where can I find existing Nuclei templates to learn from?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The official nuclei-templates repository on GitHub contains 9,000+ templates organized by category (cves, vulnerabilities, misconfiguration, exposed-panels, etc.). Start by reading templates in the 'misconfiguration' folder — they're typically the simplest."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Write Custom Nuclei Templates for Vulnerability Detection",
+      "description": "Learn to write custom Nuclei templates covering template structure, matchers, extractors, workflows, and real-world scanning examples.",
+      "datePublished": "2026-04-08",
+      "dateModified": "2026-04-08",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Understand template anatomy",
+          "text": "Learn the YAML structure of a Nuclei template: ID, metadata, requests, matchers, and extractors."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Write HTTP templates",
+          "text": "Create HTTP request templates with paths, methods, headers, and body payloads for vulnerability detection."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Configure matchers",
+          "text": "Define status, word, regex, and DSL matchers that determine whether a target is vulnerable."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add extractors",
+          "text": "Pull specific data from responses using regex, JSON, and XPath extractors for evidence collection."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Build multi-step workflows",
+          "text": "Chain multiple templates together for complex detection scenarios that require sequential requests."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Test and debug templates",
+          "text": "Use Nuclei's debug mode and validate templates against known-vulnerable targets before deployment."
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>Writing Nuclei Templates: A Practical Guide for Security Teams (2026)</h1>
+
+    <div class="meta">
+        <span>Published: April 8, 2026</span>
+        <span>&bull;</span>
+        <span>Reading time: 14 minutes</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>The biggest advantage Nuclei has over traditional scanners isn't the 9,000+ community templates — it's that you can write your own in YAML in under 10 minutes. When a new CVE drops, you don't wait for a vendor to ship a detection plugin. You write a template, test it, and scan your entire infrastructure before most teams have finished reading the advisory.</strong></p>
+
+        <p>This guide covers everything you need to write production-quality Nuclei templates: the YAML structure, HTTP/DNS/network request types, matchers and extractors, multi-step workflows, and real-world examples you can adapt for your own scanning needs. If you've read our <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei vs Traditional Scanners comparison</a>, this is the natural next step.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>SQL injection remains the most exploited injection flaw in web applications</li>
+        <li>Both error-based and boolean-based detection methods are needed for full coverage</li>
+        <li>Reflected XSS requires testing every user-controlled input that appears in responses</li>
+        <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+        <li>Integrating security scans into CI/CD catches vulnerabilities before they reach production</li>
+      </ul>
+    </div>
+
+
+    <nav style="background: #f5f5f5; padding: 20px 30px; border-radius: 8px; margin: 30px 0;">
+        <strong>Jump to:</strong>
+        <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li><a href="#anatomy">Anatomy of a Nuclei Template</a></li>
+            <li><a href="#http-templates">Writing HTTP Templates</a></li>
+            <li><a href="#matchers">Matchers: How Nuclei Decides "Vulnerable"</a></li>
+            <li><a href="#extractors">Extractors: Pulling Data from Responses</a></li>
+            <li><a href="#multi-step">Multi-Step Workflows</a></li>
+            <li><a href="#dns-network">DNS and Network Protocol Templates</a></li>
+            <li><a href="#real-world">Real-World Examples</a></li>
+            <li><a href="#testing">Testing and Debugging Templates</a></li>
+            <li><a href="#best-practices">Best Practices</a></li>
+        </ol>
+    </nav>
+
+    <!-- Section 1: Anatomy -->
+    <section id="anatomy">
+        <h2>1. Anatomy of a Nuclei Template</h2>
+
+        <p>Every Nuclei template has the same basic structure: metadata at the top, one or more request blocks in the middle, and matchers at the bottom. Here's the minimal skeleton:</p>
+
+        <pre><code>id: example-check
+
+info:
+  name: Example Vulnerability Check
+  author: your-name
+  severity: medium
+  description: Checks for example vulnerability
+  tags: example,misconfiguration
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/target-path"
+    matchers:
+      - type: word
+        words:
+          - "vulnerable-string"</code></pre>
+
+        <h3>The Four Required Sections</h3>
+        <ul>
+            <li><strong>id</strong> — Unique identifier for the template. Use lowercase with hyphens. Convention: <code>cve-YYYY-NNNNN</code> for CVEs, <code>product-issue-description</code> for everything else.</li>
+            <li><strong>info</strong> — Metadata: name, author, severity (info/low/medium/high/critical), description, and tags. Tags are how Nuclei filters templates — use them generously.</li>
+            <li><strong>Request block</strong> — One of: <code>http</code>, <code>dns</code>, <code>network</code>, <code>file</code>, <code>headless</code>. Defines what Nuclei sends to the target.</li>
+            <li><strong>matchers</strong> — Conditions that determine whether the response indicates a vulnerability. If all matchers pass, Nuclei reports a finding.</li>
+        </ul>
+
+        <h3>Severity Guidelines</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #2c3e50; color: white;">
+                    <th style="padding: 10px 16px; text-align: left;">Severity</th>
+                    <th style="padding: 10px 16px; text-align: left;">When to Use</th>
+                    <th style="padding: 10px 16px; text-align: left;">Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 8px 16px;">info</td>
+                    <td style="padding: 8px 16px;">Technology detection, version fingerprinting</td>
+                    <td style="padding: 8px 16px;">Detecting Apache version from headers</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 16px;">low</td>
+                    <td style="padding: 8px 16px;">Information disclosure, missing headers</td>
+                    <td style="padding: 8px 16px;">Missing X-Frame-Options header</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 8px 16px;">medium</td>
+                    <td style="padding: 8px 16px;">Misconfigurations, exposed panels</td>
+                    <td style="padding: 8px 16px;">Exposed admin panel without auth</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 16px;">high</td>
+                    <td style="padding: 8px 16px;">Auth bypass, data exposure, XSS</td>
+                    <td style="padding: 8px 16px;">Unauthenticated API endpoint returning user data</td>
+                </tr>
+                <tr style="background: #f9f9f9;">
+                    <td style="padding: 8px 16px;">critical</td>
+                    <td style="padding: 8px 16px;">RCE, SQLi, SSRF to internal services</td>
+                    <td style="padding: 8px 16px;">Remote code execution via deserialization</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Section 2: HTTP Templates -->
+    <section id="http-templates">
+        <h2>2. Writing HTTP Templates</h2>
+
+        <p>HTTP templates are the most common type. They send HTTP requests and analyze the response.</p>
+
+        <h3>Basic GET Request</h3>
+        <pre><code>http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/.env"
+    matchers:
+      - type: word
+        words:
+          - "DB_PASSWORD"
+          - "APP_KEY"
+        condition: or</code></pre>
+
+        <p>This checks if a <code>.env</code> file is publicly accessible — a common misconfiguration that exposes database credentials and API keys.</p>
+
+        <h3>POST Request with Body</h3>
+        <pre><code>http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/api/login"
+    headers:
+      Content-Type: application/json
+    body: '{"username":"admin","password":"admin"}'
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - "token"
+          - "session"
+        condition: or</code></pre>
+
+        <p>This tests for default credentials on a login endpoint. The <code>matchers-condition: and</code> means both matchers must pass — the response must be HTTP 200 AND contain "token" or "session".</p>
+
+        <h3>Multiple Paths</h3>
+        <pre><code>http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/admin"
+      - "{{BaseURL}}/administrator"
+      - "{{BaseURL}}/wp-admin"
+      - "{{BaseURL}}/cpanel"
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 301
+          - 302</code></pre>
+
+        <p>Nuclei sends a request to each path. If any returns a 200/301/302, it's flagged. This is useful for admin panel discovery.</p>
+    </section>
+
+    <!-- Section 3: Matchers -->
+    <section id="matchers">
+        <h2>3. Matchers: How Nuclei Decides "Vulnerable"</h2>
+
+        <p>Matchers are the core of every template. They define the conditions that indicate a vulnerability. Nuclei supports six matcher types:</p>
+
+        <h3>Word Matcher</h3>
+        <p>The most common. Checks if the response body contains specific strings.</p>
+        <pre><code>matchers:
+  - type: word
+    words:
+      - "root:x:0:0"
+    part: body</code></pre>
+
+        <h3>Regex Matcher</h3>
+        <p>For pattern matching when exact strings aren't predictable.</p>
+        <pre><code>matchers:
+  - type: regex
+    regex:
+      - "(?i)mysql.*error"
+      - "(?i)postgresql.*error"
+      - "(?i)ora-[0-9]{5}"</code></pre>
+        <p>This catches database error messages from MySQL, PostgreSQL, and Oracle — indicators of SQL injection.</p>
+
+        <h3>Status Matcher</h3>
+        <p>Checks the HTTP status code.</p>
+        <pre><code>matchers:
+  - type: status
+    status:
+      - 200</code></pre>
+
+        <h3>Binary Matcher</h3>
+        <p>For matching hex patterns in binary responses (useful for file type detection).</p>
+
+        <h3>DSL Matcher</h3>
+        <p>The most powerful. Uses Nuclei's expression language for complex conditions.</p>
+        <pre><code>matchers:
+  - type: dsl
+    dsl:
+      - "status_code == 200 && contains(body, 'admin') && content_length > 1000"</code></pre>
+
+        <h3>Combining Matchers</h3>
+        <p>Use <code>matchers-condition</code> to control how multiple matchers combine:</p>
+        <ul>
+            <li><code>and</code> (default) — All matchers must pass</li>
+            <li><code>or</code> — Any matcher passing triggers a finding</li>
+        </ul>
+
+        <pre><code>matchers-condition: and
+matchers:
+  - type: status
+    status:
+      - 200
+  - type: word
+    words:
+      - "phpinfo()"
+  - type: word
+    words:
+      - "PHP Version"
+    part: body</code></pre>
+    </section>
+
+    <!-- Section 4: Extractors -->
+    <section id="extractors">
+        <h2>4. Extractors: Pulling Data from Responses</h2>
+
+        <p>Extractors capture specific data from responses — version numbers, tokens, internal paths. They're essential for fingerprinting and multi-step workflows.</p>
+
+        <h3>Regex Extractor</h3>
+        <pre><code>extractors:
+  - type: regex
+    part: body
+    group: 1
+    regex:
+      - "Server: Apache/([0-9.]+)"</code></pre>
+        <p>This extracts the Apache version number from the Server header. The <code>group: 1</code> captures the first regex group.</p>
+
+        <h3>JSON Extractor</h3>
+        <pre><code>extractors:
+  - type: json
+    part: body
+    json:
+      - ".version"
+      - ".build.number"</code></pre>
+
+        <h3>Using Extracted Values in Subsequent Requests</h3>
+        <p>Extractors can feed values into later requests using <code>internal: true</code>:</p>
+        <pre><code>extractors:
+  - type: regex
+    name: csrf_token
+    internal: true
+    part: body
+    group: 1
+    regex:
+      - 'name="csrf_token" value="([^"]+)"'</code></pre>
+        <p>The extracted <code>csrf_token</code> can then be used as <code></code> in the next request.</p>
+    </section>
+
+    <!-- Section 5: Multi-Step -->
+    <section id="multi-step">
+        <h2>5. Multi-Step Workflows</h2>
+
+        <p>Real-world vulnerability testing often requires multiple requests: authenticate first, then test the protected endpoint. Nuclei handles this with request pipelines.</p>
+
+        <pre><code>http:
+  - raw:
+      - |
+        POST /api/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username":"admin","password":"admin"}
+      - |
+        GET /api/admin/users HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{token}}
+
+    extractors:
+      - type: json
+        name: token
+        internal: true
+        part: body
+        json:
+          - ".access_token"
+
+    matchers:
+      - type: dsl
+        dsl:
+          - "status_code_2 == 200 && contains(body_2, 'email')"</code></pre>
+
+        <p>This template: (1) logs in with default credentials, (2) extracts the access token, (3) uses it to access the admin users endpoint, (4) flags if the admin endpoint returns user data. The <code>_2</code> suffix references the second request's response.</p>
+    </section>
+
+    <!-- Section 6: DNS and Network -->
+    <section id="dns-network">
+        <h2>6. DNS and Network Protocol Templates</h2>
+
+        <h3>DNS Template</h3>
+        <pre><code>id: dns-zone-transfer
+
+info:
+  name: DNS Zone Transfer Check
+  severity: high
+  tags: dns,misconfiguration
+
+dns:
+  - name: "{{FQDN}}"
+    type: AXFR
+    matchers:
+      - type: word
+        words:
+          - "IN A"
+          - "IN MX"
+        condition: or</code></pre>
+
+        <h3>Network (TCP) Template</h3>
+        <pre><code>id: redis-unauth
+
+info:
+  name: Redis Unauthenticated Access
+  severity: critical
+  tags: network,redis,misconfiguration
+
+network:
+  - host:
+      - "{{Hostname}}"
+    port: 6379
+    inputs:
+      - data: "INFO\r\n"
+    read-size: 2048
+    matchers:
+      - type: word
+        words:
+          - "redis_version"</code></pre>
+        <p>This connects to Redis on port 6379, sends the INFO command, and checks if it responds without authentication — a critical misconfiguration that exposes the entire database.</p>
+    </section>
+
+    <!-- Section 7: Real-World Examples -->
+    <section id="real-world">
+        <h2>7. Real-World Examples</h2>
+
+        <h3>Example 1: Exposed Git Repository</h3>
+        <pre><code>id: git-config-exposure
+
+info:
+  name: Git Config Exposure
+  author: security-team
+  severity: medium
+  description: Checks for exposed .git/config files
+  tags: exposure,git,misconfiguration
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/.git/config"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - "[core]"
+          - "[remote"
+        condition: or</code></pre>
+
+        <h3>Example 2: WordPress User Enumeration</h3>
+        <pre><code>id: wp-user-enum
+
+info:
+  name: WordPress User Enumeration
+  severity: low
+  tags: wordpress,enum
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/wp-json/wp/v2/users"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - '"slug"'
+          - '"name"'
+        condition: and
+    extractors:
+      - type: json
+        json:
+          - ".[].slug"</code></pre>
+
+        <h3>Example 3: CORS Misconfiguration</h3>
+        <pre><code>id: cors-wildcard-check
+
+info:
+  name: CORS Wildcard on Authenticated Endpoint
+  severity: high
+  tags: cors,misconfiguration
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/api/user/profile"
+    headers:
+      Origin: https://evil.com
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "Access-Control-Allow-Origin: *"
+      - type: status
+        status:
+          - 200</code></pre>
+    </section>
+
+    <!-- Section 8: Testing -->
+    <section id="testing">
+        <h2>8. Testing and Debugging Templates</h2>
+
+        <h3>Validate Syntax</h3>
+        <pre><code>nuclei -t your-template.yaml -validate</code></pre>
+        <p>Checks YAML syntax and template structure without sending any requests.</p>
+
+        <h3>Debug Mode</h3>
+        <pre><code>nuclei -t your-template.yaml -u https://target.com -debug</code></pre>
+        <p>Shows the full HTTP request sent and response received. Essential for understanding why matchers aren't triggering.</p>
+
+        <h3>Test Against Vulnerable Apps</h3>
+        <p>Never test templates against production systems you don't own. Use intentionally vulnerable applications:</p>
+        <ul>
+            <li><strong>DVWA</strong> (Damn Vulnerable Web Application) — Classic, covers SQLi, XSS, file inclusion</li>
+            <li><strong>Juice Shop</strong> — Modern OWASP Top 10 coverage, Node.js-based</li>
+            <li><strong>WebGoat</strong> — OWASP's official training app</li>
+            <li><strong>VulnHub</strong> — Downloadable vulnerable VMs for network-level testing</li>
+        </ul>
+
+        <h3>Common Debugging Issues</h3>
+        <ul>
+            <li><strong>Template not matching</strong> — Check <code>part</code> setting. Default is <code>body</code>. If you're matching headers, set <code>part: header</code>.</li>
+            <li><strong>YAML parse errors</strong> — Indentation matters. Use 2 spaces, never tabs. Strings with special characters need quoting.</li>
+            <li><strong>Regex not capturing</strong> — Test your regex separately at regex101.com. Nuclei uses Go's RE2 syntax (no lookaheads).</li>
+            <li><strong>Multi-step variables empty</strong> — Ensure the extractor has <code>internal: true</code> and the variable name matches exactly.</li>
+        </ul>
+    </section>
+
+    <!-- Section 9: Best Practices -->
+    <section id="best-practices">
+        <h2>9. Best Practices</h2>
+
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Template Quality Checklist</h3>
+            <ol>
+                <li><strong>Minimize false positives</strong> — Use multiple matchers with <code>and</code> condition. A status code alone is never enough.</li>
+                <li><strong>Set accurate severity</strong> — Overstating severity erodes trust. An exposed version number is <code>info</code>, not <code>medium</code>.</li>
+                <li><strong>Add references</strong> — Include CVE IDs, advisory URLs, and CWE numbers in the <code>info</code> block.</li>
+                <li><strong>Tag generously</strong> — Tags like <code>cve</code>, <code>owasp-top10</code>, <code>wordpress</code>, <code>misconfiguration</code> help teams filter scans.</li>
+                <li><strong>Test on known-vulnerable targets</strong> — Confirm the template triggers on a vulnerable target AND doesn't trigger on a patched one.</li>
+                <li><strong>Keep templates focused</strong> — One template, one vulnerability. Don't combine unrelated checks.</li>
+                <li><strong>Use extractors for evidence</strong> — Extract the specific vulnerable version, exposed path, or leaked data. This helps triage.</li>
+                <li><strong>Document the remediation</strong> — Add a <code>remediation</code> field in the info block so the scan report is actionable.</li>
+            </ol>
+        </div>
+
+        <h3>Organizing Your Template Library</h3>
+        <pre><code>custom-templates/
+├── cves/           # CVE-specific detection
+├── misconfig/      # Configuration issues
+├── exposed-panels/ # Admin panels, dashboards
+├── takeovers/      # Subdomain takeover checks
+├── internal/       # Company-specific checks
+└── workflows/      # Multi-template workflows</code></pre>
+
+        <p>Keep your custom templates in a separate directory from the community templates. This makes updates clean — you can pull the latest community templates without overwriting your custom work.</p>
+    </section>
+
+    <section style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 40px;">
+        <h2 style="margin-top: 0;">Bottom Line</h2>
+        <p>Nuclei templates are YAML files that define what to send and what to look for. The learning curve is shallow — if you can write a curl command, you can write a Nuclei template. Start with the <a href="https://github.com/projectdiscovery/nuclei-templates" target="_blank" rel="noopener">community templates repository</a>, read 5-10 templates in the <code>misconfiguration</code> folder to understand the patterns, then write your first custom template for something specific to your environment.</p>
+        <p>The security teams that get the most value from Nuclei aren't the ones running the default template set — they're the ones writing custom templates for their own infrastructure, their own tech stack, and the specific vulnerabilities that matter to their business.</p>
+        <p>For more on how Nuclei compares to traditional scanners, see our <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei vs Traditional Scanners comparison</a>. For CI/CD integration, check our <a href="/articles/automate-zap-scans-github-actions-2026/">ZAP in GitHub Actions guide</a> — the same patterns apply to Nuclei.</p>
+    </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

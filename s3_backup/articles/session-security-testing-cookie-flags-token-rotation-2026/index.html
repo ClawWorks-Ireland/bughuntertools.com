@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Session hijacking remains one of the most exploited attack vectors. Learn what session security checks matter in 2026: cookie flags, token rotation, fixation prevention, and how to test for them.">
+    <title>Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/session-security-testing-cookie-flags-token-rotation-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/session-security-testing-cookie-flags-token-rotation-2026/">
+    <meta property="og:title" content="Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check">
+    <meta property="og:description" content="Session hijacking remains one of the most exploited attack vectors. Learn what session security checks matter in 2026: cookie flags, token rotation, fixation prevention, and how to test for them.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/session-security-testing-cookie-flags-token-rotation-2026/">
+    <meta name="twitter:title" content="Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check">
+    <meta name="twitter:description" content="Session hijacking remains one of the most exploited attack vectors. Learn what session security checks matter in 2026: cookie flags, token rotation, fixation prevention, and how to test for them.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check",
+      "description": "Session hijacking remains one of the most exploited attack vectors. Learn what session security checks matter in 2026: cookie flags, token rotation, fixation prevention, and how to test for them.",
+      "url": "https://bughuntertools.com/articles/session-security-testing-cookie-flags-token-rotation-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check",
+  "description": "Session hijacking remains one of the most exploited attack vectors. Learn what session security checks matter in 2026.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<article>
+  <h1>Session Security Testing in 2026: Cookie Flags, Token Rotation, and What Your Scanner Should Check</h1>
+
+  <div class="meta">
+    <span>Published: April 7, 2026</span>
+    <span>Reading time: 9 min</span>
+  </div>
+
+  <div class="affiliate-disclosure">
+    <p><em>Some links in this article may be affiliate links. We may earn a commission if you purchase through them, at no extra cost to you.</em></p>
+  </div>
+
+  <div class="intro">
+    <p><strong>Session management is the glue that holds authenticated web applications together. Get it wrong, and an attacker can hijack any user's session — no password required. Despite being well-understood, session vulnerabilities remain in the OWASP Top 10 (A07: Identification and Authentication Failures) because the attack surface is wide and the defaults are often insecure.</strong></p>
+  </div>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>Reflected XSS requires testing every user-controlled input that appears in responses</li>
+      <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+      <li>OWASP Top 10 provides the baseline — real-world testing goes beyond the checklist</li>
+    </ul>
+  </div>
+
+
+  <nav class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#why-sessions-break">Why Session Security Still Breaks</a></li>
+      <li><a href="#cookie-flags">The Four Cookie Flags That Matter</a></li>
+      <li><a href="#session-fixation">Session Fixation: The Forgotten Attack</a></li>
+      <li><a href="#token-rotation">Token Rotation and Expiration</a></li>
+      <li><a href="#concurrent-sessions">Concurrent Session Control</a></li>
+      <li><a href="#logout">Logout That Actually Works</a></li>
+      <li><a href="#testing-checklist">Testing Checklist</a></li>
+      <li><a href="#tools">Tools for Session Security Testing</a></li>
+      <li><a href="#bottom-line">Bottom Line</a></li>
+    </ol>
+  </nav>
+
+  <section id="why-sessions-break">
+    <h2>Why Session Security Still Breaks</h2>
+
+    <p>Most web frameworks generate session tokens correctly — high entropy, cryptographically random, long enough to resist brute force. The problems are almost never in the token itself. They're in how the token is stored, transmitted, and managed throughout its lifecycle.</p>
+
+    <p>Common failures:</p>
+    <ul>
+      <li>Session cookies without <code>HttpOnly</code> — stolen via XSS</li>
+      <li>Session cookies without <code>Secure</code> — intercepted over HTTP</li>
+      <li>No <code>SameSite</code> attribute — vulnerable to CSRF</li>
+      <li>Session tokens that don't rotate after login — session fixation</li>
+      <li>Sessions that never expire — persistent access after compromise</li>
+      <li>Logout that clears the cookie but not the server-side session — token replay</li>
+    </ul>
+
+    <p>Each of these is testable. Each is fixable. And each is still found in production applications in 2026.</p>
+  </section>
+
+  <section id="cookie-flags">
+    <h2>The Four Cookie Flags That Matter</h2>
+
+    <p>Every session cookie should have four flags set. Missing any one of them creates an exploitable vulnerability.</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Flag</th>
+          <th style="padding:10px; text-align:left;">What It Does</th>
+          <th style="padding:10px; text-align:left;">Without It</th>
+          <th style="padding:10px; text-align:center;">Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;"><code>HttpOnly</code></td>
+          <td style="padding:10px;">Prevents JavaScript from reading the cookie</td>
+          <td style="padding:10px;">XSS can steal session tokens via <code>document.cookie</code></td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;"><code>Secure</code></td>
+          <td style="padding:10px;">Cookie only sent over HTTPS</td>
+          <td style="padding:10px;">Token intercepted on any HTTP request (mixed content, redirects)</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;"><code>SameSite=Lax</code> or <code>Strict</code></td>
+          <td style="padding:10px;">Cookie not sent on cross-origin requests</td>
+          <td style="padding:10px;">CSRF attacks can use the victim's session</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;"><code>Path=/</code></td>
+          <td style="padding:10px;">Cookie scoped to the entire application</td>
+          <td style="padding:10px;">Inconsistent session behavior across paths</td>
+          <td style="padding:10px; text-align:center;">Recommended</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>How to test:</strong> Log in to the application and inspect the <code>Set-Cookie</code> response header. Every session cookie should include all four flags. In Burp Suite, check the response headers in the HTTP history tab. With curl:</p>
+
+    <pre><code>curl -v -X POST https://example.com/login \
+  -d 'username=test&amp;password=test' 2&gt;&amp;1 | grep -i 'set-cookie'</code></pre>
+
+    <p>Look for: <code>Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax; Path=/</code></p>
+
+    <p>If any flag is missing, that's a finding.</p>
+  </section>
+
+  <section id="session-fixation">
+    <h2>Session Fixation: The Forgotten Attack</h2>
+
+    <p>Session fixation is one of the oldest web attacks, and it still works against applications that don't rotate session tokens after authentication state changes.</p>
+
+    <p>The attack:</p>
+    <ol>
+      <li>Attacker visits the application and receives a session token (e.g., <code>session=abc123</code>)</li>
+      <li>Attacker tricks the victim into using that same token (via URL parameter, cookie injection, or XSS)</li>
+      <li>Victim logs in — the application authenticates the session but doesn't issue a new token</li>
+      <li>Attacker uses <code>session=abc123</code> — now authenticated as the victim</li>
+    </ol>
+
+    <p><strong>How to test:</strong></p>
+    <ol>
+      <li>Note the session token before login</li>
+      <li>Log in</li>
+      <li>Check if the session token changed</li>
+    </ol>
+
+    <p>If the token is the same before and after login, the application is vulnerable to session fixation.</p>
+
+    <p><strong>The fix:</strong> Regenerate the session ID on every authentication state change — login, logout, privilege escalation, password change. In most frameworks this is one line:</p>
+
+    <pre><code># Python/Flask
+session.regenerate()
+
+# PHP
+session_regenerate_id(true);
+
+# Java/Spring
+request.getSession().invalidate();
+request.getSession(true);</code></pre>
+  </section>
+
+  <section id="token-rotation">
+    <h2>Token Rotation and Expiration</h2>
+
+    <p>Session tokens should have both an absolute timeout and an idle timeout. Without them, a stolen token provides permanent access.</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Timeout Type</th>
+          <th style="padding:10px; text-align:left;">What It Does</th>
+          <th style="padding:10px; text-align:left;">Recommended Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">Absolute timeout</td>
+          <td style="padding:10px;">Session expires after a fixed duration regardless of activity</td>
+          <td style="padding:10px;">4-8 hours (adjust for risk)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Idle timeout</td>
+          <td style="padding:10px;">Session expires after a period of inactivity</td>
+          <td style="padding:10px;">15-30 minutes</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Token rotation</td>
+          <td style="padding:10px;">Session ID changes periodically even during active use</td>
+          <td style="padding:10px;">Every 15-30 minutes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>How to test:</strong></p>
+    <ul>
+      <li>Log in and wait beyond the idle timeout — does the session expire?</li>
+      <li>Log in and use the application continuously for longer than the absolute timeout — does it eventually force re-authentication?</li>
+      <li>Save a session token, wait 30 minutes, replay it — does the server accept it?</li>
+    </ul>
+
+    <p>Applications that never expire sessions are giving attackers unlimited time to exploit stolen tokens.</p>
+  </section>
+
+  <section id="concurrent-sessions">
+    <h2>Concurrent Session Control</h2>
+
+    <p>Should a user be able to have 50 active sessions simultaneously? In most applications, no. Unlimited concurrent sessions mean a compromised token can be used alongside the legitimate user without detection.</p>
+
+    <p><strong>How to test:</strong></p>
+    <ol>
+      <li>Log in from browser A</li>
+      <li>Log in from browser B (same account)</li>
+      <li>Check if browser A's session is still valid</li>
+      <li>Repeat with 5+ concurrent sessions</li>
+    </ol>
+
+    <p>Good implementations either invalidate previous sessions on new login (strictest), limit concurrent sessions to a reasonable number (e.g., 3-5), or at minimum notify the user of new logins.</p>
+  </section>
+
+  <section id="logout">
+    <h2>Logout That Actually Works</h2>
+
+    <p>Logout is surprisingly hard to implement correctly. Many applications clear the session cookie on the client but don't invalidate the session on the server. This means the old token still works if replayed.</p>
+
+    <p><strong>How to test:</strong></p>
+    <ol>
+      <li>Log in and copy the session token</li>
+      <li>Log out</li>
+      <li>Replay the old session token (e.g., via curl with the cookie header)</li>
+      <li>If the server returns an authenticated response, logout is broken</li>
+    </ol>
+
+    <pre><code># After logout, replay the old token
+curl -H "Cookie: session=OLD_TOKEN_HERE" https://example.com/dashboard</code></pre>
+
+    <p>If you get the dashboard instead of a redirect to login, the server-side session wasn't invalidated.</p>
+
+    <p><strong>The fix:</strong> On logout, invalidate the session on the server (delete from session store), clear the cookie on the client, and set the cookie's <code>Max-Age=0</code> or <code>Expires</code> to a past date.</p>
+  </section>
+
+  <section id="testing-checklist">
+    <h2>Testing Checklist</h2>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Check</th>
+          <th style="padding:10px; text-align:left;">What to Look For</th>
+          <th style="padding:10px; text-align:center;">OWASP Ref</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">Cookie flags</td>
+          <td style="padding:10px;">HttpOnly, Secure, SameSite present on all session cookies</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Session fixation</td>
+          <td style="padding:10px;">Token changes after login</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Idle timeout</td>
+          <td style="padding:10px;">Session expires after inactivity</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Absolute timeout</td>
+          <td style="padding:10px;">Session expires after max duration</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Token entropy</td>
+          <td style="padding:10px;">Session IDs are long (128+ bits), random, unpredictable</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Logout invalidation</td>
+          <td style="padding:10px;">Old token rejected after logout</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Concurrent sessions</td>
+          <td style="padding:10px;">Reasonable limit on simultaneous sessions</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Token in URL</td>
+          <td style="padding:10px;">Session token never appears in URLs (Referer leakage)</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">Token rotation</td>
+          <td style="padding:10px;">Token changes on privilege escalation</td>
+          <td style="padding:10px; text-align:center;">A07</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="tools">
+    <h2>Tools for Session Security Testing</h2>
+
+    <p><strong>Burp Suite</strong> — The session handling rules in Burp's Intruder and Scanner can automatically test for fixation, cookie flags, and token entropy. The "Session Token Analyzer" (Sequencer) measures randomness quality.</p>
+
+    <p><strong>OWASP ZAP</strong> — The passive scanner flags missing cookie flags automatically. The active scanner tests for session fixation. Free and open source.</p>
+
+    <p><strong>SecurityClaw</strong> — The <code>session-security-tester</code> skill automates the full checklist: cookie flag verification, fixation testing, timeout detection, and logout validation. Runs as part of automated scan campaigns.</p>
+
+    <p><strong>Browser DevTools</strong> — The Application tab in Chrome/Firefox DevTools shows all cookies with their flags. Quick manual check during exploratory testing.</p>
+
+    <p><strong>curl</strong> — For scripted testing, curl with <code>-v</code> flag shows Set-Cookie headers. Combine with <code>-b</code> (send cookie) and <code>-c</code> (save cookie) for session replay testing.</p>
+  </section>
+
+  <section id="bottom-line">
+    <h2>Bottom Line</h2>
+
+    <p>Session security is not glamorous. It doesn't make headlines like zero-days or supply chain attacks. But it's the foundation that every authenticated feature depends on. A missing <code>HttpOnly</code> flag turns every XSS vulnerability into a session hijack. A missing token rotation turns every phishing link into a session fixation attack.</p>
+
+    <p>The good news: every check in this article is automatable. Modern scanners — whether Burp Suite, ZAP, or SecurityClaw — can verify cookie flags, test for fixation, and detect missing timeouts without manual intervention. The hard part isn't finding these issues. It's making sure they're checked on every deployment.</p>
+
+    <p>Add session security to your CI/CD pipeline. Test it on every release. Don't assume your framework handles it correctly — verify.</p>
+  </section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

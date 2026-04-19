@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels. Here&#39;s what SSRF looks like, what your scanner should catch, and how to fix it.">
+    <title>Server-Side Request Forgery in 2026: What Your Scanner Should Detect</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">
+    <meta property="og:title" content="Server-Side Request Forgery in 2026: What Your Scanner Should Detect">
+    <meta property="og:description" content="SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels. Here&#39;s what SSRF looks like, what your scanner should catch, and how to fix it.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">
+    <meta name="twitter:title" content="Server-Side Request Forgery in 2026: What Your Scanner Should Detect">
+    <meta name="twitter:description" content="SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels. Here&#39;s what SSRF looks like, what your scanner should catch, and how to fix it.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Server-Side Request Forgery in 2026: What Your Scanner Should Detect",
+      "description": "SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels. Here&#39;s what SSRF looks like, what your scanner should catch, and how to fix it.",
+      "url": "https://bughuntertools.com/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Server-Side Request Forgery in 2026: What Your Scanner Should Detect</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Server-Side Request Forgery in 2026: What Your Scanner Should Detect",
+  "description": "SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels. Here is what SSRF looks like, what your scanner should catch, and how to fix it.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Server-Side Request Forgery (SSRF)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SSRF is a vulnerability where an attacker tricks a server into making HTTP requests to unintended destinations. Instead of the server fetching the resource the user intended, it fetches an internal resource the attacker chose — like a cloud metadata endpoint, an internal admin panel, or a file on the local filesystem. The server acts as a proxy for the attacker, bypassing firewalls and network segmentation that would block direct access."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is SSRF in the OWASP Top 10?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SSRF was added to the OWASP Top 10 as A10 in the 2021 edition because cloud adoption made the impact dramatically worse. In cloud environments, a single SSRF vulnerability can expose instance metadata containing IAM credentials, API keys, and service account tokens. The Capital One breach in 2019 — which exposed 100 million customer records — was an SSRF attack against the AWS metadata endpoint. The attack surface has only grown since then."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What cloud metadata endpoints are targeted by SSRF attacks?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The three major cloud providers all expose instance metadata at well-known URLs: AWS uses http://169.254.169.254/latest/meta-data/ (and the newer IMDSv2 token-based endpoint), GCP uses http://metadata.google.internal/computeMetadata/v1/ with a required Metadata-Flavor header, and Azure uses http://169.254.169.254/metadata/instance?api-version=2021-02-01 with a required Metadata header. All three can return IAM credentials, service account tokens, and instance configuration data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you detect SSRF vulnerabilities with a scanner?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SSRF detection works by injecting known internal URLs into parameters that accept URLs or file paths, then analysing the response for indicators that the server fetched the injected resource. Key indicators include: cloud metadata signatures in the response body (AMI IDs, IAM credentials, subscription IDs), /etc/passwd patterns from file:// protocol abuse, internal IP addresses (10.x, 172.16-31.x, 192.168.x) in responses to localhost payloads, and the injected URL reflected back in the response body."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you fix SSRF vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SSRF remediation requires multiple layers: validate and sanitise all user-supplied URLs on the server side, use allowlists for permitted domains and IP ranges rather than denylists, block requests to private IP ranges (RFC 1918) and link-local addresses (169.254.x.x) at the application level, enforce IMDSv2 on AWS instances (requires a token header that SSRF payloads cannot set), disable unnecessary URL schemes (file://, gopher://, dict://), and use network-level controls like VPC security groups to limit what the application server can reach."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>Server-Side Request Forgery in 2026: What Your Scanner Should Detect</h1>
+
+<p class="article-meta">Published April 2026 · 12 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>SSRF is OWASP A10 and the attack class that turned cloud metadata endpoints into data exfiltration channels</li>
+    <li>Scanners should test for internal IP access, cloud metadata (169.254.169.254), and DNS rebinding bypasses</li>
+    <li>The primary fix is allowlisting outbound destinations and blocking access to internal IP ranges</li>
+    <li>Cloud environments are especially vulnerable — SSRF to IMDS can escalate to full account takeover</li>
+  </ul>
+</div>
+
+
+<p>SSRF — Server-Side Request Forgery — is the vulnerability that turned cloud metadata endpoints into data exfiltration channels. It's OWASP A10, it was the root cause of the Capital One breach, and in 2026 it remains one of the most dangerous classes of web application vulnerability because of what it gives an attacker: the ability to make the <em>server</em> send requests on their behalf.</p>
+
+<p>That's the key distinction. With XSS, the attacker's code runs in the victim's browser. With SQLi, the attacker's query runs in the database. With SSRF, the attacker's request runs from the server itself — inside the firewall, inside the VPC, with access to internal services that are invisible from the outside.</p>
+
+<p>This article covers what SSRF is, why it's particularly dangerous in cloud environments, what a scanner should detect, and how to fix it. If you've read our <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQLi detection</a> and <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">XSS detection</a> articles, this completes the injection/forgery trifecta.</p>
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#what-is-ssrf">What Is SSRF?</a></li>
+    <li><a href="#why-cloud-makes-it-worse">Why Cloud Makes It Worse</a></li>
+    <li><a href="#ssrf-attack-patterns">SSRF Attack Patterns</a></li>
+    <li><a href="#ssrf-bypass-techniques">SSRF Bypass Techniques Scanners Must Handle</a></li>
+    <li><a href="#what-scanners-should-detect">What Your Scanner Should Detect</a></li>
+    <li><a href="#detection-methods">Detection Methods: How Scanners Find SSRF</a></li>
+    <li><a href="#real-world-examples">Real-World SSRF Examples</a></li>
+    <li><a href="#how-to-fix-ssrf">How to Fix SSRF</a></li>
+    <li><a href="#ssrf-testing-checklist">SSRF Testing Checklist</a></li>
+    <li><a href="#ssrf-testing-tools">SSRF Testing Tools</a></li>
+  </ol>
+</nav>
+
+<h2 id="what-is-ssrf">1. What Is SSRF?</h2>
+
+<p>Server-Side Request Forgery happens when an application takes a user-supplied URL (or partial URL) and makes a server-side HTTP request to it without proper validation. The attacker doesn't get to see the response directly in every case — but in many cases they do, and even blind SSRF (where the response isn't returned) can be exploited through timing, DNS callbacks, or out-of-band data exfiltration.</p>
+
+<p>The classic vulnerable pattern looks like this:</p>
+
+<pre><code># Vulnerable: user controls the URL, server fetches it
+@app.route('/fetch')
+def fetch_url():
+    url = request.args.get('url')
+    response = requests.get(url)  # Server makes the request
+    return response.text           # Response returned to user</code></pre>
+
+<p>An attacker sends:</p>
+
+<pre><code>GET /fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/</code></pre>
+
+<p>And the server — running inside AWS — dutifully fetches the IAM credentials from the instance metadata service and returns them to the attacker.</p>
+
+<h3>Where SSRF Hides</h3>
+
+<p>SSRF isn't limited to obvious "fetch this URL" endpoints. It appears in:</p>
+
+<ul>
+  <li><strong>PDF generators</strong> — services that render HTML to PDF often fetch external resources (images, stylesheets) from URLs embedded in the HTML</li>
+  <li><strong>Webhook configurations</strong> — any feature that lets users specify a callback URL</li>
+  <li><strong>Image/file upload by URL</strong> — "paste a URL to import" features</li>
+  <li><strong>API integrations</strong> — proxy endpoints that forward requests to user-specified backends</li>
+  <li><strong>XML parsers</strong> — XXE (XML External Entity) attacks are a form of SSRF via the XML parser</li>
+  <li><strong>Redirect handlers</strong> — open redirects can be chained with SSRF to bypass URL validation</li>
+</ul>
+
+<h2 id="why-cloud-makes-it-worse">2. Why Cloud Makes It Worse</h2>
+
+<p>SSRF existed before cloud computing, but cloud made it catastrophic. The reason is simple: every major cloud provider exposes an instance metadata service at a well-known IP address that's accessible from any process running on the instance.</p>
+
+<h3>Cloud Metadata Endpoints</h3>
+
+<table>
+  <thead>
+    <tr><th>Provider</th><th>Endpoint</th><th>What It Exposes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AWS</td>
+      <td><code>http://169.254.169.254/latest/meta-data/</code></td>
+      <td>IAM role credentials, instance ID, security groups, user data scripts</td>
+    </tr>
+    <tr>
+      <td>GCP</td>
+      <td><code>http://metadata.google.internal/computeMetadata/v1/</code></td>
+      <td>Service account tokens, project ID, instance attributes</td>
+    </tr>
+    <tr>
+      <td>Azure</td>
+      <td><code>http://169.254.169.254/metadata/instance?api-version=2021-02-01</code></td>
+      <td>Subscription ID, resource group, managed identity tokens</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The 169.254.169.254 address is a link-local IP that's only accessible from the instance itself. From the outside, you can't reach it. But if you can make the <em>server</em> request it via SSRF — you get everything.</p>
+
+<h3>The IMDSv2 Defence (AWS)</h3>
+
+<p>AWS introduced IMDSv2 (Instance Metadata Service version 2) to mitigate SSRF attacks against the metadata endpoint. IMDSv2 requires a PUT request to obtain a session token before metadata can be accessed. Since most SSRF vulnerabilities only allow GET requests, this blocks the attack.</p>
+
+<p>But IMDSv2 is not enforced by default on all instance types, and many organisations still run IMDSv1 (which accepts plain GET requests). GCP requires a <code>Metadata-Flavor: Google</code> header, which provides some protection. Azure requires a <code>Metadata: true</code> header.</p>
+
+<p>None of these are foolproof. If the SSRF vulnerability allows the attacker to control request headers (not just the URL), all three can be bypassed.</p>
+
+<h2 id="ssrf-attack-patterns">3. SSRF Attack Patterns</h2>
+
+<h3>Pattern 1: Cloud Metadata Theft</h3>
+
+<p>The highest-impact SSRF pattern. The attacker targets the cloud metadata endpoint to steal IAM credentials or service account tokens, then uses those credentials to access other cloud resources (S3 buckets, databases, other services).</p>
+
+<pre><code># AWS metadata — get IAM role name, then credentials
+GET /fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/
+# Returns: "my-app-role"
+
+GET /fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/my-app-role
+# Returns: AccessKeyId, SecretAccessKey, Token</code></pre>
+
+<h3>Pattern 2: Internal Service Access</h3>
+
+<p>The attacker uses SSRF to reach internal services that aren't exposed to the internet — admin panels, databases, monitoring dashboards, internal APIs.</p>
+
+<pre><code># Scan internal network
+GET /fetch?url=http://10.0.0.1:8080/admin
+GET /fetch?url=http://192.168.1.1/status
+GET /fetch?url=http://localhost:6379/  # Redis</code></pre>
+
+<h3>Pattern 3: Local File Read</h3>
+
+<p>If the application's HTTP client supports the <code>file://</code> protocol, the attacker can read local files:</p>
+
+<pre><code>GET /fetch?url=file:///etc/passwd
+GET /fetch?url=file:///etc/shadow
+GET /fetch?url=file:///proc/self/environ  # Environment variables (may contain secrets)</code></pre>
+
+<h3>Pattern 4: Blind SSRF via DNS/HTTP Callbacks</h3>
+
+<p>When the server doesn't return the response body, attackers use out-of-band techniques. They inject a URL pointing to a server they control and watch for the callback:</p>
+
+<pre><code>GET /fetch?url=http://attacker-controlled.example.com/ssrf-callback</code></pre>
+
+<p>If the attacker's server receives a request from the target's IP, SSRF is confirmed — even though the attacker never sees the response in the application.</p>
+
+<h2 id="ssrf-bypass-techniques">4. SSRF Bypass Techniques Scanners Must Handle</h2>
+
+<p>Developers often implement SSRF protections that check the URL string — blocking "169.254.169.254" or "localhost" literally. Attackers bypass these with encoding tricks and parser differentials. Your scanner needs to test these bypasses, not just the basic payloads.</p>
+
+<h3>IP Address Encoding Bypasses</h3>
+
+<p>The IP address 169.254.169.254 can be represented in multiple formats that resolve to the same address but evade string-matching filters:</p>
+
+<pre><code># Decimal encoding
+http://2852039166/latest/meta-data/
+
+# Octal encoding
+http://0251.0376.0251.0376/latest/meta-data/
+
+# Hex encoding
+http://0xa9.0xfe.0xa9.0xfe/latest/meta-data/
+
+# Mixed encoding
+http://169.254.0xa9.0376/latest/meta-data/
+
+# IPv6 mapped IPv4
+http://[::ffff:169.254.169.254]/latest/meta-data/
+
+# Shortened IPv6
+http://[::ffff:a9fe:a9fe]/latest/meta-data/</code></pre>
+
+<p>If your scanner only tests the dotted-decimal form, it misses every one of these. A production-grade scanner tests at least decimal, hex, octal, and IPv6-mapped variants for each target IP.</p>
+
+<h3>URL Parser Differential Attacks</h3>
+
+<p>Many SSRF filters parse the URL to extract the hostname, then check it against a denylist. But the filter's URL parser and the HTTP client's URL parser may disagree on what the hostname is:</p>
+
+<pre><code># URL with credentials — some parsers extract "allowed.com" as host,
+# but the HTTP client connects to 169.254.169.254
+http://allowed.com@169.254.169.254/latest/meta-data/
+
+# Backslash confusion — some parsers treat \ as path separator
+http://169.254.169.254\@allowed.com/
+
+# Fragment confusion
+http://169.254.169.254#@allowed.com/</code></pre>
+
+<p>These work because URL parsing is surprisingly inconsistent across libraries. Python's <code>urllib</code>, Node's <code>url</code> module, Go's <code>net/url</code>, and browser URL parsers all handle edge cases differently.</p>
+
+<h3>DNS Rebinding in Detail</h3>
+
+<p>DNS rebinding defeats the "resolve first, then check" defence. The attack works in two steps:</p>
+
+<ol>
+  <li>The attacker registers a domain (e.g., <code>rebind.attacker.com</code>) with a very short TTL (1 second)</li>
+  <li>First DNS resolution returns a public IP — passes the filter's check</li>
+  <li>By the time the HTTP client makes the actual connection, the DNS has been updated to return 169.254.169.254</li>
+</ol>
+
+<p>Tools like <a href="https://github.com/taviso/rbndr">rbndr</a> and services like <code>1u.ms</code> make DNS rebinding trivial to test. Your scanner should either test with rebinding payloads or flag applications that don't pin DNS resolution.</p>
+
+<h3>Redirect-Based Bypasses</h3>
+
+<p>Even if the application validates the initial URL, it may follow HTTP redirects without re-validating:</p>
+
+<pre><code># Attacker hosts a redirect on their server:
+# https://attacker.com/redirect → 302 → http://169.254.169.254/latest/meta-data/
+
+GET /fetch?url=https://attacker.com/redirect
+# Application validates attacker.com (allowed), follows redirect to metadata</code></pre>
+
+<p>Scanners should test with redirect chains that land on internal targets. If the application follows the redirect and returns metadata content, the SSRF protection is incomplete.</p>
+
+<h2 id="what-scanners-should-detect">5. What Your Scanner Should Detect</h2>
+
+<p>A thorough SSRF scanner should test for all four patterns. Here's what the detection matrix looks like:</p>
+
+<table>
+  <thead>
+    <tr><th>Detection Type</th><th>Payload</th><th>What to Look For</th><th>Severity</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cloud Metadata</td>
+      <td><code>http://169.254.169.254/latest/meta-data/</code></td>
+      <td>AMI IDs, instance-id, iam/security-credentials in response</td>
+      <td>CRITICAL</td>
+    </tr>
+    <tr>
+      <td>Cloud Metadata</td>
+      <td><code>http://metadata.google.internal/computeMetadata/v1/</code></td>
+      <td>computeMetadata, project/project-id in response</td>
+      <td>CRITICAL</td>
+    </tr>
+    <tr>
+      <td>Cloud Metadata</td>
+      <td><code>http://169.254.169.254/metadata/instance?api-version=2021-02-01</code></td>
+      <td>subscriptionId, resourceGroupName in response</td>
+      <td>CRITICAL</td>
+    </tr>
+    <tr>
+      <td>File Read</td>
+      <td><code>file:///etc/passwd</code></td>
+      <td><code>root:.*:0:0:</code> pattern in response</td>
+      <td>CRITICAL</td>
+    </tr>
+    <tr>
+      <td>Internal Access</td>
+      <td><code>http://localhost/</code>, <code>http://127.0.0.1/</code></td>
+      <td>Internal IP addresses (10.x, 172.16-31.x, 192.168.x) in response</td>
+      <td>HIGH</td>
+    </tr>
+    <tr>
+      <td>URL Reflection</td>
+      <td>Any injected URL</td>
+      <td>Injected URL appears verbatim in response body</td>
+      <td>MEDIUM</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Why Severity Matters</h3>
+
+<p>Cloud metadata and file read findings are CRITICAL because they represent immediate data exfiltration. Internal access is HIGH because it confirms the server will make requests to internal addresses — the attacker just needs to find the right target. URL reflection is MEDIUM because it confirms the parameter is processed server-side but doesn't prove exploitation yet.</p>
+
+<h2 id="detection-methods">6. Detection Methods: How Scanners Find SSRF</h2>
+
+<h3>Parameter Injection</h3>
+
+<p>The scanner identifies URL parameters that might accept URLs (common parameter names: <code>url</code>, <code>link</code>, <code>src</code>, <code>href</code>, <code>redirect</code>, <code>callback</code>, <code>next</code>, <code>dest</code>, <code>target</code>, <code>uri</code>, <code>path</code>, <code>file</code>) and replaces each with SSRF payloads one at a time.</p>
+
+<p>For each parameter-payload combination, the scanner sends the request and analyses the response body for indicators of successful server-side fetching.</p>
+
+<h3>Response Analysis</h3>
+
+<p>The key to SSRF detection is knowing what a successful attack looks like in the response. The scanner checks for:</p>
+
+<ul>
+  <li><strong>Cloud metadata signatures</strong> — regex patterns for AWS AMI IDs (<code>ami-[0-9a-f]{8,17}</code>), IAM credential paths, GCP computeMetadata strings, Azure subscription/resource group JSON keys</li>
+  <li><strong>File content patterns</strong> — <code>root:.*:0:0:</code> for /etc/passwd, <code>[boot loader]</code> for win.ini</li>
+  <li><strong>Internal IP addresses</strong> — RFC 1918 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and loopback (127.0.0.0/8) appearing in responses to localhost payloads</li>
+  <li><strong>URL reflection</strong> — the exact injected URL string appearing in the response body, indicating the server processed the URL parameter</li>
+</ul>
+
+<h3>What Good Scanners Do Differently</h3>
+
+<p>Basic scanners only test GET parameters. Better scanners also test:</p>
+
+<ul>
+  <li>POST body parameters (JSON and form-encoded)</li>
+  <li>HTTP headers that might be used as URLs (Referer, X-Forwarded-For)</li>
+  <li>Redirect chains — following redirects from an allowed domain to an internal one</li>
+  <li>Protocol smuggling — using <code>gopher://</code>, <code>dict://</code>, or <code>tftp://</code> schemes</li>
+  <li>DNS rebinding — where the domain resolves to a public IP during validation but an internal IP during the actual request</li>
+</ul>
+
+<h2 id="real-world-examples">7. Real-World SSRF Examples</h2>
+
+<h3>Capital One (2019) — $80M Fine, 100M Records</h3>
+
+<p>The most famous SSRF attack. A misconfigured WAF on an AWS EC2 instance allowed an attacker to reach the instance metadata endpoint, steal IAM credentials, and use those credentials to access S3 buckets containing 100 million customer records. The root cause was a combination of SSRF in the WAF proxy and overly permissive IAM roles.</p>
+
+<h3>GitLab (2021) — $20K Bug Bounty</h3>
+
+<p>A researcher found SSRF in GitLab's import feature. When importing a project from a URL, GitLab's server would fetch the URL — including internal addresses. The researcher demonstrated access to the GCP metadata endpoint from GitLab's cloud infrastructure.</p>
+
+<h3>Shopify (2020) — $15K Bug Bounty</h3>
+
+<p>SSRF via the "import products from URL" feature. The application fetched user-supplied URLs server-side without validating the destination, allowing access to internal services.</p>
+
+<h3>The Pattern</h3>
+
+<p>Every major SSRF breach follows the same pattern: (1) find a feature that fetches URLs server-side, (2) inject an internal URL, (3) read the response or use out-of-band exfiltration. The attack surface is any feature that takes a URL as input.</p>
+
+<h2 id="how-to-fix-ssrf">8. How to Fix SSRF</h2>
+
+<h3>Layer 1: Input Validation</h3>
+
+<pre><code># Allowlist approach — only permit known-good domains
+ALLOWED_DOMAINS = {'api.example.com', 'cdn.example.com'}
+
+def validate_url(url):
+    parsed = urlparse(url)
+    if parsed.hostname not in ALLOWED_DOMAINS:
+        raise ValueError(f"Domain not allowed: {parsed.hostname}")
+    if parsed.scheme not in ('http', 'https'):
+        raise ValueError(f"Scheme not allowed: {parsed.scheme}")
+    return url</code></pre>
+
+<p>Use allowlists, not denylists. Denylists (blocking 169.254.169.254, localhost, etc.) are always incomplete — attackers find bypasses through DNS rebinding, IPv6 addresses, URL encoding, and redirect chains.</p>
+
+<h3>Layer 2: Network Controls</h3>
+
+<ul>
+  <li><strong>Block RFC 1918 and link-local at the network level</strong> — configure security groups / firewall rules so the application server cannot reach 169.254.169.254, 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16 on outbound connections</li>
+  <li><strong>Enforce IMDSv2 on AWS</strong> — require the token-based metadata endpoint, which blocks GET-only SSRF</li>
+  <li><strong>Use a dedicated egress proxy</strong> — route all outbound HTTP through a proxy that enforces URL allowlists</li>
+</ul>
+
+<h3>Layer 3: Application Architecture</h3>
+
+<ul>
+  <li><strong>Don't fetch user-supplied URLs from the application server</strong> — use a separate, isolated service with minimal permissions for URL fetching</li>
+  <li><strong>Resolve DNS before making the request</strong> — check that the resolved IP is not in a private range before connecting (but beware of TOCTOU / DNS rebinding)</li>
+  <li><strong>Disable unnecessary URL schemes</strong> — if your HTTP client supports <code>file://</code>, <code>gopher://</code>, or <code>dict://</code>, disable them</li>
+  <li><strong>Strip or ignore response bodies</strong> — if you only need to verify a URL is reachable (e.g., webhook validation), use HEAD requests and don't return the response body to the user</li>
+</ul>
+
+<h3>Layer 4: Monitoring</h3>
+
+<ul>
+  <li>Alert on outbound requests to 169.254.169.254 from application servers</li>
+  <li>Monitor for unusual DNS resolutions to private IP ranges</li>
+  <li>Log all outbound HTTP requests from URL-fetching features with the resolved IP address</li>
+</ul>
+
+<h2 id="ssrf-testing-checklist">9. SSRF Testing Checklist</h2>
+
+<p>Use this checklist when testing for SSRF in your applications:</p>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Check</th><th>How to Test</th><th>Expected Result</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>AWS metadata access</td>
+      <td>Inject <code>http://169.254.169.254/latest/meta-data/</code> into URL parameters</td>
+      <td>No metadata content in response</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>GCP metadata access</td>
+      <td>Inject <code>http://metadata.google.internal/computeMetadata/v1/</code></td>
+      <td>No metadata content in response</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Azure metadata access</td>
+      <td>Inject <code>http://169.254.169.254/metadata/instance?api-version=2021-02-01</code></td>
+      <td>No metadata content in response</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Local file read</td>
+      <td>Inject <code>file:///etc/passwd</code></td>
+      <td>No file content in response</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Localhost access</td>
+      <td>Inject <code>http://localhost/</code> and <code>http://127.0.0.1/</code></td>
+      <td>No internal content or IP addresses in response</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Internal network scan</td>
+      <td>Inject <code>http://10.0.0.1/</code>, <code>http://192.168.1.1/</code></td>
+      <td>Request blocked or no internal content returned</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>URL scheme restriction</td>
+      <td>Inject <code>gopher://</code>, <code>dict://</code>, <code>tftp://</code> URLs</td>
+      <td>Non-HTTP schemes rejected</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Redirect bypass</td>
+      <td>Inject URL that 302-redirects to <code>http://169.254.169.254/</code></td>
+      <td>Redirect not followed to internal address</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>DNS rebinding</td>
+      <td>Use a domain that alternates between public and private IP resolution</td>
+      <td>Request blocked after DNS re-resolution</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>IMDSv2 enforcement (AWS)</td>
+      <td>Verify instance requires IMDSv2 token for metadata access</td>
+      <td>GET to metadata endpoint returns 401 without token</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="ssrf-testing-tools">10. SSRF Testing Tools</h2>
+
+<p>Manual testing and custom scanners benefit from purpose-built SSRF tools:</p>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>What It Does</th><th>When to Use It</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Burp Collaborator</strong></td>
+      <td>Provides unique callback URLs that log DNS and HTTP interactions from the target server</td>
+      <td>Blind SSRF detection — confirms the server made an outbound request even when the response isn't returned to you</td>
+    </tr>
+    <tr>
+      <td><strong>SSRFmap</strong></td>
+      <td>Automates SSRF exploitation with modules for AWS/GCP/Azure metadata, local file read, and network scanning</td>
+      <td>Post-discovery exploitation — once you've confirmed SSRF exists, SSRFmap automates the data extraction</td>
+    </tr>
+    <tr>
+      <td><strong>Gopherus</strong></td>
+      <td>Generates gopher:// payloads for exploiting SSRF against internal services (Redis, MySQL, SMTP, FastCGI)</td>
+      <td>When the target's HTTP client supports the gopher protocol — turns SSRF into RCE via internal service exploitation</td>
+    </tr>
+    <tr>
+      <td><strong>interactsh</strong></td>
+      <td>Open-source alternative to Burp Collaborator — generates unique callback URLs with DNS/HTTP/SMTP logging</td>
+      <td>Blind SSRF detection without a Burp license — self-hostable for sensitive engagements</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Combining Tools for Full Coverage</h3>
+
+<p>A practical SSRF testing workflow combines these tools: use Burp Suite or interactsh to identify blind SSRF endpoints, SSRFmap to automate metadata extraction once confirmed, and Gopherus when gopher:// is supported and internal services (Redis, MySQL) are reachable. No single tool covers every scenario — the combination matters.</p>
+
+<h2>Bottom Line</h2>
+
+<p>SSRF is the vulnerability that bridges the gap between "I can reach your web application" and "I can reach everything your web application can reach." In cloud environments, that means IAM credentials, internal APIs, databases, and metadata services.</p>
+
+<p>The fix isn't a single control — it's defence in depth: input validation (allowlists, not denylists), network controls (block private ranges at the firewall), application architecture (isolate URL-fetching services), and monitoring (alert on metadata endpoint access). And your testing must go beyond basic payloads — IP encoding bypasses, DNS rebinding, and redirect chains are how real attackers evade SSRF filters in production.</p>
+
+<p>If your scanner isn't testing for SSRF against all three major cloud metadata endpoints, bypass techniques, localhost access, and file:// protocol abuse — it's leaving your most dangerous attack surface untested.</p>
+
+<p>This article is part of our scanner detection series. See also: <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">SQL Injection Detection</a>, <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">XSS Detection</a>, <a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">TLS Auditing</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

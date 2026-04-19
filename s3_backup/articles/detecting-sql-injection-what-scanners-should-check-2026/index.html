@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SQL injection remains OWASP A03 and the most exploited injection flaw in web applications. Here&#39;s what error-based and boolean-based SQLi detection looks like, what your scanner should catch, and how to fix it.">
+    <title>Detecting SQL Injection: What Your Security Scanner Should Check in 2026</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/detecting-sql-injection-what-scanners-should-check-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/detecting-sql-injection-what-scanners-should-check-2026/">
+    <meta property="og:title" content="Detecting SQL Injection: What Your Security Scanner Should Check in 2026">
+    <meta property="og:description" content="SQL injection remains OWASP A03 and the most exploited injection flaw in web applications. Here&#39;s what error-based and boolean-based SQLi detection looks like, what your scanner should catch, and how to fix it.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/detecting-sql-injection-what-scanners-should-check-2026/">
+    <meta name="twitter:title" content="Detecting SQL Injection: What Your Security Scanner Should Check in 2026">
+    <meta name="twitter:description" content="SQL injection remains OWASP A03 and the most exploited injection flaw in web applications. Here&#39;s what error-based and boolean-based SQLi detection looks like, what your scanner should catch, and how to fix it.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Detecting SQL Injection: What Your Security Scanner Should Check in 2026",
+      "description": "SQL injection remains OWASP A03 and the most exploited injection flaw in web applications. Here&#39;s what error-based and boolean-based SQLi detection looks like, what your scanner should catch, and how to fix it.",
+      "url": "https://bughuntertools.com/articles/detecting-sql-injection-what-scanners-should-check-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Detecting SQL Injection: What Your Security Scanner Should Check in 2026</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Detecting SQL Injection: What Your Security Scanner Should Check in 2026",
+  "description": "SQL injection remains OWASP A03 and the most exploited injection flaw in web applications. Here is what error-based and boolean-based detection looks like and how to fix it.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Why is SQL injection still in the OWASP Top 10 in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SQL injection falls under OWASP A03: Injection, which remains in the Top 10 because legacy applications, custom-built queries, and ORM misuse continue to introduce injectable parameters. Despite decades of awareness, new SQLi vulnerabilities are reported every month in production applications. The attack surface has expanded to include NoSQL injection, GraphQL injection, and ORM-layer injection alongside classic SQL."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between error-based and boolean-based SQL injection?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Error-based SQLi relies on the application returning database error messages in the HTTP response — for example, 'You have an error in your SQL syntax' from MySQL. The attacker reads the error to confirm injection and extract data. Boolean-based SQLi works when errors are suppressed: the attacker sends two queries (one true, one false) and compares response lengths or content to infer whether the injection succeeded. Boolean-based is harder to detect but equally dangerous."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What SQL injection payloads should a scanner test?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A thorough scanner should test at minimum: single quote (') to break string literals, double single quote ('') to test escaping, tautology payloads (1 OR 1=1, 1' OR '1'='1) to bypass authentication, UNION SELECT NULL to test column enumeration, comment-terminated payloads (1; DROP TABLE--) to test statement stacking, and double-quote variants (\" OR \"\"=\") for systems that use double-quote string delimiters."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I fix SQL injection vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The primary fix is parameterized queries (prepared statements) — never concatenate user input into SQL strings. Use your language's built-in parameterization: PDO in PHP, PreparedStatement in Java, parameterized queries in Python's sqlite3/psycopg2. Additionally: validate and whitelist input types, use an ORM with parameterized queries under the hood, apply least-privilege database permissions, and suppress detailed error messages in production."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which databases are most commonly affected by SQL injection?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All relational databases are vulnerable when queries are constructed with unsanitized input. MySQL and PostgreSQL are the most commonly reported because of their prevalence in web applications. MSSQL is frequently targeted in enterprise environments. SQLite appears in mobile apps and embedded systems. Each database has distinct error signatures that scanners use to fingerprint the backend — for example, 'You have an error in your SQL syntax' for MySQL versus 'unterminated quoted string' for PostgreSQL."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+    <h1>Detecting SQL Injection: What Your Security Scanner Should Check in 2026</h1>
+
+    <div class="meta">
+        <span>Published: April 12, 2026</span>
+        <span>•</span>
+        <span>Reading time: 12 minutes</span>
+    </div>
+
+    <div class="affiliate-disclosure">
+        <p><strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon. We earn a commission when you purchase through our links at no additional cost to you.</p>
+    </div>
+
+    <div class="intro">
+        <p><strong>OWASP A03 — Injection — has been in the Top 10 since the list was created, and SQL injection is still the most common way it shows up. In 2026, SQLi accounts for more confirmed web application breaches than any other single vulnerability class. The reason is simple: developers keep building queries by concatenating strings, and scanners keep missing the injectable parameters because they only test the obvious ones.</strong></p>
+
+        <p>This article covers what a proper SQL injection scan should detect in 2026: error-based detection (when the database talks back), boolean-based detection (when it doesn't), the specific payloads that matter, and how to fix every pattern we find. We'll reference SecurityClaw's new <code>sqli-probe</code> skill as a concrete implementation — it was built to close the A03 gap in automated scanning.</p>
+    </div>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+    <li>SQL injection remains OWASP A03 — the most exploited injection flaw in web applications</li>
+    <li>Scanners should test error-based, boolean-based, and time-based blind SQLi across all input parameters</li>
+    <li>Parameterized queries (prepared statements) are the primary fix — never concatenate user input into SQL</li>
+    <li>SecurityClaw automates SQLi detection with payloads covering MySQL, PostgreSQL, MSSQL, and SQLite signatures</li>
+  </ul>
+    </div>
+
+
+    <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+            <li><a href="#why-sqli-still-matters">Why SQL Injection Still Matters in 2026</a></li>
+            <li><a href="#error-based-detection">Error-Based Detection: When the Database Talks Back</a></li>
+            <li><a href="#boolean-based-detection">Boolean-Based Detection: When Errors Are Suppressed</a></li>
+            <li><a href="#payloads-that-matter">The Payloads That Matter</a></li>
+            <li><a href="#db-fingerprinting">Database Fingerprinting via Error Signatures</a></li>
+            <li><a href="#how-to-fix">How to Fix SQL Injection</a></li>
+            <li><a href="#scanner-checklist">Scanner Checklist: What Your Tool Should Cover</a></li>
+            <li><a href="#bottom-line">Bottom Line</a></li>
+        </ol>
+    </nav>
+
+    <section id="why-sqli-still-matters">
+        <h2>1. Why SQL Injection Still Matters in 2026</h2>
+
+        <p>SQL injection was first documented in 1998. Twenty-eight years later, it remains the single most exploited injection flaw in web applications. Here's why:</p>
+
+        <ul>
+            <li><strong>Legacy code is everywhere.</strong> Applications built before parameterized queries became standard practice are still running in production. Many have never been refactored.</li>
+            <li><strong>ORM misuse creates new injection points.</strong> Developers assume their ORM handles sanitization, then use raw query methods (<code>.raw()</code>, <code>.execute()</code>, <code>.extra()</code>) that bypass it entirely.</li>
+            <li><strong>The attack surface has expanded.</strong> Classic SQL injection now coexists with NoSQL injection (MongoDB <code>$where</code>), GraphQL injection, and ORM-layer injection. A03 covers all of them.</li>
+            <li><strong>Scanners miss it.</strong> Many security scanners only test GET parameters with a single quote and call it done. They miss POST body parameters, JSON payloads, HTTP headers, and cookie values — all of which can be injectable.</li>
+        </ul>
+
+        <p>The impact of successful SQLi hasn't changed either: full database extraction, authentication bypass, data modification, and in some configurations, remote code execution via <code>xp_cmdshell</code> (MSSQL) or <code>LOAD_FILE</code> (MySQL).</p>
+    </section>
+
+    <section id="error-based-detection">
+        <h2>2. Error-Based Detection: When the Database Talks Back</h2>
+
+        <p>Error-based SQL injection is the easiest to detect and the most common finding in automated scans. It works when the application returns database error messages in the HTTP response.</p>
+
+        <p>The detection logic is straightforward:</p>
+
+        <ol>
+            <li>Inject a payload that breaks the SQL syntax (e.g., a single quote <code>'</code>)</li>
+            <li>Read the HTTP response body</li>
+            <li>Search for database-specific error strings</li>
+        </ol>
+
+        <p>If the response contains <code>You have an error in your SQL syntax</code>, you've confirmed two things: the parameter is injectable, and the backend is MySQL. That's enough for a HIGH severity finding.</p>
+
+        <p>Here's what error-based detection looks like in practice. A vulnerable search endpoint:</p>
+
+        <pre><code>GET /search?q=test' HTTP/1.1</code></pre>
+
+        <p>Returns:</p>
+
+        <pre><code>You have an error in your SQL syntax; check the manual
+that corresponds to your MySQL server version for the
+right syntax to use near ''' at line 1</code></pre>
+
+        <p>The application is concatenating the <code>q</code> parameter directly into a SQL query. The single quote breaks the string literal, and MySQL's error message leaks through to the response. This is a textbook A03 finding.</p>
+
+        <p>The key insight for scanner builders: you need error patterns for <em>every</em> major database, not just MySQL. A scanner that only checks for MySQL errors will miss PostgreSQL, MSSQL, and SQLite injection on the same endpoint.</p>
+    </section>
+
+    <section id="boolean-based-detection">
+        <h2>3. Boolean-Based Detection: When Errors Are Suppressed</h2>
+
+        <p>Production applications often suppress error messages — custom error pages, generic 500 responses, or error logging without display. Error-based detection fails here. Boolean-based detection fills the gap.</p>
+
+        <p>The technique:</p>
+
+        <ol>
+            <li>Fetch the page with the original parameter value (baseline)</li>
+            <li>Inject a tautology payload: <code>1 OR 1=1</code> (always true)</li>
+            <li>Inject a contradiction payload: <code>1 AND 1=2</code> (always false)</li>
+            <li>Compare response lengths against the baseline</li>
+        </ol>
+
+        <p>If the true payload returns a response similar to the baseline but the false payload returns a significantly different response (or vice versa), the parameter is injectable. The application is evaluating the injected SQL and changing its behavior based on the result.</p>
+
+        <p>SecurityClaw's <code>sqli-probe</code> uses a 50% response length threshold: if the injected response differs from the baseline by more than 50% of the baseline length, it flags a MEDIUM severity boolean-based finding. This threshold balances sensitivity against false positives — minor content variations (timestamps, CSRF tokens) won't trigger it, but a query that returns 0 rows instead of 100 will.</p>
+
+        <p>Boolean-based findings are rated MEDIUM rather than HIGH because the detection is inferential — you're measuring a side effect rather than reading a confirmed error. Manual verification is recommended before reporting to the application owner.</p>
+    </section>
+
+    <section id="payloads-that-matter">
+        <h2>4. The Payloads That Matter</h2>
+
+        <p>Not all SQLi payloads are equal. A good scanner tests a focused set that covers the major injection patterns without generating excessive traffic. Here are the payloads that matter and why:</p>
+
+        <table>
+            <thead style="background: #2c3e50; color: white;">
+                <tr>
+                    <th style="padding: 10px;">Payload</th>
+                    <th style="padding: 10px;">What It Tests</th>
+                    <th style="padding: 10px;">Why It Matters</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 8px;"><code>'</code></td>
+                    <td style="padding: 8px;">String literal break</td>
+                    <td style="padding: 8px;">The most basic test — if a single quote causes a SQL error, the parameter is injectable. Works on every database.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>''</code></td>
+                    <td style="padding: 8px;">Escape handling</td>
+                    <td style="padding: 8px;">Two single quotes is a valid SQL escape. If <code>'</code> errors but <code>''</code> doesn't, it confirms the input reaches the SQL parser.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>1 OR 1=1</code></td>
+                    <td style="padding: 8px;">Tautology (numeric context)</td>
+                    <td style="padding: 8px;">Bypasses <code>WHERE id = [input]</code> clauses. Returns all rows instead of one. Classic authentication bypass.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>1' OR '1'='1</code></td>
+                    <td style="padding: 8px;">Tautology (string context)</td>
+                    <td style="padding: 8px;">Same as above but for string-typed parameters: <code>WHERE name = '[input]'</code>. The quotes balance the existing query structure.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>1; DROP TABLE--</code></td>
+                    <td style="padding: 8px;">Statement stacking</td>
+                    <td style="padding: 8px;">Tests whether the database allows multiple statements. If it does, an attacker can execute arbitrary SQL after the semicolon. The <code>--</code> comments out the rest of the original query.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>1 UNION SELECT NULL--</code></td>
+                    <td style="padding: 8px;">UNION-based extraction</td>
+                    <td style="padding: 8px;">Tests column enumeration. If the UNION succeeds, the attacker can extract data from other tables by matching column counts.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><code>" OR ""="</code></td>
+                    <td style="padding: 8px;">Double-quote delimiter</td>
+                    <td style="padding: 8px;">Some databases and applications use double quotes for string literals. This catches injection points that single-quote payloads miss.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>These 7 payloads cover the major injection patterns: syntax breaking, escape testing, tautology bypass, statement stacking, UNION extraction, and alternate delimiters. A scanner that tests all 7 against every parameter will catch the vast majority of injectable endpoints.</p>
+    </section>
+
+    <section id="db-fingerprinting">
+        <h2>5. Database Fingerprinting via Error Signatures</h2>
+
+        <p>When error-based detection succeeds, the error message itself reveals which database is running. This is valuable intelligence for both the scanner (to refine follow-up payloads) and the security team (to assess impact).</p>
+
+        <p>Here are the error signatures that identify each major database:</p>
+
+        <table>
+            <thead style="background: #2c3e50; color: white;">
+                <tr>
+                    <th style="padding: 10px;">Database</th>
+                    <th style="padding: 10px;">Error Signatures</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 8px;"><strong>MySQL</strong></td>
+                    <td style="padding: 8px;"><code>You have an error in your SQL syntax</code>, <code>mysql_fetch</code>, <code>Warning.*mysql_</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><strong>PostgreSQL</strong></td>
+                    <td style="padding: 8px;"><code>pg_query()</code>, <code>unterminated quoted string</code>, <code>ERROR: syntax error at or near</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><strong>MSSQL</strong></td>
+                    <td style="padding: 8px;"><code>Unclosed quotation mark</code>, <code>Microsoft OLE DB Provider for SQL Server</code>, <code>[Microsoft][ODBC SQL Server Driver]</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;"><strong>SQLite</strong></td>
+                    <td style="padding: 8px;"><code>SQLite3::query()</code>, <code>near "...": syntax error</code>, <code>SQLITE_ERROR</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>A scanner should check for all of these patterns, not just one database. Many web applications use different databases for different services — the main app might run PostgreSQL while an internal admin panel uses SQLite. Testing only for MySQL errors would miss both.</p>
+
+        <p>SecurityClaw's <code>sqli-probe</code> checks 14 distinct error patterns across all 4 databases plus generic SQL error strings. When a match is found, the finding includes the identified database type, which helps the security team prioritize remediation — a MySQL injection on a customer-facing endpoint is more urgent than a SQLite injection on an internal tool.</p>
+    </section>
+
+    <section id="how-to-fix">
+        <h2>6. How to Fix SQL Injection</h2>
+
+        <p>Every SQLi vulnerability has the same root cause: user input is concatenated into a SQL query string instead of being passed as a parameter. The fix is always the same pattern — parameterized queries — but the implementation varies by language and framework.</p>
+
+        <h3>The Vulnerable Pattern (Don't Do This)</h3>
+
+        <pre><code># Python — VULNERABLE
+cursor.execute("SELECT * FROM users WHERE name = '" + username + "'")
+
+# PHP — VULNERABLE
+$result = mysqli_query($conn, "SELECT * FROM users WHERE name = '$username'");
+
+# Java — VULNERABLE
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery("SELECT * FROM users WHERE name = '" + username + "'");</code></pre>
+
+        <h3>The Fixed Pattern (Do This)</h3>
+
+        <pre><code># Python — SAFE (parameterized)
+cursor.execute("SELECT * FROM users WHERE name = %s", (username,))
+
+# PHP — SAFE (prepared statement)
+$stmt = $conn->prepare("SELECT * FROM users WHERE name = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+
+# Java — SAFE (PreparedStatement)
+PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE name = ?");
+stmt.setString(1, username);
+ResultSet rs = stmt.executeQuery();</code></pre>
+
+        <h3>Defense in Depth</h3>
+
+        <p>Parameterized queries are the primary fix, but defense in depth means layering additional protections:</p>
+
+        <ul>
+            <li><strong>Input validation.</strong> Whitelist expected input types. If a parameter should be a numeric ID, reject anything that isn't a number before it reaches the query layer.</li>
+            <li><strong>ORM with parameterization.</strong> Use an ORM (SQLAlchemy, Hibernate, Eloquent) that parameterizes queries by default. But never use the ORM's raw query escape hatch (<code>.raw()</code>, <code>.extra()</code>) with user input.</li>
+            <li><strong>Least-privilege database accounts.</strong> The application's database user should only have SELECT, INSERT, UPDATE, DELETE on the tables it needs. Never use the root/admin database account. This limits the damage if injection succeeds.</li>
+            <li><strong>Suppress error messages.</strong> Never display raw database errors to users. Log them server-side and return a generic error page. This doesn't prevent injection, but it prevents error-based data extraction.</li>
+            <li><strong>Web Application Firewall (WAF).</strong> A WAF can block common SQLi payloads at the network edge. It's not a substitute for fixing the code, but it buys time while remediation is in progress.</li>
+        </ul>
+    </section>
+
+    <section id="scanner-checklist">
+        <h2>7. Scanner Checklist: What Your Tool Should Cover</h2>
+
+        <p>If you're evaluating a security scanner's SQL injection detection capabilities, here's what to look for:</p>
+
+        <table>
+            <thead style="background: #2c3e50; color: white;">
+                <tr>
+                    <th style="padding: 10px;">Capability</th>
+                    <th style="padding: 10px;">Why It Matters</th>
+                    <th style="padding: 10px;">sqli-probe</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 8px;">Error-based detection</td>
+                    <td style="padding: 8px;">Catches the most obvious and highest-confidence SQLi findings</td>
+                    <td style="padding: 8px;">✅ 14 patterns across 4 databases</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Boolean-based detection</td>
+                    <td style="padding: 8px;">Catches injection when error messages are suppressed</td>
+                    <td style="padding: 8px;">✅ Response length comparison with 50% threshold</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Multiple payload types</td>
+                    <td style="padding: 8px;">Different injection contexts require different payloads</td>
+                    <td style="padding: 8px;">✅ 7 payloads covering syntax break, tautology, UNION, stacking</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Multi-database signatures</td>
+                    <td style="padding: 8px;">Applications use different databases; scanner must detect all</td>
+                    <td style="padding: 8px;">✅ MySQL, PostgreSQL, MSSQL, SQLite</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Database fingerprinting</td>
+                    <td style="padding: 8px;">Knowing the DB type helps prioritize and plan remediation</td>
+                    <td style="padding: 8px;">✅ Reports DB type with each finding</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Parameter enumeration</td>
+                    <td style="padding: 8px;">Tests every parameter, not just the first one</td>
+                    <td style="padding: 8px;">✅ All URL query parameters tested</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Severity classification</td>
+                    <td style="padding: 8px;">Error-based (confirmed) should be rated higher than boolean-based (inferred)</td>
+                    <td style="padding: 8px;">✅ HIGH for error-based, MEDIUM for boolean-based</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px;">Non-destructive</td>
+                    <td style="padding: 8px;">Scanner should detect, not exploit — no actual data extraction or table drops</td>
+                    <td style="padding: 8px;">✅ Passive detection only (requires_approval: false)</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="bottom-line">
+        <h2>Bottom Line</h2>
+
+        <p>SQL injection is a solved problem in theory — parameterized queries have existed for decades. In practice, it remains the most exploited injection flaw because legacy code persists, ORMs get misused, and scanners don't test thoroughly enough.</p>
+
+        <p>A proper SQLi scanner needs both error-based and boolean-based detection, multiple payload types covering different injection contexts, error signatures for every major database, and the discipline to test every parameter on every endpoint. SecurityClaw's <code>sqli-probe</code> skill implements exactly this — 7 payloads, 14 error patterns, 4 database signatures, and boolean-based fallback with a calibrated threshold.</p>
+
+        <p>If your current scanner only sends a single quote to GET parameters and calls it done, you're missing injectable endpoints. The fix is straightforward: parameterized queries everywhere, input validation as a second layer, least-privilege database accounts, and suppressed error messages. None of this is new. The challenge is doing it consistently across every query in every application.</p>
+    </section>
+
+    <div class="related-articles">
+        <h3>Related Articles</h3>
+        <ul>
+            <li><a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Security Scanner Should Check in 2026</a></li>
+            <li><a href="/articles/securityclaw-4-new-skills-april-2026/">4 New SecurityClaw Skills That Change How You Recon Web Applications</a></li>
+            <li><a href="/articles/owasp-zap-vs-burp-suite-2026/">OWASP ZAP vs Burp Suite in 2026</a></li>
+        </ul>
+    </div>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

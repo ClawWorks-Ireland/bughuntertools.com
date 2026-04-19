@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical guide to finding path traversal and directory traversal vulnerabilities in real targets. Covers detection techniques, bypass methods, and escalation paths from file read to RCE.">
+    <title>Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/path-traversal-hunting-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/path-traversal-hunting-guide-2026/">
+    <meta property="og:title" content="Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay">
+    <meta property="og:description" content="A practical guide to finding path traversal and directory traversal vulnerabilities in real targets. Covers detection techniques, bypass methods, and escalation paths from file read to RCE.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/path-traversal-hunting-guide-2026/">
+    <meta name="twitter:title" content="Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay">
+    <meta name="twitter:description" content="A practical guide to finding path traversal and directory traversal vulnerabilities in real targets. Covers detection techniques, bypass methods, and escalation paths from file read to RCE.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay",
+      "description": "A practical guide to finding path traversal and directory traversal vulnerabilities in real targets. Covers detection techniques, bypass methods, and escalation paths from file read to RCE.",
+      "url": "https://bughuntertools.com/articles/path-traversal-hunting-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay",
+      "description": "A practical guide to finding path traversal and directory traversal vulnerabilities in real targets. Covers detection techniques, bypass methods, and escalation paths from file read to RCE.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/images/logos/altclaw-logo-512.png"
+        }
+      },
+      "datePublished": "2026-04-15",
+      "dateModified": "2026-04-15"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is path traversal?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Path traversal (also called directory traversal) is a vulnerability that allows attackers to read files outside the intended directory by manipulating file path parameters with sequences like ../ to navigate the filesystem."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between path traversal and LFI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Path traversal reads arbitrary files by escaping the intended directory. Local File Inclusion (LFI) includes files into the application's execution context, which can lead to code execution. Path traversal is a file read; LFI is a file include that may execute code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can path traversal lead to RCE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Path traversal can escalate to RCE by reading sensitive files like SSH keys, database credentials, or application secrets, then using those to gain shell access. Combined with file write capabilities, it can directly achieve code execution."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>Path Traversal Hunting Guide: How to Find Directory Traversal Bugs That Pay</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Path traversal remains one of the most common web vulnerabilities — and one of the most underreported in bug bounty programs</li>
+<li>The classic <code>../</code> payload is just the starting point; real-world bugs require encoding bypasses, null bytes, and platform-specific tricks</li>
+<li>File download endpoints, image handlers, template engines, and API file parameters are the highest-yield attack surfaces</li>
+<li>Escalation from file read to account takeover or RCE is what turns a medium-severity finding into a critical payout</li>
+</ul>
+</div>
+
+<h2>What Is Path Traversal?</h2>
+
+<p>Path traversal (directory traversal, dot-dot-slash) lets you read — or sometimes write — files outside the directory the application intended. When an application takes a filename as input and doesn't properly validate it, you can use <code>../</code> sequences to navigate up the directory tree and access sensitive files.</p>
+
+<p>The canonical example:</p>
+
+<pre><code>GET /download?file=../../../../etc/passwd HTTP/1.1</code></pre>
+
+<p>If the server returns the contents of <code>/etc/passwd</code>, you have a path traversal vulnerability.</p>
+
+<h2>Where to Look</h2>
+
+<p>Path traversal hides in any parameter that references a file. These are the highest-yield locations:</p>
+
+<h3>1. File Download Endpoints</h3>
+<p>Any URL that serves files based on a parameter: <code>/download?file=</code>, <code>/export?name=</code>, <code>/attachment?path=</code>. These are the most obvious and still the most commonly vulnerable.</p>
+
+<h3>2. Image and Media Handlers</h3>
+<p>Image resizing proxies, avatar uploads, and media serving endpoints often take a path parameter. Look for <code>/images?src=</code>, <code>/thumb?img=</code>, <code>/media/</code> routes.</p>
+
+<h3>3. Template and Theme Selection</h3>
+<p>Parameters like <code>?template=</code>, <code>?theme=</code>, <code>?lang=</code> that load files from disk. These often have weaker validation because developers don't think of them as "file" parameters.</p>
+
+<h3>4. API Endpoints With File References</h3>
+<p>REST APIs that accept filenames in request bodies or path segments: <code>POST /api/import {"file": "report.csv"}</code>. JSON and XML bodies are often less filtered than query parameters.</p>
+
+<h3>5. Log Viewers and Admin Panels</h3>
+<p>Admin interfaces that display log files, configuration files, or backup files. These are gold — they're designed to read files, and the traversal filter is often the only thing between you and <code>/etc/shadow</code>.</p>
+
+<h2>Detection Techniques</h2>
+
+<h3>Basic Traversal</h3>
+<p>Start with the fundamentals. Try these payloads against every file-referencing parameter:</p>
+
+<pre><code>../../../etc/passwd
+..\..\..\..\windows\win.ini
+....//....//....//etc/passwd</code></pre>
+
+<h3>Encoding Bypasses</h3>
+<p>When basic traversal is filtered, encoding often gets through:</p>
+
+<pre><code>%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd    (URL encoding)
+..%252f..%252f..%252fetc%252fpasswd          (double URL encoding)
+%c0%ae%c0%ae%c0%af                           (overlong UTF-8)
+..%c0%af..%c0%af..%c0%afetc/passwd           (UTF-8 overlong slash)</code></pre>
+
+<h3>Null Byte Injection</h3>
+<p>On older systems and some languages (PHP &lt; 5.3.4, older Java), null bytes truncate the path:</p>
+
+<pre><code>../../../../etc/passwd%00.png
+../../../../etc/passwd\0.jpg</code></pre>
+
+<h3>Platform-Specific Tricks</h3>
+
+<p><strong>Windows:</strong></p>
+<pre><code>..\..\..\..\windows\system32\drivers\etc\hosts
+....\\....\\....\\windows\\win.ini
+/..../..../..../windows/win.ini</code></pre>
+
+<p><strong>Java/Tomcat:</strong></p>
+<pre><code>/WEB-INF/web.xml
+/META-INF/MANIFEST.MF</code></pre>
+
+<p><strong>Node.js:</strong></p>
+<pre><code>..%5c..%5c..%5cetc%5cpasswd    (backslash on Windows Node)</code></pre>
+
+<h3>Wrapper and Protocol Tricks</h3>
+<p>Some applications use file wrappers that accept protocols:</p>
+<pre><code>file:///etc/passwd
+php://filter/convert.base64-encode/resource=../config.php</code></pre>
+
+<h2>Confirming the Bug</h2>
+
+<p>Reading <code>/etc/passwd</code> proves the traversal works, but you need to demonstrate impact for a good bounty report. Target these files:</p>
+
+<ul>
+<li><code>/etc/passwd</code> — proof of concept (Linux)</li>
+<li><code>/etc/shadow</code> — password hashes (requires root, critical if readable)</li>
+<li><code>/proc/self/environ</code> — environment variables, often contains secrets</li>
+<li><code>/proc/self/cmdline</code> — reveals running process and arguments</li>
+<li><code>~/.ssh/id_rsa</code> — SSH private keys</li>
+<li><code>.env</code>, <code>config.php</code>, <code>application.yml</code> — application secrets</li>
+<li><code>/windows/win.ini</code> — proof of concept (Windows)</li>
+<li><code>web.config</code> — IIS configuration with connection strings</li>
+</ul>
+
+<h2>Escalation Paths</h2>
+
+<h3>File Read → Account Takeover</h3>
+<p>Read application config files to extract database credentials, API keys, or JWT signing secrets. Use JWT secrets to forge admin tokens. Use database credentials to access user data directly.</p>
+
+<h3>File Read → RCE</h3>
+<p>Read SSH keys and use them to SSH into the server. Read <code>/proc/self/environ</code> for cloud metadata credentials. On AWS, read <code>/proc/self/environ</code> for IAM role credentials or chain with SSRF to hit the metadata endpoint.</p>
+
+<h3>File Write → RCE</h3>
+<p>If the traversal allows writing (upload endpoints, log injection), write a web shell to a publicly accessible directory. On PHP: write to <code>/var/www/html/shell.php</code>. On Java: write to the webapps directory.</p>
+
+<h2>Bypassing Common Defenses</h2>
+
+<h3>Stripping <code>../</code></h3>
+<p>If the app strips <code>../</code> once, double it: <code>....//</code> becomes <code>../</code> after stripping.</p>
+
+<h3>Absolute Path Requirement</h3>
+<p>If the app requires the path to start with a specific directory, try: <code>/var/www/uploads/../../../etc/passwd</code></p>
+
+<h3>Extension Whitelisting</h3>
+<p>If the app requires <code>.pdf</code> or <code>.png</code> extension, try null bytes (<code>%00</code>) or path parameters (<code>../../../etc/passwd/.png</code> on some servers).</p>
+
+<h3>WAF Bypass</h3>
+<p>Combine encoding techniques. Use <code>..;/</code> on Tomcat (path parameter bypass). Try Unicode normalization: <code>%ef%bc%8f</code> (fullwidth solidus).</p>
+
+<h2>Tools</h2>
+
+<ul>
+<li><strong>Burp Suite Intruder</strong> — fuzz file parameters with traversal wordlists</li>
+<li><strong>ffuf</strong> — fast fuzzing with <code>-w traversal-payloads.txt</code></li>
+<li><strong>dotdotpwn</strong> — dedicated directory traversal fuzzer</li>
+<li><strong>Nuclei</strong> — templates for common traversal patterns (<code>nuclei -t http/vulnerabilities/path-traversal/</code>)</li>
+</ul>
+
+<h2>Writing the Report</h2>
+
+<p>A path traversal report that pays well includes:</p>
+
+<ol>
+<li><strong>Clear reproduction steps</strong> — exact HTTP request with the traversal payload</li>
+<li><strong>Proof of file read</strong> — screenshot or response body showing file contents</li>
+<li><strong>Impact demonstration</strong> — show what sensitive data is accessible (redact actual secrets)</li>
+<li><strong>Escalation path</strong> — explain how file read leads to account takeover or RCE</li>
+<li><strong>Remediation</strong> — recommend allowlisting filenames, using a file ID instead of a path, or chrooting the file access</li>
+</ol>
+
+<h2>FAQ</h2>
+
+<h3>What is path traversal?</h3>
+<p>Path traversal (also called directory traversal) is a vulnerability that allows attackers to read files outside the intended directory by manipulating file path parameters with sequences like <code>../</code> to navigate the filesystem.</p>
+
+<h3>What is the difference between path traversal and LFI?</h3>
+<p>Path traversal reads arbitrary files by escaping the intended directory. Local File Inclusion (LFI) includes files into the application's execution context, which can lead to code execution. Path traversal is a file read; LFI is a file include that may execute code.</p>
+
+<h3>Can path traversal lead to RCE?</h3>
+<p>Yes. Path traversal can escalate to RCE by reading sensitive files like SSH keys, database credentials, or application secrets, then using those to gain shell access. Combined with file write capabilities, it can directly achieve code execution.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

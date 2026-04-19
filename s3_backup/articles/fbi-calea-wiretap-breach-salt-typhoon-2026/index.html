@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure. Attribution unclear but consistent with Salt Typhoon, which breached AT&amp;T and Verizon in 2024.">
+    <title>FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon&#39;s Reach May Extend to Federal Networks</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/fbi-calea-wiretap-breach-salt-typhoon-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/fbi-calea-wiretap-breach-salt-typhoon-2026/">
+    <meta property="og:title" content="FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon&#39;s Reach May Extend to Federal Networks">
+    <meta property="og:description" content="The FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure. Attribution unclear but consistent with Salt Typhoon, which breached AT&amp;T and Verizon in 2024.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/fbi-calea-wiretap-breach-salt-typhoon-2026/">
+    <meta name="twitter:title" content="FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon&#39;s Reach May Extend to Federal Networks">
+    <meta name="twitter:description" content="The FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure. Attribution unclear but consistent with Salt Typhoon, which breached AT&amp;T and Verizon in 2024.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "name": "FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon&#39;s Reach May Extend to Federal Networks",
+      "description": "The FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure. Attribution unclear but consistent with Salt Typhoon, which breached AT&amp;T and Verizon in 2024.",
+      "url": "https://bughuntertools.com/articles/fbi-calea-wiretap-breach-salt-typhoon-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon&#39;s Reach May Extend to Federal Networks</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<article>
+  <header>
+    <h1>FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon's Reach May Extend to Federal Networks</h1>
+    <p class="meta">
+      <time datetime="2026-03-06">March 6, 2026</time> · 8 min read · <em>⚡ Developing — details limited by ongoing investigation</em>
+    </p>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+    <li>FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure</li>
+    <li>Attribution is consistent with Salt Typhoon, which breached AT&T and Verizon wiretap systems in 2024</li>
+    <li>The breach potentially exposed federal surveillance operations and active investigation targets</li>
+    <li>Telecom and government organizations should audit network access and hunt for Salt Typhoon indicators</li>
+  </ul>
+    </div>
+
+    <p class="summary">
+      The FBI confirmed on March 6, 2026 that it detected and remediated "suspicious activities" on networks responsible for managing wiretap authorisations and FISA warrant systems. The systems involved fall under CALEA — the legal framework that US law enforcement uses to conduct lawful intercept. No attribution has been confirmed publicly, but the intrusion is consistent with Salt Typhoon, the Chinese APT that compromised AT&T, Verizon, and multiple US telecoms carriers in 2024.
+    </p>
+    <p><strong>Note: This is a developing story. Details are limited; the investigation is ongoing.</strong></p>
+  </header>
+
+  <section>
+    <h2>What the FBI Confirmed</h2>
+    <p>
+      In a brief statement on March 6, 2026, the FBI acknowledged detecting "suspicious activities on FBI networks" — specifically describing the affected systems as those involved in the management of wiretap authorisations and Foreign Intelligence Surveillance Act (FISA) warrant infrastructure.
+    </p>
+    <p>
+      The FBI stated the activity has been "addressed" and is under active investigation. No details were released on the scope of the compromise, how long the threat actors had access, what data may have been accessed, or who is responsible.
+    </p>
+    <p>
+      This level of opacity is standard for active counterintelligence investigations — but it also means current public reporting is working from the minimum disclosure that the FBI was legally or institutionally required to acknowledge.
+    </p>
+  </section>
+
+  <section>
+    <h2>What CALEA Is — and Why Compromising It Matters</h2>
+    <p>
+      The <strong>Communications Assistance for Law Enforcement Act (CALEA)</strong> is a 1994 US federal law that requires telecommunications carriers and broadband providers to build intercept capability into their infrastructure. In practice, this means US carriers maintain interfaces that allow law enforcement — with a valid court order — to intercept calls, messages, and data in real time.
+    </p>
+    <p>
+      The FBI's role in the CALEA ecosystem involves managing the authorisation process: which targets are approved for lawful intercept, under what legal authority, and for how long. The systems described in the FBI's statement sit at the centre of that administrative and operational infrastructure.
+    </p>
+    <p>
+      The security implications of a breach of these systems are severe:
+    </p>
+    <ul>
+      <li><strong>Target exposure</strong> — a directory of CALEA intercept targets is, effectively, a list of people the US government considers significant enough to surveil. Foreign intelligence services would find that list extraordinarily valuable: it identifies the US government's active intelligence priorities and operational targets.</li>
+      <li><strong>Intercept poisoning</strong> — in a worse-case scenario, access to intercept management systems could allow an adversary to tamper with existing wiretap orders, redirect intercept traffic, or introduce false data into collections.</li>
+      <li><strong>Counterintelligence damage</strong> — if targets became aware they were under surveillance (because the adversary notified their own assets or proxies), ongoing operations could be burned. This is the category of damage that's hardest to assess and hardest to remediate.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The Salt Typhoon Connection</h2>
+    <p>
+      In late 2024, US cybersecurity authorities (CISA, NSA, FBI) confirmed that a Chinese state-sponsored APT tracked as <strong>Salt Typhoon</strong> (also known as Earth Estries, GhostEmperor, and FamousSparrow) had compromised multiple major US telecommunications carriers — including AT&T and Verizon. The campaign targeted CALEA intercept infrastructure specifically.
+    </p>
+    <p>
+      In the telecom breaches, Salt Typhoon's primary goal appeared to be accessing lawful intercept systems to identify who law enforcement was actively wiretapping — an intelligence collection technique known as <strong>metadata harvesting on surveillance targets</strong>. By knowing who is under surveillance, a foreign intelligence service can warn its own assets, monitor what the US government knows about their activities, and build a picture of ongoing counterintelligence investigations.
+    </p>
+    <p>
+      The FBI breach follows that exact pattern. The FBI has not confirmed Salt Typhoon attribution for the March 2026 incident, and we will not speculate beyond what's been stated. But the targeting logic — intercept management systems, wiretap authorisation infrastructure — is identical to the 2024 telecom campaign.
+    </p>
+
+    <h3>Salt Typhoon's Known Footprint (2024–2025)</h3>
+    <p>
+      To understand the context, Salt Typhoon is not a typical financially-motivated APT. It is a persistent, patient, nation-state intelligence collection operation with the following confirmed characteristics:
+    </p>
+    <ul>
+      <li>Long dwell times — months or years of access before detection or disclosure</li>
+      <li>Primary interest in telecommunications infrastructure, not data destruction</li>
+      <li>Specific targeting of CALEA lawful intercept systems in multiple carrier environments</li>
+      <li>Attribution to the People's Republic of China (PRC) by US government and Five Eyes intelligence partners</li>
+      <li>Related to FamousSparrow cluster — the same threat cluster now being linked to UAT-9244 (TernDoor/PeerTime implants, also disclosed March 6 2026)</li>
+    </ul>
+    <p>
+      The 2024 telecom breaches resulted in a CISA advisory calling for federal agencies and critical infrastructure operators to treat CALEA-adjacent systems as high-value targets requiring elevated security controls.
+    </p>
+  </section>
+
+  <section>
+    <h2>UAT-9244: A Related Development, Same Day</h2>
+    <p>
+      On the same day as the FBI disclosure, Cisco Talos released research on <strong>UAT-9244</strong> — a China-linked threat actor (FamousSparrow/Salt Typhoon-adjacent) deploying three previously undocumented implants against South American telecommunications carriers since at least 2024:
+    </p>
+    <ul>
+      <li><strong>TernDoor</strong> (Windows): DLL sideloading via <code>wsprint.exe</code> + <code>BugSplatRc64.dll</code>. A CrowDoor/SparrowDoor variant with an embedded Windows driver for process management. Persists via scheduled tasks and Run key entries.</li>
+      <li><strong>PeerTime</strong> (Linux, multi-architecture — ARM, AARCH64, PPC, MIPS): Uses the <strong>BitTorrent protocol as its C2 channel</strong> — a novel evasion technique that routes command traffic over a protocol used by hundreds of millions of legitimate users globally. Docker-aware: takes a different execution path if container environment is detected. Decrypts and executes all payloads in memory, leaving minimal disk artefacts.</li>
+      <li><strong>BruteEntry</strong> (edge devices, Golang): Converts compromised edge devices into ORB (Operational Relay Box) nodes that mass-scan for and brute-force Postgres, SSH, and Tomcat services, reporting successful logins to C2. This is the infrastructure play — BruteEntry creates the network of compromised nodes through which subsequent Salt Typhoon operations route.</li>
+    </ul>
+    <p>
+      The timing is notable. BruteEntry specifically explains the mechanism by which Salt Typhoon has built its edge device infrastructure — and that infrastructure is what gives the group its ability to operate from IP addresses that don't immediately look like nation-state activity.
+    </p>
+  </section>
+
+  <section>
+    <h2>What Defenders Should Do — Right Now</h2>
+    <p>
+      The FBI and CISA have not issued new technical guidance specific to the March 2026 incident as of this writing. The standing guidance from the 2024 telecom breaches remains the operative baseline:
+    </p>
+
+    <h3>For Telecommunications Carriers and ISPs</h3>
+    <ul>
+      <li><strong>Audit access to CALEA management interfaces</strong> — who has access, from what networks, with what authentication. CALEA systems should not be reachable from general enterprise networks.</li>
+      <li><strong>Review network segmentation</strong> — CALEA intercept systems should be on dedicated, isolated segments with strict ingress/egress controls. Check for any paths that connect lawful intercept infrastructure to corporate or internet-facing networks.</li>
+      <li><strong>Hunt for Salt Typhoon TTPs</strong> — CISA's AA24-038A advisory provides indicators. Key patterns to hunt: DLL sideloading in Windows environments, long-lived encrypted sessions to unfamiliar infrastructure, BitTorrent traffic from servers that have no business reason to use it (PeerTime C2 channel).</li>
+      <li><strong>Edge device inventory</strong> — BruteEntry specifically targets internet-exposed edge devices. Complete inventory + authentication audit of all routers, VPN concentrators, and edge appliances.</li>
+    </ul>
+
+    <h3>For Federal Networks (FISMA-covered)</h3>
+    <ul>
+      <li>Apply <strong>Emergency Directive 24-02</strong> guidance if not already fully implemented.</li>
+      <li>Treat authentication to sensitive systems as a priority: phishing-resistant MFA (FIDO2/PIV) only for systems with access to law enforcement sensitive data.</li>
+      <li>Log review: if you have network telemetry from any system with connectivity to FBI or DOJ networks, now is a good time to review it.</li>
+    </ul>
+
+    <h3>For Everyone</h3>
+    <ul>
+      <li>This incident is a reminder that lawful intercept infrastructure — designed to enable surveillance — creates a high-value target that adversaries specifically want to access. The same access control principles that apply to any sensitive system apply here, but the threat model is nation-state, not opportunistic criminal.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The Bigger Picture: Lawful Intercept as Attack Surface</h2>
+    <p>
+      Security researchers and policy advocates have argued for decades that CALEA-mandated intercept capabilities create systemic risk: by requiring carriers to build in surveillance access, the law also creates infrastructure that can be compromised by adversaries. The 2024 telecom breaches and the 2026 FBI incident are real-world validation of that concern.
+    </p>
+    <p>
+      This isn't an argument against lawful intercept per se — it's an observation that CALEA-adjacent systems need to be treated as <strong>critical national security infrastructure</strong> with security controls to match. The current evidence suggests they have not been, consistently.
+    </p>
+    <p>
+      The irony is sharp: systems designed to enable surveillance of adversaries may have enabled adversaries to surveil US surveillance operations. How long that access persisted, and what was learned from it, is unknown.
+    </p>
+  </section>
+
+  <section>
+    <h2>Security Operations — Recommended Reading</h2>
+    <p>
+      Understanding nation-state tactics, network segmentation design, and incident response for advanced persistent threats:
+    </p>
+    <ul>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/B005LVQA9S?tag=altclaw-20" rel="noopener noreferrer">
+          The Web Application Hacker's Handbook
+        </a> — covers the authentication bypass and session management weaknesses that APT groups exploit. Relevant background for understanding how long-dwell threat actors maintain access without triggering detection.
+      </li>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/1718501129?tag=altclaw-20" rel="noopener noreferrer">
+          Black Hat Python (2nd Edition)
+        </a> — covers network implant design and evasion techniques, including the kind of in-memory execution and non-standard C2 protocols (like PeerTime's BitTorrent channel) that make advanced implants hard to detect.
+      </li>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/B0BKLWL7LD?tag=altclaw-20" rel="noopener noreferrer">
+          YubiKey 5C NFC
+        </a> — for accounts at elevated risk of targeted attack, hardware FIDO2 keys are the only MFA method that cannot be bypassed by session cookie theft or adversary-in-the-middle attacks. For federal workers and anyone with access to sensitive systems, hardware MFA is not optional.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <ul>
+      <li>FBI statement, March 6 2026 — "Suspicious Activities on FBI Networks" (via BleepingComputer / CNN)</li>
+      <li>Cisco Talos research — UAT-9244 TernDoor/PeerTime/BruteEntry, March 6 2026</li>
+      <li>CISA Advisory AA24-038A — Salt Typhoon telecom breaches, 2024</li>
+      <li>CISA/NSA/FBI joint advisory — Salt Typhoon attribution, 2024</li>
+    </ul>
+    <p><em>This article will be updated as more information becomes available from the FBI or CISA.</em></p>
+  </section>
+
+  <section class="faq">
+    <h2>Frequently Asked Questions</h2>
+
+    <details>
+      <summary>What is CALEA and why does breaching it matter?</summary>
+      <p>
+        CALEA (Communications Assistance for Law Enforcement Act, 1994) requires US telecoms to build in intercept capabilities for lawful surveillance. The FBI's CALEA-adjacent systems manage who is authorised for wiretapping and under what legal authority. Breaching these systems potentially exposes the identities of surveillance targets — a counterintelligence catastrophe if that list reaches a foreign intelligence service.
+      </p>
+    </details>
+
+    <details>
+      <summary>Has the FBI confirmed Salt Typhoon was responsible?</summary>
+      <p>
+        No. As of March 6, 2026, the FBI has not confirmed attribution. The statement described "suspicious activities" that have been "addressed." The targeting logic — CALEA infrastructure — is identical to the 2024 Salt Typhoon telecom campaigns, but we are not attributing this incident beyond what's been officially confirmed.
+      </p>
+    </details>
+
+    <details>
+      <summary>What is Salt Typhoon?</summary>
+      <p>
+        Salt Typhoon is a China-linked APT (also tracked as Earth Estries, GhostEmperor, FamousSparrow) that specialises in telecommunications infrastructure targeting. In 2024, it was confirmed to have compromised AT&T, Verizon, and other US carriers, specifically targeting CALEA lawful intercept systems. Salt Typhoon is characterised by long dwell times, patience, and a focus on intelligence collection rather than destructive activity.
+      </p>
+    </details>
+
+    <details>
+      <summary>What is PeerTime's BitTorrent C2 channel and why is it hard to detect?</summary>
+      <p>
+        PeerTime (a new Linux implant from UAT-9244/FamousSparrow) routes its command-and-control traffic over the BitTorrent protocol. Because BitTorrent is used by hundreds of millions of legitimate users, network monitoring tools that rely on protocol blocklisting or unusual traffic signatures won't flag it. Detection requires behavioural analysis: identifying servers that have no business reason to generate BitTorrent traffic, or looking for BitTorrent-pattern communication from processes that shouldn't be initiating peer-to-peer connections.
+      </p>
+    </details>
+
+    <details>
+      <summary>Should this change how organisations approach MFA?</summary>
+      <p>
+        Yes. Nation-state APTs like Salt Typhoon use adversary-in-the-middle (AiTM) techniques that can capture and replay session tokens, bypassing SMS-based and TOTP MFA. The only MFA that resists AiTM is hardware FIDO2 (WebAuthn) — specifically because the key's cryptographic response is bound to the origin URL, making phished or intercepted credentials unusable on a different domain. For any system with access to sensitive government or critical infrastructure data, phishing-resistant MFA should be mandatory.
+      </p>
+    </details>
+  </section>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "FBI Confirms Breach of Wiretap Management Systems — Salt Typhoon's Reach May Extend to Federal Networks",
+    "description": "The FBI confirmed suspicious activity on networks managing FISA warrant and wiretap infrastructure. Attribution unclear but consistent with Salt Typhoon, which breached AT&T and Verizon in 2024.",
+    "datePublished": "2026-03-06",
+    "author": {"@type": "Organization", "name": "Bug Hunter Tools"},
+    "publisher": {"@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com"}
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is CALEA and why does breaching it matter?",
+        "acceptedAnswer": {"@type": "Answer", "text": "CALEA requires US telecoms to build in intercept capabilities for lawful surveillance. Breaching CALEA-adjacent systems potentially exposes surveillance targets — a counterintelligence catastrophe if that information reaches a foreign intelligence service."}
+      },
+      {
+        "@type": "Question",
+        "name": "Has the FBI confirmed Salt Typhoon was responsible?",
+        "acceptedAnswer": {"@type": "Answer", "text": "No. As of March 6, 2026, the FBI has not confirmed attribution. The targeting logic is identical to the 2024 Salt Typhoon telecom campaigns, but we are not attributing this incident beyond what's been officially confirmed."}
+      },
+      {
+        "@type": "Question",
+        "name": "Should this change how organisations approach MFA?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Yes. The only MFA that resists adversary-in-the-middle techniques is hardware FIDO2/WebAuthn. For any system with access to sensitive data, phishing-resistant MFA should be mandatory."}
+      }
+    ]
+  }
+  </script>
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/tycoon-2fa-phaas-takedown-aitm-mfa-bypass-2026/">Tycoon 2FA Takedown: How AiTM Phishing Bypasses MFA at Scale</a></li>
+    <li><a href="/articles/aeternum-botnet-blockchain-c2-polygon-ethereum/">Aeternum Botnet Uses Ethereum Smart Contracts on Polygon as C2</a></li>
+    <li><a href="/articles/unc2814-gridtide-google-sheets-c2-apt/">How China's UNC2814 Used Google Sheets as a Hacking Command Centre</a></li>
+    <li><a href="/articles/scarcruft-ruby-jumper-north-korea-zoho-workdrive-c2/">ScarCruft's 'Ruby Jumper': North Korea's APT37 Using Zoho WorkDrive to Bridge Air-Gapped Networks</a></li>
+    <li><a href="/demos/securityclaw-shodan-intel-passive-osint-demo-2026/">484,956 Exposed Servers Found in Under 3 Seconds — Without Sending a Single Packet</a></li>
+  </ul>
+</section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

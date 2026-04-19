@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find and exploit broken API authentication — JWT attacks, OAuth token flaws, API key leakage, GraphQL auth bypass, and gRPC metadata abuse with real-world exploitation chains.">
+    <title>API Authentication Testing: Breaking OAuth, JWT, and API Keys in REST, GraphQL, and gRPC</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/api-authentication-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/api-authentication-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="API Authentication Testing: Breaking OAuth, JWT, and API Keys in REST, GraphQL, and gRPC">
+    <meta property="og:description" content="Find and exploit broken API authentication — JWT attacks, OAuth token flaws, API key leakage, GraphQL auth bypass, and gRPC metadata abuse with real-world exploitation chains.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/api-authentication-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="API Authentication Testing: Breaking OAuth, JWT, and API Keys in REST, GraphQL, and gRPC">
+    <meta name="twitter:description" content="Find and exploit broken API authentication — JWT attacks, OAuth token flaws, API key leakage, GraphQL auth bypass, and gRPC metadata abuse with real-world exploitation chains.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "API Authentication Testing: Breaking OAuth, JWT, and API Keys in REST, GraphQL, and gRPC",
+      "description": "Find and exploit broken API authentication — JWT attacks, OAuth token flaws, API key leakage, GraphQL auth bypass, and gRPC metadata abuse with real-world exploitation chains.",
+      "url": "https://bughuntertools.com/articles/api-authentication-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">API Authentication Testing: Breaking OAuth, JWT, and API Keys in REST, GraphQL, and gRPC</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>JWT misconfigurations — algorithm confusion, missing signature validation, and weak secrets — remain the most exploitable API auth flaws in 2026</li>
+<li>OAuth/OIDC token flows expose redirect_uri manipulation, token leakage via referrer headers, and scope escalation when implementations deviate from spec</li>
+<li>GraphQL APIs frequently expose introspection in production, revealing auth-gated mutations and queries you can call without proper tokens</li>
+<li>gRPC services often rely on metadata-based auth that can be spoofed or stripped when load balancers or proxies sit in front of the service</li>
+<li>API key leakage in client-side code, mobile apps, and public repositories provides direct access to authenticated endpoints — always check before testing auth logic</li>
+</ul>
+</div>
+
+<h2>Why API Authentication Testing Matters for Bug Bounty</h2>
+
+<p>APIs are the backbone of every modern application. Mobile apps, SPAs, microservices, third-party integrations — they all authenticate through API endpoints. When that authentication breaks, attackers get direct access to user data, admin functionality, and backend systems without ever touching the web UI.</p>
+
+<p>Broken authentication consistently ranks at the top of the OWASP API Security Top 10. Bug bounty programs pay premium rates for auth bypass findings because the impact is immediate: account takeover, data exfiltration, or privilege escalation to admin. If you can prove you bypassed authentication on a production API, you're looking at high to critical severity payouts.</p>
+
+<h2>Reconnaissance: Mapping API Authentication Surfaces</h2>
+
+<p>Before attacking auth, you need to understand what auth mechanisms the target uses and where they're enforced.</p>
+
+<h3>Identifying Auth Mechanisms</h3>
+
+<p>Start by cataloging every authentication method the API accepts. Most targets use more than one:</p>
+
+<ul>
+<li><strong>Bearer tokens (JWT)</strong> — Look for <code>Authorization: Bearer eyJ...</code> headers. The <code>eyJ</code> prefix (base64 for <code>{"</code>) confirms JWT format</li>
+<li><strong>API keys</strong> — Check for keys in headers (<code>X-API-Key</code>, <code>Authorization: ApiKey</code>), query parameters (<code>?api_key=</code>), or request bodies</li>
+<li><strong>OAuth 2.0 tokens</strong> — Identify the grant type by watching the token exchange flow. Authorization code, client credentials, and implicit flows each have different attack surfaces</li>
+<li><strong>Session cookies</strong> — Some APIs still use cookie-based auth, especially when the API serves both web and mobile clients</li>
+<li><strong>mTLS / certificate-based</strong> — Less common in public APIs but found in B2B and internal service-to-service communication</li>
+</ul>
+
+<h3>Endpoint Discovery</h3>
+
+<p>Auth enforcement is only as strong as its weakest endpoint. Find every endpoint the API exposes:</p>
+
+<ul>
+<li>Check for OpenAPI/Swagger docs at <code>/swagger.json</code>, <code>/openapi.json</code>, <code>/api-docs</code>, <code>/v1/docs</code></li>
+<li>For GraphQL, send an introspection query to <code>/graphql</code> — if it returns the schema, you have a complete map of every query and mutation</li>
+<li>For gRPC, check if server reflection is enabled with <code>grpcurl -plaintext target:port list</code></li>
+<li>Use Burp Suite's content discovery or ffuf with API-specific wordlists to find undocumented endpoints</li>
+<li>Check JavaScript bundles and mobile app binaries for hardcoded endpoint paths</li>
+</ul>
+
+<h2>JWT Attacks: The Most Common API Auth Vulnerability</h2>
+
+<p>JWTs are everywhere, and they're misconfigured more often than not. Here's what to test.</p>
+
+<h3>Algorithm Confusion (alg:none and RS256→HS256)</h3>
+
+<p>The classic JWT attack. If the server accepts <code>"alg": "none"</code>, you can strip the signature entirely and forge any claims. Test with jwt_tool:</p>
+
+<pre><code>python3 jwt_tool.py &lt;token&gt; -X a</code></pre>
+
+<p>For RS256 to HS256 confusion: if the server uses RS256 (asymmetric) but also accepts HS256 (symmetric), you can sign a forged token using the server's public key as the HMAC secret. This works because the server uses the same key material for verification regardless of algorithm.</p>
+
+<h3>Weak Signing Secrets</h3>
+
+<p>Many JWTs are signed with weak or default secrets. Crack them offline:</p>
+
+<pre><code>hashcat -a 0 -m 16500 &lt;token&gt; /path/to/wordlist.txt</code></pre>
+
+<p>Common weak secrets include <code>secret</code>, <code>password</code>, the application name, and UUIDs that appear elsewhere in the application. Once cracked, you can forge tokens with any claims — admin access, different user IDs, elevated roles.</p>
+
+<h3>Missing Expiration and Claim Validation</h3>
+
+<p>Test whether the server actually validates critical claims:</p>
+
+<ul>
+<li><strong>exp</strong> — Send an expired token. If it's accepted, tokens never expire</li>
+<li><strong>iss / aud</strong> — Change the issuer or audience claim. If accepted, the server doesn't validate token origin</li>
+<li><strong>sub / user_id</strong> — Change the subject to another user's ID. This is IDOR via JWT — if the server trusts the claim without cross-referencing, you have account takeover</li>
+</ul>
+
+<h3>JWK Injection and x5u/jku Abuse</h3>
+
+<p>Some JWT libraries allow the token itself to specify the verification key via the <code>jwk</code> header parameter or a URL (<code>jku</code>, <code>x5u</code>). If the server fetches and trusts these:</p>
+
+<ol>
+<li>Generate your own RSA key pair</li>
+<li>Host the public key at a URL you control</li>
+<li>Set the <code>jku</code> header to your URL</li>
+<li>Sign the token with your private key</li>
+</ol>
+
+<p>The server fetches your public key and validates the signature you created — complete auth bypass.</p>
+
+<h2>OAuth and OIDC Token Attacks</h2>
+
+<p>OAuth implementations are complex, and complexity breeds vulnerabilities. Focus on the gaps between the spec and the implementation.</p>
+
+<h3>Redirect URI Manipulation</h3>
+
+<p>The redirect_uri parameter controls where authorization codes and tokens are sent. Test for:</p>
+
+<ul>
+<li><strong>Open redirect on the redirect domain</strong> — If the target has an open redirect, chain it: <code>redirect_uri=https://target.com/redirect?url=https://attacker.com</code></li>
+<li><strong>Subdomain matching</strong> — Try <code>redirect_uri=https://attacker.target.com</code> if the validation only checks the parent domain</li>
+<li><strong>Path traversal</strong> — <code>redirect_uri=https://target.com/callback/../../../attacker-controlled-path</code></li>
+<li><strong>Parameter pollution</strong> — Add duplicate redirect_uri parameters to confuse the parser</li>
+</ul>
+
+<h3>Token Leakage</h3>
+
+<p>OAuth tokens leak through multiple channels:</p>
+
+<ul>
+<li><strong>Referrer headers</strong> — If the redirect page loads external resources, the token in the URL fragment or query string leaks via the Referer header</li>
+<li><strong>Browser history</strong> — Implicit flow tokens in URL fragments persist in browser history</li>
+<li><strong>Server logs</strong> — Authorization codes in query parameters get logged by web servers, proxies, and analytics tools</li>
+<li><strong>Postmessage</strong> — SPAs using postMessage to pass tokens may have insufficient origin checks</li>
+</ul>
+
+<h3>Scope Escalation</h3>
+
+<p>Request more scopes than the application normally uses. Many OAuth servers don't validate requested scopes against the client's allowed scopes:</p>
+
+<pre><code>scope=openid profile email admin:write users:delete</code></pre>
+
+<p>If the server grants elevated scopes, you've escalated privileges through the OAuth flow itself.</p>
+
+<h2>GraphQL Authentication Bypass</h2>
+
+<p>GraphQL APIs consolidate multiple operations behind a single endpoint, which creates unique auth bypass opportunities.</p>
+
+<h3>Introspection-Guided Auth Testing</h3>
+
+<p>If introspection is enabled, query the full schema to find mutations and queries that should require authentication:</p>
+
+<pre><code>{
+  __schema {
+    mutationType {
+      fields {
+        name
+        args { name type { name } }
+      }
+    }
+  }
+}</code></pre>
+
+<p>Then call each mutation without an auth token. Developers frequently protect the main queries but forget to gate admin mutations, internal tooling queries, or newly added fields.</p>
+
+<h3>Query Batching and Alias-Based Bypass</h3>
+
+<p>Some GraphQL rate limiters and auth checks only inspect the first query in a batch. Send multiple operations in a single request:</p>
+
+<pre><code>[
+  {"query": "{ publicData { id } }"},
+  {"query": "mutation { deleteUser(id: \"target\") { success } }"}
+]</code></pre>
+
+<p>Alternatively, use aliases to call the same field multiple times with different arguments — useful for brute-forcing auth tokens or OTPs through a single request that bypasses per-request rate limits.</p>
+
+<h3>Field-Level Authorization Gaps</h3>
+
+<p>GraphQL resolvers may enforce auth at the query level but not at the field level. If you can access a user query, try requesting fields that should be restricted:</p>
+
+<pre><code>{ user(id: "self") { email passwordHash apiKey internalRole } }</code></pre>
+
+<h2>gRPC Authentication Testing</h2>
+
+<p>gRPC services are increasingly common in microservice architectures. Their auth model differs from REST APIs.</p>
+
+<h3>Metadata-Based Auth Spoofing</h3>
+
+<p>gRPC uses metadata (similar to HTTP headers) for authentication. When a load balancer or API gateway sits in front of the gRPC service, it may inject auth metadata that the backend trusts implicitly:</p>
+
+<pre><code>grpcurl -plaintext -H "x-authenticated-user: admin" -H "x-user-role: superadmin" target:50051 service.AdminService/ListUsers</code></pre>
+
+<p>If the backend trusts these headers without validating them against the actual token, you can impersonate any user.</p>
+
+<h3>Reflection-Enabled Service Discovery</h3>
+
+<p>gRPC server reflection exposes all available services and methods — the equivalent of GraphQL introspection. Use it to find internal services that lack auth:</p>
+
+<pre><code>grpcurl -plaintext target:50051 list
+grpcurl -plaintext target:50051 describe service.InternalService</code></pre>
+
+<h3>Unary vs. Streaming Auth Checks</h3>
+
+<p>Some implementations validate auth on unary (single request-response) calls but skip validation on streaming RPCs. Test bidirectional and server-streaming methods separately — they may have weaker or missing auth enforcement.</p>
+
+<h2>API Key Attacks</h2>
+
+<p>API keys are the simplest auth mechanism and the most frequently leaked.</p>
+
+<h3>Key Discovery</h3>
+
+<ul>
+<li><strong>Client-side source</strong> — Search JavaScript bundles for API keys: <code>grep -r "api[_-]key\|apikey\|authorization" *.js</code></li>
+<li><strong>Mobile apps</strong> — Decompile APKs with jadx or use objection to hook API calls at runtime</li>
+<li><strong>Public repositories</strong> — Search GitHub, GitLab, and Bitbucket for the target's domain combined with key-related terms</li>
+<li><strong>Error messages</strong> — Trigger errors that leak keys in stack traces or debug output</li>
+</ul>
+
+<h3>Key Privilege Testing</h3>
+
+<p>Once you have a key, test what it can access. Many API keys have broader permissions than the application uses:</p>
+
+<ul>
+<li>Try admin endpoints with a regular user's API key</li>
+<li>Test write operations if the key was only used for reads</li>
+<li>Check if the key works across API versions — v1 may have weaker authorization than v2</li>
+<li>Test if the key works on staging or internal API subdomains</li>
+</ul>
+
+<h2>Practical Exploitation Chains</h2>
+
+<p>The highest-impact findings chain multiple auth weaknesses together.</p>
+
+<h3>Chain 1: JWT None Algorithm → Admin Takeover</h3>
+
+<ol>
+<li>Capture a valid JWT from a low-privilege account</li>
+<li>Decode the payload — note the role and user ID claims</li>
+<li>Set <code>alg</code> to <code>none</code>, change <code>role</code> to <code>admin</code>, strip the signature</li>
+<li>Send the forged token to admin-only endpoints</li>
+<li>If accepted: full admin access from an unprivileged account</li>
+</ol>
+
+<h3>Chain 2: OAuth Redirect + Token Theft → Account Takeover</h3>
+
+<ol>
+<li>Find an open redirect on the target domain</li>
+<li>Craft an OAuth authorization URL with <code>redirect_uri</code> pointing to the open redirect, which forwards to your server</li>
+<li>Send the link to a victim (or demonstrate the flow in your report)</li>
+<li>Capture the authorization code or token when it arrives at your server</li>
+<li>Exchange the code for an access token — you now have the victim's session</li>
+</ol>
+
+<h3>Chain 3: GraphQL Introspection → Hidden Mutation → Privilege Escalation</h3>
+
+<ol>
+<li>Run introspection to discover all mutations</li>
+<li>Find an <code>updateUserRole</code> or <code>setAdmin</code> mutation not exposed in the UI</li>
+<li>Call it with your own user ID and an elevated role</li>
+<li>Verify your account now has admin privileges</li>
+</ol>
+
+<h2>Tools and Workflow</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td>jwt_tool</td><td>JWT analysis and attack</td><td>Algorithm confusion, claim tampering, brute-force secrets</td></tr>
+<tr><td>Burp Suite + JWT Editor</td><td>Intercept and modify JWTs in-flight</td><td>Real-time token manipulation during testing</td></tr>
+<tr><td>Nuclei</td><td>Automated API vulnerability scanning</td><td>Run API-auth templates against discovered endpoints</td></tr>
+<tr><td>InQL / GraphQL Voyager</td><td>GraphQL schema analysis</td><td>Visualize auth boundaries and find ungated operations</td></tr>
+<tr><td>grpcurl</td><td>gRPC endpoint testing</td><td>Service discovery, metadata spoofing, method enumeration</td></tr>
+<tr><td>Postman / Insomnia</td><td>API exploration</td><td>Build and replay auth flows with modified parameters</td></tr>
+<tr><td>hashcat</td><td>JWT secret cracking</td><td>Offline brute-force of HMAC signing secrets</td></tr>
+<tr><td>trufflehog / gitleaks</td><td>Secret scanning</td><td>Find leaked API keys in repositories and codebases</td></tr>
+</tbody>
+</table>
+
+<h2>Writing High-Impact Reports</h2>
+
+<p>API auth bypass reports need to clearly demonstrate the impact. Include:</p>
+
+<ul>
+<li><strong>Exact request/response pairs</strong> — Show the authenticated request, then the same request with the manipulated or missing token succeeding</li>
+<li><strong>Impact demonstration</strong> — Don't just show the bypass; show what data or functionality you accessed. "I accessed 10,000 user records" hits harder than "the endpoint returned 200"</li>
+<li><strong>Reproduction steps</strong> — Include curl commands or Burp request files that the triager can replay immediately</li>
+<li><strong>Scope of exposure</strong> — How many endpoints are affected? Is it a single endpoint or a systemic auth failure?</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>API authentication testing is one of the highest-ROI skills in bug bounty. Every target has APIs, most have auth flaws, and the payouts for auth bypass are consistently at the top of the severity scale. Start with JWT analysis — it's the most common and most exploitable. Then expand to OAuth flows, GraphQL auth boundaries, and gRPC metadata. The tools are mature, the attack patterns are well-documented, and the targets are everywhere.</p>
+
+<p>Focus on the gaps between what the spec says and what the implementation does. That's where the bounties live.</p>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SecurityClaw shipped 5 new scanning skills in a single sprint, covering SSRF (A10), SRI (A08), session security (A07), security headers (A04), and logging monitoring (A09). Here&#39;s what each skill detects and why it matters.">
+    <title>SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/securityclaw-5-new-skills-owasp-gap-sprint-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/securityclaw-5-new-skills-owasp-gap-sprint-2026/">
+    <meta property="og:title" content="SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint">
+    <meta property="og:description" content="SecurityClaw shipped 5 new scanning skills in a single sprint, covering SSRF (A10), SRI (A08), session security (A07), security headers (A04), and logging monitoring (A09). Here&#39;s what each skill detects and why it matters.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/securityclaw-5-new-skills-owasp-gap-sprint-2026/">
+    <meta name="twitter:title" content="SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint">
+    <meta name="twitter:description" content="SecurityClaw shipped 5 new scanning skills in a single sprint, covering SSRF (A10), SRI (A08), session security (A07), security headers (A04), and logging monitoring (A09). Here&#39;s what each skill detects and why it matters.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint",
+      "description": "SecurityClaw shipped 5 new scanning skills in a single sprint, covering SSRF (A10), SRI (A08), session security (A07), security headers (A04), and logging monitoring (A09). Here&#39;s what each skill detects and why it matters.",
+      "url": "https://bughuntertools.com/articles/securityclaw-5-new-skills-owasp-gap-sprint-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint",
+  "description": "SecurityClaw shipped 5 new scanning skills in a single sprint, covering SSRF, SRI, session security, security headers, and logging monitoring.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How many OWASP Top 10 categories does SecurityClaw now cover?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "After this sprint, SecurityClaw covers 8 out of 10 OWASP Top 10 categories: A01 (Broken Access Control), A02 (Cryptographic Failures), A03 (Injection — XSS, SQLi), A04 (Insecure Design — security headers), A05 (Security Misconfiguration), A07 (Identification and Authentication Failures — session security), A08 (Software and Data Integrity Failures — SRI), and A10 (Server-Side Request Forgery). The remaining gaps are A06 (Vulnerable and Outdated Components) and A09 (Security Logging and Monitoring Failures), though the logging-monitor-checker provides partial A09 coverage."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Subresource Integrity (SRI) and why does it matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Subresource Integrity is a browser security feature that lets you verify that files fetched from CDNs have not been tampered with. When a script tag includes an integrity attribute with a cryptographic hash, the browser checks the downloaded file against that hash before executing it. Without SRI, a compromised CDN can inject malicious code into every site that loads scripts from it — a supply-chain attack that affected thousands of sites in the Polyfill.io incident."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What security headers should every web application have?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "At minimum: Content-Security-Policy (prevents XSS and data injection), X-Content-Type-Options: nosniff (prevents MIME type sniffing), X-Frame-Options or CSP frame-ancestors (prevents clickjacking), Referrer-Policy (controls information leakage), and Permissions-Policy (restricts browser features). Additional headers like Cross-Origin-Opener-Policy and Cross-Origin-Resource-Policy provide defence against Spectre-class side-channel attacks."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>SecurityClaw Closes the OWASP Gap: 5 New Skills Ship in One Sprint</h1>
+
+<p class="article-meta">Published April 2026 · 8 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+    <li>SecurityClaw skills map directly to OWASP Top 10 categories for systematic coverage</li>
+    <li>OWASP Top 10 provides the baseline — real-world testing goes beyond the checklist</li>
+    <li>Integrating security scans into CI/CD catches vulnerabilities before they reach production</li>
+  </ul>
+</div>
+
+
+<p>SecurityClaw just shipped 5 new scanning skills in a single sprint. That's not a typo. Five skills, each covering a different OWASP Top 10 category, all built, tested, reviewed, and merged in under 48 hours.</p>
+
+<p>Before this sprint, SecurityClaw had clear gaps in its OWASP coverage. After it, the platform covers 8 out of 10 categories. Here's what shipped, what each skill detects, and why it matters for your security testing workflow.</p>
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#the-sprint">The Sprint at a Glance</a></li>
+    <li><a href="#ssrf-probe">ssrf-probe — SSRF Detection (A10)</a></li>
+    <li><a href="#sri-checker">sri-checker — Subresource Integrity (A08)</a></li>
+    <li><a href="#session-security">session-security-tester — Session Cookie Security (A07)</a></li>
+    <li><a href="#security-headers">security-header-checker — HTTP Security Headers (A04)</a></li>
+    <li><a href="#logging-monitor">logging-monitor-checker — Logging and Monitoring (A09)</a></li>
+    <li><a href="#coverage-map">Updated OWASP Coverage Map</a></li>
+    <li><a href="#whats-next">What's Still Missing</a></li>
+  </ol>
+</nav>
+
+<h2 id="the-sprint">1. The Sprint at a Glance</h2>
+
+<table>
+  <thead>
+    <tr><th>Skill</th><th>OWASP Category</th><th>Detection Type</th><th>Severity Range</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>ssrf-probe</td><td>A10 — Server-Side Request Forgery</td><td>Active (payload injection)</td><td>MEDIUM → CRITICAL</td></tr>
+    <tr><td>sri-checker</td><td>A08 — Software and Data Integrity Failures</td><td>Passive (HTML analysis)</td><td>MEDIUM → HIGH</td></tr>
+    <tr><td>session-security-tester</td><td>A07 — Identification and Authentication Failures</td><td>Passive (cookie inspection)</td><td>MEDIUM → HIGH</td></tr>
+    <tr><td>security-header-checker</td><td>A04 — Insecure Design</td><td>Passive (header inspection)</td><td>LOW → HIGH</td></tr>
+    <tr><td>logging-monitor-checker</td><td>A09 — Security Logging and Monitoring Failures</td><td>Passive (response analysis)</td><td>MEDIUM → HIGH</td></tr>
+  </tbody>
+</table>
+
+<p>Four of the five skills are passive — they analyse responses without modifying requests. Only ssrf-probe is active, injecting SSRF payloads into URL parameters to test for server-side request forgery. This distinction matters: passive skills can run against any target without risk, while active skills require explicit approval before execution.</p>
+
+<h2 id="ssrf-probe">2. ssrf-probe — SSRF Detection (A10)</h2>
+
+<p>The headline skill of the sprint. SSRF is the vulnerability that turned cloud metadata endpoints into data exfiltration channels — it was the root cause of the Capital One breach and remains one of the most dangerous web application vulnerabilities in cloud environments.</p>
+
+<p>The ssrf-probe skill injects 6 payloads into URL query parameters:</p>
+
+<ul>
+  <li><code>http://169.254.169.254/latest/meta-data/</code> — AWS instance metadata</li>
+  <li><code>http://metadata.google.internal/computeMetadata/v1/</code> — GCP metadata</li>
+  <li><code>http://169.254.169.254/metadata/instance?api-version=2021-02-01</code> — Azure IMDS</li>
+  <li><code>http://localhost/</code> and <code>http://127.0.0.1/</code> — localhost access</li>
+  <li><code>file:///etc/passwd</code> — local file read</li>
+</ul>
+
+<p>For each injection, the skill analyses the response for cloud metadata signatures (AMI IDs, IAM credential paths, GCP computeMetadata strings, Azure subscription IDs), file content patterns (/etc/passwd format), internal IP addresses, and URL reflection. Findings are classified from MEDIUM (URL reflection) to CRITICAL (cloud metadata or file read).</p>
+
+<p>For a deep dive on SSRF detection and remediation, see our full article: <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">Server-Side Request Forgery in 2026: What Your Scanner Should Detect</a>.</p>
+
+<h2 id="sri-checker">3. sri-checker — Subresource Integrity (A08)</h2>
+
+<p>Subresource Integrity is the defence against CDN supply-chain attacks. When your page loads a script from a CDN, the <code>integrity</code> attribute tells the browser to verify the file's hash before executing it. Without SRI, a compromised CDN can inject malicious code into every site that loads from it.</p>
+
+<p>This isn't theoretical. The Polyfill.io incident demonstrated exactly this attack at scale — a widely-used CDN was acquired and began serving malicious JavaScript to millions of sites.</p>
+
+<p>The sri-checker skill scans HTML responses for <code>&lt;script&gt;</code> and <code>&lt;link rel="stylesheet"&gt;</code> tags that load from external domains without an <code>integrity</code> attribute. Scripts without SRI are flagged as HIGH severity (executable code), stylesheets as MEDIUM (CSS injection is lower impact but still exploitable).</p>
+
+<p>The fix is straightforward: add <code>integrity="sha384-..."</code> and <code>crossorigin="anonymous"</code> to every CDN-loaded resource. Most CDN providers publish the correct hash values, and tools like <code>srihash.org</code> can generate them.</p>
+
+<h2 id="session-security">4. session-security-tester — Session Cookie Security (A07)</h2>
+
+<p>Session cookies are the keys to your users' accounts. If they're not configured correctly, attackers can steal them via XSS (missing HttpOnly), intercept them over unencrypted connections (missing Secure), or use them in cross-site request forgery attacks (missing SameSite).</p>
+
+<p>The session-security-tester checks three cookie flags:</p>
+
+<table>
+  <thead>
+    <tr><th>Flag</th><th>Missing = Risk</th><th>Severity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>HttpOnly</td><td>XSS can steal session cookies via <code>document.cookie</code></td><td>HIGH</td></tr>
+    <tr><td>Secure</td><td>Cookies sent over HTTP in cleartext</td><td>HIGH</td></tr>
+    <tr><td>SameSite</td><td>Cookies sent with cross-site requests (CSRF)</td><td>MEDIUM</td></tr>
+  </tbody>
+</table>
+
+<p>The skill also checks for session fixation — a vulnerability where a session cookie set before authentication isn't rotated after login. If the pre-auth session ID persists, an attacker who knows it can hijack the authenticated session.</p>
+
+<h2 id="security-headers">5. security-header-checker — HTTP Security Headers (A04)</h2>
+
+<p>Security headers are the cheapest defence you can deploy. They're response headers that tell the browser to enable security features — and most applications are missing at least half of them.</p>
+
+<p>The security-header-checker inspects responses for 7 headers:</p>
+
+<table>
+  <thead>
+    <tr><th>Header</th><th>Purpose</th><th>Missing = Severity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Content-Security-Policy</td><td>Prevents XSS and data injection</td><td>HIGH</td></tr>
+    <tr><td>X-Content-Type-Options</td><td>Prevents MIME type sniffing</td><td>MEDIUM</td></tr>
+    <tr><td>X-Frame-Options</td><td>Prevents clickjacking</td><td>MEDIUM</td></tr>
+    <tr><td>Referrer-Policy</td><td>Controls information leakage via Referer header</td><td>MEDIUM</td></tr>
+    <tr><td>Permissions-Policy</td><td>Restricts browser features (camera, mic, geolocation)</td><td>MEDIUM</td></tr>
+    <tr><td>Cross-Origin-Opener-Policy</td><td>Isolates browsing context (Spectre defence)</td><td>LOW</td></tr>
+    <tr><td>Cross-Origin-Resource-Policy</td><td>Controls cross-origin resource loading</td><td>LOW</td></tr>
+  </tbody>
+</table>
+
+<p>For a complete guide to implementing these headers, see our article: <a href="/articles/security-headers-complete-guide-2026/">Security Headers in 2026: The Complete Guide</a>.</p>
+
+<h2 id="logging-monitor">6. logging-monitor-checker — Logging and Monitoring (A09)</h2>
+
+<p>OWASP A09 is the hardest category to scan for because it's about what's <em>not</em> there — missing logs, missing alerts, missing monitoring. You can't detect the absence of logging from the outside.</p>
+
+<p>The logging-monitor-checker takes a pragmatic approach, checking for observable indicators:</p>
+
+<ul>
+  <li><strong>Missing X-Request-ID header</strong> (MEDIUM) — indicates the application doesn't correlate requests for debugging and incident response</li>
+  <li><strong>Verbose error messages</strong> (HIGH) — stack traces, database errors, and framework debug output in responses indicate debug mode is enabled in production, which means logging is likely misconfigured too</li>
+  <li><strong>Missing rate limiting headers</strong> (MEDIUM) — no <code>X-RateLimit-*</code> or <code>Retry-After</code> headers suggests no rate limiting, which means brute-force attacks won't be detected or blocked</li>
+  <li><strong>Exposed debug endpoints</strong> (HIGH) — accessible <code>/debug</code>, <code>/status</code>, or framework-specific debug pages indicate monitoring infrastructure is exposed</li>
+</ul>
+
+<p>This is partial A09 coverage — a full logging audit requires access to the application's backend. But these external indicators catch the most common misconfigurations.</p>
+
+<h2 id="coverage-map">7. Updated OWASP Coverage Map</h2>
+
+<p>Here's where SecurityClaw stands after this sprint:</p>
+
+<table>
+  <thead>
+    <tr><th>OWASP Category</th><th>Skills</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A01 — Broken Access Control</td><td>auth-portal-tester</td><td>✅ Covered</td></tr>
+    <tr><td>A02 — Cryptographic Failures</td><td>tls-crypto-auditor</td><td>✅ Covered</td></tr>
+    <tr><td>A03 — Injection</td><td>xss-probe, sqli-probe</td><td>✅ Covered</td></tr>
+    <tr><td>A04 — Insecure Design</td><td>security-header-checker</td><td>✅ NEW</td></tr>
+    <tr><td>A05 — Security Misconfiguration</td><td>apigw-cors-tester, nextjs-recon</td><td>✅ Covered</td></tr>
+    <tr><td>A06 — Vulnerable Components</td><td>tech-stack-cve-scanner (partial)</td><td>🟡 Partial</td></tr>
+    <tr><td>A07 — Auth Failures</td><td>session-security-tester</td><td>✅ NEW</td></tr>
+    <tr><td>A08 — Data Integrity</td><td>sri-checker</td><td>✅ NEW</td></tr>
+    <tr><td>A09 — Logging Failures</td><td>logging-monitor-checker</td><td>🟡 NEW (partial)</td></tr>
+    <tr><td>A10 — SSRF</td><td>ssrf-probe</td><td>✅ NEW</td></tr>
+  </tbody>
+</table>
+
+<p>From 5/10 categories covered to 8/10 (with 2 partial) in a single sprint. The remaining full gap is A06 (Vulnerable and Outdated Components) — detecting known CVEs in third-party libraries requires a dependency scanning approach rather than HTTP-level probing.</p>
+
+<h2 id="whats-next">8. What's Still Missing</h2>
+
+<p>Two categories still need work:</p>
+
+<ul>
+  <li><strong>A06 — Vulnerable and Outdated Components</strong>: The tech-stack-cve-scanner provides partial coverage by fingerprinting server technologies and checking for known CVEs. Full coverage would require dependency-level scanning (like Trivy or Snyk) integrated into the pipeline.</li>
+  <li><strong>A09 — Security Logging and Monitoring Failures</strong>: The logging-monitor-checker catches external indicators, but true A09 coverage requires backend access to verify that security events are actually being logged, alerts are configured, and incident response procedures exist.</li>
+</ul>
+
+<p>For the full OWASP coverage analysis, see: <a href="/articles/securityclaw-owasp-top-10-coverage-2026/">SecurityClaw OWASP Top 10 Coverage in 2026</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

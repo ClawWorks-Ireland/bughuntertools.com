@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find XSS vulnerabilities that automated scanners miss. Covers DOM-based XSS, mutation XSS, filter bypasses, and context-specific injection techniques.">
+    <title>XSS Hunting: Finding Cross-Site Scripting That Automated Scanners Miss</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/xss-hunting-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/xss-hunting-bug-bounty-guide-2026/">
+    <meta property="og:title" content="XSS Hunting: Finding Cross-Site Scripting That Automated Scanners Miss">
+    <meta property="og:description" content="Find XSS vulnerabilities that automated scanners miss. Covers DOM-based XSS, mutation XSS, filter bypasses, and context-specific injection techniques.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/xss-hunting-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="XSS Hunting: Finding Cross-Site Scripting That Automated Scanners Miss">
+    <meta name="twitter:description" content="Find XSS vulnerabilities that automated scanners miss. Covers DOM-based XSS, mutation XSS, filter bypasses, and context-specific injection techniques.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "XSS Hunting: Finding Cross-Site Scripting That Automated Scanners Miss",
+      "description": "Find XSS vulnerabilities that automated scanners miss. Covers DOM-based XSS, mutation XSS, filter bypasses, and context-specific injection techniques.",
+      "url": "https://bughuntertools.com/articles/xss-hunting-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">XSS Hunting: Finding Cross-Site Scripting That Automated Scanners Miss</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "XSS Hunting for Bug Bounty in 2026: How to Find Cross-Site Scripting That Scanners Miss",
+      "description": "A practical guide to finding XSS vulnerabilities in bug bounty programs. Covers reflected, stored, and DOM-based XSS, WAF bypass techniques, mutation XSS, and report writing.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" },
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "mainEntityOfPage": "https://bughuntertools.com/articles/xss-hunting-bug-bounty-guide-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why do scanners miss so many XSS vulnerabilities?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Automated scanners test a fixed set of payloads against reflected parameters and check for exact string matches in the response. They miss DOM-based XSS entirely because the vulnerability exists in client-side JavaScript, not in the server response. They also miss context-dependent XSS where the payload needs to break out of a specific HTML context (attribute, JavaScript string, template literal), and they cannot navigate multi-step flows where the injection point and execution point are on different pages — like stored XSS through a profile field that renders on another user's dashboard."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does XSS pay in bug bounty programs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Self-XSS pays nothing. Reflected XSS on a low-value page typically pays Low to Medium ($150–$500). Stored XSS that executes in another user's session pays Medium to High ($500–$3,000). XSS that leads to account takeover — stealing session tokens, triggering password changes, or exfiltrating sensitive data — pays High to Critical ($2,000–$15,000+). The payout depends entirely on demonstrated impact, not the XSS type."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is mutation XSS (mXSS) and why does it matter?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mutation XSS exploits the browser's HTML parser behavior. When the browser normalizes malformed HTML, it can transform a seemingly safe string into executable code. For example, a sanitizer might allow a specific tag combination that the browser re-parses into a script-executing context. mXSS bypasses server-side and client-side sanitizers because the dangerous payload only exists after the browser mutates the DOM. It is one of the hardest XSS types to detect and one of the most rewarding to find."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Hunt for XSS in Bug Bounty Programs",
+      "step": [
+        { "@type": "HowToStep", "name": "Map all input reflection points", "text": "Crawl the target and identify every parameter, header, and path segment that reflects in the response. Use Burp Suite's passive scanner or a custom script to flag reflected values. Don't forget URL fragments — they never reach the server but may be consumed by client-side JavaScript." },
+        { "@type": "HowToStep", "name": "Determine the rendering context", "text": "For each reflection point, identify the HTML context: inside a tag attribute, within a script block, inside a template literal, in a CSS value, or in raw HTML. The context determines which characters you need unescaped and which payload structure will execute." },
+        { "@type": "HowToStep", "name": "Test context-specific breakout payloads", "text": "Send payloads designed for the specific context. For attribute context: close the attribute and tag. For JavaScript string context: close the string and inject code. For template literals: use ${} expression injection. Avoid generic payloads — they waste time and trigger WAFs." },
+        { "@type": "HowToStep", "name": "Hunt DOM-based XSS separately", "text": "Review client-side JavaScript for dangerous sinks: innerHTML, document.write, eval, setTimeout with string args, jQuery.html(). Trace data flow from sources (location.hash, location.search, document.referrer, postMessage) to these sinks. Browser DevTools and DOM Invader (Burp) automate parts of this." },
+        { "@type": "HowToStep", "name": "Bypass WAF and sanitizer filters", "text": "When a WAF blocks your payload, identify what it filters (tag names, event handlers, specific strings). Use alternative tags (svg, math, details), alternative events (onfocus, onbeforetoggle, onanimationend), encoding tricks, and HTML entity abuse. Test mutation XSS vectors when client-side sanitization is present." },
+        { "@type": "HowToStep", "name": "Escalate impact beyond alert(1)", "text": "Prove real impact: steal cookies (if no HttpOnly), exfiltrate localStorage tokens, perform actions as the victim via fetch requests, or redirect to a credential-harvesting page. A report showing account takeover via XSS pays 5-10x more than a report showing alert(1)." }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>Scanners find the easy reflected XSS — the bugs that pay real money (stored XSS, DOM XSS, mXSS) require manual hunting</li>
+<li>Context is everything: the same payload that works in raw HTML fails inside a JavaScript string or tag attribute</li>
+<li>DOM-based XSS lives entirely in client-side code — you find it by reading JavaScript, not by fuzzing parameters</li>
+<li>WAF bypass is a skill, not a trick: understand what the filter blocks, then find what it allows</li>
+<li>Impact determines payout — escalate from alert(1) to account takeover or data exfiltration before reporting</li>
+</ul>
+</div>
+
+<h2>Why XSS Still Pays in 2026</h2>
+
+<p>Cross-site scripting has been on the OWASP Top 10 for over two decades, and it still accounts for roughly 20% of all bug bounty payouts. The reason is simple: every web application reflects user input somewhere, and the attack surface keeps growing as applications move logic to the client side.</p>
+
+<p>But the easy XSS — the reflected parameter that pops an alert box — gets caught by scanners and fixed before you ever see it. The XSS that pays in 2026 is the kind scanners cannot find: DOM-based injection through client-side JavaScript, stored XSS through multi-step workflows, and mutation XSS that exploits browser parsing quirks to bypass sanitizers.</p>
+
+<p>This guide covers how to find those bugs. If you're looking for what automated scanners check, read our <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">reflected XSS scanner detection guide</a> first. This article picks up where scanners stop.</p>
+
+<h2>The Three Types of XSS (And Which Ones Pay)</h2>
+
+<h3>Reflected XSS</h3>
+
+<p>The input goes in through a request parameter and comes back in the immediate response. The victim must click a crafted link. Reflected XSS on a login page or sensitive action page pays Medium. On a static marketing page, most programs mark it Low or Informational.</p>
+
+<p>Scanners catch most reflected XSS. Your edge as a manual hunter is finding reflections in unusual places: HTTP headers rendered in error pages, JSON responses consumed by client-side rendering, and API endpoints whose output gets injected into the DOM by frontend code.</p>
+
+<h3>Stored XSS</h3>
+
+<p>The payload persists on the server and executes when other users view the affected page. This is where the money is. A stored XSS in a user profile field that renders on an admin dashboard can be Critical. Common injection points:</p>
+
+<ul>
+<li>Display names and profile bios</li>
+<li>Comment and review systems</li>
+<li>File upload metadata (EXIF data, filenames)</li>
+<li>Support ticket content rendered in agent dashboards</li>
+<li>Webhook URLs and callback configurations</li>
+<li>Email subject lines rendered in web-based inboxes</li>
+</ul>
+
+<p>The key insight: the injection point and the execution point are often on different pages, accessed by different user roles. Scanners test the same page they inject into — they miss cross-page stored XSS entirely.</p>
+
+<h3>DOM-Based XSS</h3>
+
+<p>The payload never reaches the server. Client-side JavaScript reads from a source (URL fragment, localStorage, postMessage) and writes to a dangerous sink (innerHTML, document.write, eval). The server response is clean — the vulnerability exists entirely in the browser.</p>
+
+<p>This is the most underreported XSS type because it requires reading JavaScript source code, not just fuzzing parameters. If you develop the skill to trace source-to-sink data flows in client-side code, you will find bugs that no other hunter and no scanner will catch.</p>
+
+<h2>Step 1: Map Every Input Reflection Point</h2>
+
+<p>Before you test a single payload, map where user input appears in the application's output. This is not just URL parameters — it includes:</p>
+
+<ul>
+<li><strong>Query parameters and path segments</strong> — the obvious ones</li>
+<li><strong>POST body fields</strong> — form submissions, JSON payloads, multipart uploads</li>
+<li><strong>HTTP headers</strong> — Referer, User-Agent, X-Forwarded-For rendered in logs or error pages</li>
+<li><strong>Cookie values</strong> — sometimes reflected in page content</li>
+<li><strong>URL fragments</strong> — never sent to the server, but consumed by client-side JavaScript</li>
+</ul>
+
+<p>Use Burp Suite's passive scanner to flag reflections automatically as you browse. For a more targeted approach, inject a unique canary string (like <code>xss7r4c3</code>) into every parameter and search the response for it. This tells you where your input lands without triggering any WAF rules.</p>
+
+<h2>Step 2: Identify the Rendering Context</h2>
+
+<p>The same input reflected in different HTML contexts requires completely different payloads. Before crafting an exploit, determine exactly where your input lands:</p>
+
+<table>
+<thead>
+<tr><th>Context</th><th>Example</th><th>Breakout Strategy</th></tr>
+</thead>
+<tbody>
+<tr><td>Raw HTML</td><td><code>&lt;div&gt;USER_INPUT&lt;/div&gt;</code></td><td>Inject a tag directly: <code>&lt;img src=x onerror=alert(1)&gt;</code></td></tr>
+<tr><td>Tag attribute (quoted)</td><td><code>&lt;input value="USER_INPUT"&gt;</code></td><td>Close the attribute and tag: <code>"&gt;&lt;img src=x onerror=alert(1)&gt;</code></td></tr>
+<tr><td>Tag attribute (unquoted)</td><td><code>&lt;input value=USER_INPUT&gt;</code></td><td>Add an event handler: <code>x onfocus=alert(1) autofocus</code></td></tr>
+<tr><td>JavaScript string</td><td><code>var x = 'USER_INPUT';</code></td><td>Close the string: <code>';alert(1)//</code></td></tr>
+<tr><td>Template literal</td><td><code>var x = `USER_INPUT`;</code></td><td>Expression injection: <code>${alert(1)}</code></td></tr>
+<tr><td>HTML comment</td><td><code>&lt;!-- USER_INPUT --&gt;</code></td><td>Close the comment: <code>--&gt;&lt;img src=x onerror=alert(1)&gt;</code></td></tr>
+<tr><td>CSS value</td><td><code>background: url(USER_INPUT)</code></td><td>Limited in modern browsers — focus on other contexts</td></tr>
+</tbody>
+</table>
+
+<p>If you send a generic <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> payload into an attribute context, it will fail even if there is zero sanitization. Context-aware payloads are not optional — they are the difference between finding the bug and missing it.</p>
+
+<h2>Step 3: Hunt DOM-Based XSS</h2>
+
+<p>DOM XSS requires a different methodology. You are not testing server responses — you are auditing client-side JavaScript.</p>
+
+<h3>Dangerous Sinks to Search For</h3>
+
+<p>Open the browser DevTools, go to Sources, and search the application's JavaScript for these patterns:</p>
+
+<ul>
+<li><code>innerHTML</code> — the most common DOM XSS sink</li>
+<li><code>outerHTML</code></li>
+<li><code>document.write()</code> and <code>document.writeln()</code></li>
+<li><code>eval()</code>, <code>Function()</code>, <code>setTimeout(string)</code>, <code>setInterval(string)</code></li>
+<li><code>jQuery.html()</code>, <code>jQuery.append()</code>, <code>jQuery.prepend()</code></li>
+<li><code>React dangerouslySetInnerHTML</code></li>
+<li><code>v-html</code> in Vue templates</li>
+<li><code>[innerHTML]</code> bindings in Angular</li>
+</ul>
+
+<h3>Tainted Sources to Trace</h3>
+
+<p>For each sink, trace backward to find where the data originates:</p>
+
+<ul>
+<li><code>location.hash</code>, <code>location.search</code>, <code>location.href</code></li>
+<li><code>document.referrer</code></li>
+<li><code>window.name</code></li>
+<li><code>postMessage</code> event handlers</li>
+<li><code>localStorage</code> / <code>sessionStorage</code> values</li>
+<li>URL parameters parsed by client-side routers</li>
+</ul>
+
+<p>If user-controlled data flows from a source to a sink without sanitization, you have a DOM XSS. Burp Suite's DOM Invader extension automates source-to-sink tracing and is worth the Professional license cost for this alone.</p>
+
+<h2>Step 4: Bypass WAFs and Sanitizers</h2>
+
+<p>Modern applications use WAFs (Cloudflare, AWS WAF, Akamai) and client-side sanitizers (DOMPurify). When your payload gets blocked, don't give up — adapt.</p>
+
+<h3>WAF Bypass Techniques</h3>
+
+<p><strong>Use alternative tags.</strong> WAFs often block <code>&lt;script&gt;</code>, <code>&lt;img&gt;</code>, and <code>&lt;svg&gt;</code> but miss less common tags:</p>
+
+<pre><code>&lt;details open ontoggle=alert(1)&gt;
+&lt;math&gt;&lt;mtext&gt;&lt;table&gt;&lt;mglyph&gt;&lt;style&gt;&lt;!--&lt;/style&gt;&lt;img src=x onerror=alert(1)&gt;
+&lt;svg/onload=alert(1)&gt;
+&lt;body onpageshow=alert(1)&gt;
+&lt;marquee onstart=alert(1)&gt;</code></pre>
+
+<p><strong>Use alternative event handlers.</strong> If <code>onerror</code> and <code>onload</code> are blocked:</p>
+
+<pre><code>onfocus, onblur, oninput, onchange
+onanimationstart, onanimationend
+onbeforetoggle (new in 2025+)
+onpointerover, onpointerenter</code></pre>
+
+<p><strong>Encoding and case tricks:</strong></p>
+
+<ul>
+<li>HTML entities: <code>&amp;lt;</code> decoded by the browser after WAF inspection</li>
+<li>Double URL encoding: <code>%253C</code> decoded twice by the server</li>
+<li>Unicode normalization: <code>＜script＞</code> (fullwidth characters)</li>
+<li>Null bytes: <code>%00</code> between tag characters to confuse pattern matching</li>
+</ul>
+
+<h3>Client-Side Sanitizer Bypass (Mutation XSS)</h3>
+
+<p>DOMPurify is the gold standard for client-side sanitization, but older versions have known mXSS vectors. When you encounter DOMPurify:</p>
+
+<ol>
+<li>Check the version (look in the JavaScript source or network responses)</li>
+<li>Search for known bypasses for that version on PortSwigger Research and the DOMPurify GitHub issues</li>
+<li>Test with nested tag combinations that the browser's parser normalizes differently than the sanitizer expects</li>
+</ol>
+
+<p>Mutation XSS is rare but pays extremely well because it bypasses the defense that the application explicitly chose to deploy.</p>
+
+<h2>Step 5: Escalate Impact</h2>
+
+<p>A report that says "I can execute alert(1)" gets triaged as Low. A report that says "I can take over any user's account" gets triaged as Critical. Same vulnerability, different payout. Always escalate before reporting.</p>
+
+<h3>Impact Escalation Paths</h3>
+
+<ul>
+<li><strong>Session hijacking:</strong> If cookies lack the HttpOnly flag, steal them with <code>document.cookie</code> and send to your server. Full account takeover.</li>
+<li><strong>Token theft:</strong> Many SPAs store JWT tokens in localStorage. XSS can read localStorage and exfiltrate the token.</li>
+<li><strong>Action on behalf of victim:</strong> Use <code>fetch()</code> to perform sensitive actions (change email, change password, transfer funds) as the victim. This works even with HttpOnly cookies because the browser attaches them automatically.</li>
+<li><strong>Keylogging:</strong> Inject an event listener that captures keystrokes on the page — useful for login pages.</li>
+<li><strong>Phishing:</strong> Replace the page content with a fake login form that sends credentials to your server.</li>
+</ul>
+
+<p>Document the full attack chain in your report. Include the payload, the impact proof, and a clear explanation of what an attacker could achieve. See our <a href="/articles/how-to-write-bug-bounty-reports-2026/">bug bounty report writing guide</a> for the full template.</p>
+
+<h2>XSS Hunting Checklist</h2>
+
+<ol>
+<li>Map all reflection points (parameters, headers, cookies, fragments)</li>
+<li>Inject canary strings to identify where input appears in output</li>
+<li>Determine the rendering context for each reflection</li>
+<li>Test context-specific breakout payloads</li>
+<li>Audit client-side JavaScript for source-to-sink DOM XSS</li>
+<li>Test stored XSS through profile fields, comments, file metadata</li>
+<li>Attempt WAF bypass with alternative tags and event handlers</li>
+<li>Check for mutation XSS if client-side sanitization is present</li>
+<li>Escalate impact: session hijacking, token theft, or action-as-victim</li>
+<li>Write the report with full attack chain and business impact</li>
+</ol>
+
+<h2>Tools for XSS Hunting</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Cost</th></tr>
+</thead>
+<tbody>
+<tr><td>Burp Suite Professional</td><td>Passive reflection detection, active scanning, Turbo Intruder for payload fuzzing</td><td>$449/yr</td></tr>
+<tr><td>DOM Invader (Burp extension)</td><td>Automated source-to-sink tracing for DOM XSS</td><td>Included with Burp Pro</td></tr>
+<tr><td>dalfox</td><td>Open-source XSS scanner with context-aware payload generation</td><td>Free</td></tr>
+<tr><td>XSStrike</td><td>Fuzzing engine that analyzes context and generates targeted payloads</td><td>Free</td></tr>
+<tr><td>Browser DevTools</td><td>JavaScript debugging, DOM inspection, network analysis</td><td>Free</td></tr>
+<tr><td>kxss</td><td>Fast reflection checker — identifies which parameters reflect unfiltered</td><td>Free</td></tr>
+</tbody>
+</table>
+
+<p>For a deeper look at Burp extensions that accelerate XSS hunting, see our <a href="/articles/burp-suite-extensions-bug-bounty-2026/">Burp Suite extensions guide</a>.</p>
+
+<h2>Common Mistakes That Waste Time</h2>
+
+<ul>
+<li><strong>Testing generic payloads without checking context.</strong> If your input lands inside a JavaScript string, no amount of <code>&lt;script&gt;</code> tags will work. Check context first.</li>
+<li><strong>Ignoring DOM XSS.</strong> If you only test server-reflected parameters, you miss an entire class of vulnerabilities that no other hunter is looking at.</li>
+<li><strong>Reporting self-XSS.</strong> If the victim must paste the payload into their own browser console, it is not a vulnerability. The payload must be deliverable via a link, stored content, or postMessage.</li>
+<li><strong>Stopping at alert(1).</strong> Prove impact. The difference between a $200 payout and a $5,000 payout is the escalation chain.</li>
+<li><strong>Fighting the WAF with brute force.</strong> Sending 10,000 payloads from a wordlist triggers rate limiting and gets your IP blocked. Understand what the WAF filters, then craft one payload that bypasses it.</li>
+</ul>
+
+<h2>What to Read Next</h2>
+
+<p>XSS hunting pairs well with other client-side and injection-focused skills:</p>
+
+<ul>
+<li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow</a> — find the injectable endpoints before other hunters do</li>
+<li><a href="/articles/api-hacking-bug-bounty-guide-2026/">API Hacking for Bug Bounty</a> — APIs often reflect input in JSON responses consumed by frontend code</li>
+<li><a href="/articles/race-condition-hunting-bug-bounty-guide-2026/">Race Condition Hunting</a> — another manual-only vulnerability class that scanners miss</li>
+<li><a href="/articles/ssrf-hunting-bug-bounty-guide-2026/">SSRF Hunting for Bug Bounty</a> — server-side injection that pairs with XSS for full-chain exploits</li>
+<li><a href="/articles/bug-bounty-resource-center-hub-2026/">Bug Bounty Resource Center</a> — the complete index of our hunting guides</li>
+</ul>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

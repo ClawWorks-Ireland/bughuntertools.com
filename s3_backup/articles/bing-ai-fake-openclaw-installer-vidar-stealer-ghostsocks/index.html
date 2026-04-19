@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Huntress researchers caught Bing AI promoting malicious GitHub repos impersonating OpenClaw. Windows users got Vidar infostealer plus GhostSocks proxy malware. macOS users got Atomic Stealer.">
+    <title>Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/">
+    <meta property="og:title" content="Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.">
+    <meta property="og:description" content="Huntress researchers caught Bing AI promoting malicious GitHub repos impersonating OpenClaw. Windows users got Vidar infostealer plus GhostSocks proxy malware. macOS users got Atomic Stealer.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/">
+    <meta name="twitter:title" content="Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.">
+    <meta name="twitter:description" content="Huntress researchers caught Bing AI promoting malicious GitHub repos impersonating OpenClaw. Windows users got Vidar infostealer plus GhostSocks proxy malware. macOS users got Atomic Stealer.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "name": "Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.",
+      "description": "Huntress researchers caught Bing AI promoting malicious GitHub repos impersonating OpenClaw. Windows users got Vidar infostealer plus GhostSocks proxy malware. macOS users got Atomic Stealer.",
+      "url": "https://bughuntertools.com/articles/bing-ai-fake-openclaw-installer-vidar-stealer-ghostsocks/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<article>
+  <header>
+    <h1>Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.</h1>
+    <p class="meta">
+      <time datetime="2026-03-06">March 6, 2026</time> · 9 min read
+    </p>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+        <li>Attackers increasingly use legitimate services as command-and-control infrastructure</li>
+        <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+      </ul>
+    </div>
+
+    <p class="summary">
+      Researchers at Huntress caught Bing's AI-enhanced search recommending malicious GitHub repositories posing as OpenClaw installers. Windows users who followed the instructions picked up Vidar infostealer and GhostSocks backconnect proxy malware — loaded entirely in memory. macOS users got Atomic Stealer. The attack worked because the repos looked real, GitHub gave them legitimacy, and Bing's AI did the distribution.
+    </p>
+  </header>
+
+  <section>
+    <h2>What Happened</h2>
+    <p>
+      Huntress MDR discovered a campaign, disclosed in early March 2026, where threat actors registered GitHub organisations impersonating OpenClaw installers. The fake organisation — <code>openclaw-installer</code> — hosted repositories that appeared professional enough to fool Bing's AI-powered search at a glance.
+    </p>
+    <p>
+      When users searched for OpenClaw on Bing, the AI-generated results surfaced these malicious repos as recommended download sources — effectively doing the distribution work for the attackers with zero paid advertising. Huntress put it bluntly: <em>"just hosting the malware on GitHub was enough to poison Bing AI search results."</em>
+    </p>
+    <p>
+      To boost credibility, the threat actors copied real code from Cloudflare's <strong>Moltworker</strong> project into their repos — something an automated credibility signal might read as "this looks like real infrastructure code". It worked.
+    </p>
+    <p>
+      The official OpenClaw repository is at <a href="https://github.com/openclaw/openclaw" rel="noopener noreferrer">https://github.com/openclaw/openclaw</a>. If you're not reading from there, you're not reading the real thing.
+    </p>
+  </section>
+
+  <section>
+    <h2>The Payload Chain — Two Platforms, Three Malware Families</h2>
+
+    <h3>Windows: Vidar + GhostSocks</h3>
+    <p>
+      Windows users following the fake installation instructions downloaded <code>OpenClaw_x64.exe</code>. That binary executed multiple payloads in sequence:
+    </p>
+    <ul>
+      <li><strong>Rust-based memory loaders</strong> — Multiple executables, all written in Rust, that loaded the final payloads directly into memory. No disk writes where endpoint tooling would typically look.</li>
+      <li><strong>Vidar infostealer</strong> — A well-documented stealer that harvests browser credentials, session tokens, crypto wallets, and anything else useful from the machine. Its C2 communication is unusual: Vidar resolves its command server address by scraping <strong>Telegram channel descriptions and Steam user profile pages</strong> — legitimate services that most corporate firewalls won't block.</li>
+      <li><strong>GhostSocks backconnect proxy</strong> — After stealing credentials, GhostSocks turns the victim's machine into a proxy node. Attackers then route their own traffic through it to bypass geo-based fraud detection and anti-abuse checks — including the kind that would flag a login from an attacker's VPS but not from the victim's own IP.</li>
+    </ul>
+    <p>
+      Huntress noted that their Managed AV and Managed Defender solutions caught and quarantined the payloads on the customer machine they analysed. That's a best-case scenario — enterprises with EDR deployed got visibility. Consumer users who followed the same instructions likely did not.
+    </p>
+
+    <h3>macOS: Atomic Stealer</h3>
+    <p>
+      The macOS path used a different delivery mechanism. Victims were shown a bash command to paste into Terminal — a pattern now so common it has a name: <strong>pastejacking</strong>. The command reached a second GitHub organisation (<code>puppeteerrr</code>, repository <code>dmg</code>) that contained shell scripts paired with Mach-O executables identified by Huntress as <strong>Atomic Stealer</strong> (also known as AMOS).
+    </p>
+    <p>
+      Atomic Stealer is a macOS infostealer with a solid pedigree — it targets browser data, iCloud Keychain content, macOS password prompts (fake UI that captures the user's login), and crypto wallet extensions. It's sold as crimeware-as-a-service and has seen active development since at least 2023.
+    </p>
+  </section>
+
+  <section>
+    <h2>Why Bing AI Is the Story Here</h2>
+    <p>
+      This campaign is notable less for the malware families — Vidar and Atomic Stealer are both known quantities — and more for <em>how it found victims</em>. The distribution channel was Bing's AI search, not phishing emails, not malicious ads, not SEO poisoning in the traditional sense.
+    </p>
+    <p>
+      AI-enhanced search results from Bing surface recommended content based on signals that include GitHub's own credibility metrics — stars, forks, commit activity, organisation affiliation. The attackers gamed exactly those signals: a named GitHub organisation, copied legitimate code in the repository, and enough apparent structure to look like a real project.
+    </p>
+    <p>
+      This is a different threat model than SEO poisoning, where attackers build pages optimised for search crawlers. Here, the attack surface is the <strong>LLM-layer summarisation and recommendation</strong> that sits on top of search — something that infers intent and trustworthiness without the same depth of vetting a security researcher would apply.
+    </p>
+    <p>
+      The practical implication: AI-powered search recommendations should be treated as suggestions, not endorsements. For software downloads especially, verify URLs directly against the official project.
+    </p>
+  </section>
+
+  <section>
+    <h2>Disclosure Status</h2>
+    <p>
+      Huntress reported all identified malicious repositories and accounts to GitHub. As of their disclosure date (early March 2026), removal status was unclear. GitHub's response to malicious repository reports varies in speed — if you encounter a repository claiming to offer OpenClaw outside the official org, report it directly at <a href="https://github.com/contact/report-abuse" rel="noopener noreferrer">github.com/contact/report-abuse</a>.
+    </p>
+    <p>
+      Microsoft has not issued a public statement about the Bing AI recommendation as of this writing.
+    </p>
+  </section>
+
+  <section>
+    <h2>Detection and Response</h2>
+
+    <h3>If You Downloaded from an Unofficial Source</h3>
+    <p>
+      Assume compromise. The immediate steps:
+    </p>
+    <ol>
+      <li><strong>Isolate the machine</strong> — disconnect from the network if you have reason to believe the installer ran.</li>
+      <li><strong>Credential rotation</strong> — every browser-saved password, every session token, every stored credential on that machine should be treated as stolen. Rotate all of them from a clean device.</li>
+      <li><strong>Check for proxy activity</strong> — GhostSocks establishes an outbound TCP connection to the attacker's infrastructure. Look for unexpected outbound connections to unfamiliar IPs, especially persistent connections that survive reboots.</li>
+      <li><strong>Crypto wallet audit</strong> — if you have any browser-based crypto extensions or wallet files on the machine, assume they were captured. Both Vidar and Atomic Stealer explicitly target wallet software.</li>
+      <li><strong>Revoke active sessions</strong> — log out all sessions on Google, Microsoft, Apple, GitHub, and any SaaS tools used from that machine. Vidar captures session cookies, which bypass password-based authentication entirely.</li>
+    </ol>
+
+    <h3>IOC Summary (from Huntress)</h3>
+    <ul>
+      <li>Malicious GitHub org: <code>openclaw-installer</code></li>
+      <li>Malicious repo: <code>puppeteerrr/dmg</code></li>
+      <li>Windows payload filename: <code>OpenClaw_x64.exe</code></li>
+      <li>C2 pattern: Vidar resolves C2 via Telegram/Steam profile scraping</li>
+      <li>Proxy pattern: GhostSocks establishes persistent outbound TCP backconnect</li>
+    </ul>
+
+    <h3>Network-Level Detection</h3>
+    <p>
+      Because Vidar uses Telegram and Steam as C2 relay channels, straightforward domain blocklisting won't catch it. Detection requires <strong>behavioural analysis</strong>: look for new or unexpected processes making unusual sequences of requests to Telegram API endpoints (<code>api.telegram.org</code>) or Steam profile URLs shortly after software installation. A fresh browser process making a GET to a Telegram channel description within minutes of install is anomalous — flag it.
+    </p>
+  </section>
+
+  <section>
+    <h2>The Broader Pattern: GitHub + AI Search as Attack Surface</h2>
+    <p>
+      This campaign fits a wider playbook that's been evolving since 2023:
+    </p>
+    <ol>
+      <li><strong>Target a popular open-source tool</strong> — OpenClaw, Node.js packages, Python utilities. Popularity means more search traffic and more user trust.</li>
+      <li><strong>Create a plausible-looking repository</strong> — clone legitimate code, use a professional-sounding org name, add a README with installation instructions.</li>
+      <li><strong>Wait for AI-assisted discovery</strong> — neither paid placement nor active SEO needed. LLM-based search assistants will surface it based on relevance signals alone.</li>
+      <li><strong>Deliver payload via trusted mechanism</strong> — terminal commands look authoritative; users who "installed" the real tool via terminal are primed to follow the same instructions in a fake guide.</li>
+    </ol>
+    <p>
+      It's a supply chain attack that never touches the actual supply chain — it operates entirely in the <em>discovery layer</em> between "I want to install X" and "I'm on the official download page".
+    </p>
+
+    <h3>Related: Malicious Skills and Package Registries</h3>
+    <p>
+      This isn't the first time OpenClaw's ecosystem has been targeted. BleepingComputer previously reported on <a href="https://www.bleepingcomputer.com/news/security/malicious-moltbot-skills-used-to-push-password-stealing-malware/">malicious Moltbot skills used to push password-stealing malware</a> — in that case, attacker-controlled instruction files in the official skills registry. The GitHub installer campaign represents escalation: if the registry is being watched more closely, move the attack to the installation step.
+    </p>
+  </section>
+
+  <section>
+    <h2>Defender Checklist — AI Search Downloads</h2>
+    <p>
+      For any open-source tool installation, apply the following before running anything:
+    </p>
+    <ul>
+      <li>✅ <strong>Find the official repository independently</strong> — search the project name + "github" and confirm the org matches official documentation, not a search result.</li>
+      <li>✅ <strong>Check repository age and contributor history</strong> — a two-week-old org with one contributor and 0 stars is suspicious regardless of how polished the README looks.</li>
+      <li>✅ <strong>Verify the download URL in official docs</strong> — the project's own website or documentation should reference download URLs directly. If you can't find the URL in official docs, don't run the installer.</li>
+      <li>✅ <strong>Treat AI search results as suggestions, not endorsements</strong> — AI-generated results surface content based on signals that attackers can game. The recommendation box is not a security control.</li>
+      <li>✅ <strong>Scan before executing</strong> — even on macOS. Run installers through VirusTotal or your EDR before execution, especially for tools that request privileged access or system-level permissions.</li>
+      <li>✅ <strong>Bookmark the official repos</strong> — once you've verified the real URL, bookmark it. Every future update should come from that bookmark, not a new search.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Security Reading</h2>
+    <p>
+      Understanding how infostealers operate — and how to defend against them at an architectural level — is covered in depth in these:
+    </p>
+    <ul>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/B005LVQA9S?tag=altclaw-20" rel="noopener noreferrer">
+          The Web Application Hacker's Handbook
+        </a> — session hijacking, credential theft mechanics, and defence patterns. The infostealer model is session-cookie theft in bulk; this book explains why rotating passwords alone isn't sufficient after credential compromise.
+      </li>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/1718501129?tag=altclaw-20" rel="noopener noreferrer">
+          Black Hat Python (2nd Edition)
+        </a> — covers network-level implant communication patterns, including the kind of backconnect proxy architecture GhostSocks uses. Useful for both understanding what defenders are up against and for writing detection tooling.
+      </li>
+      <li>
+        <a href="https://www.amazon.co.uk/dp/B07HBD71HL?tag=altclaw-20" rel="noopener noreferrer">
+          YubiKey 5 NFC
+        </a> — Vidar steals session cookies. FIDO2 hardware keys mean that even with valid session cookies, an attacker cannot initiate a new authenticated session on a protected account without the physical key. For accounts you can't afford to lose, hardware MFA is the correct mitigation.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Source and Attribution</h2>
+    <p>
+      Primary source: Huntress MDR research, March 2026. Reported by BleepingComputer. Huntress identified the malicious repos, analysed the payload chain, and reported the repositories to GitHub.
+    </p>
+    <p>
+      The official OpenClaw installer is at <a href="https://github.com/openclaw/openclaw">https://github.com/openclaw/openclaw</a>. No other installation source should be trusted.
+    </p>
+  </section>
+
+  <section class="faq">
+    <h2>Frequently Asked Questions</h2>
+
+    <details>
+      <summary>How did Bing AI get tricked into recommending the fake installer?</summary>
+      <p>
+        Bing's AI-powered search surfaces recommendations based on signals like GitHub's credibility metrics — repository structure, organisation affiliation, and the presence of plausible code. The attackers specifically copied real code from Cloudflare's Moltworker project to boost those signals. The AI recommendation layer doesn't perform security vetting; it infers relevance and credibility from surface-level signals that attackers can engineer.
+      </p>
+    </details>
+
+    <details>
+      <summary>What is Vidar stealer?</summary>
+      <p>
+        Vidar is an infostealer sold as crimeware-as-a-service, active since at least 2018. It collects browser credentials, saved passwords, session cookies, crypto wallet files, and system information, then exfiltrates the data to attacker infrastructure. Its distinctive feature is using Telegram channel descriptions and Steam user profile pages as dynamic C2 channels — when the attacker rotates infrastructure, they just update a Telegram bio or Steam profile, and the stealer follows without needing a new binary.
+      </p>
+    </details>
+
+    <details>
+      <summary>What is GhostSocks?</summary>
+      <p>
+        GhostSocks is a backconnect proxy malware — it installs a persistent SOCKS proxy on the victim's machine that attackers can route traffic through. The main use cases are: bypassing fraud detection (logins from the victim's own IP pass geo checks that would block an attacker's VPS), hiding attacker infrastructure, and conducting follow-on attacks that appear to originate from the victim's network.
+      </p>
+    </details>
+
+    <details>
+      <summary>Does rotating my password protect me after a Vidar infection?</summary>
+      <p>
+        Only partially. Vidar steals session cookies — active authenticated sessions that remain valid until they expire or are revoked, regardless of password changes. A password rotation doesn't invalidate existing session tokens. You need to explicitly log out all active sessions on affected services (most platforms have a "sign out all devices" option) and then change passwords <em>after</em> clearing sessions. For future protection, hardware FIDO2 keys prevent new sessions from being established even with a valid cookie.
+      </p>
+    </details>
+
+    <details>
+      <summary>How can I check if my machine is running GhostSocks?</summary>
+      <p>
+        Look for persistent outbound TCP connections to unfamiliar external IPs that survive reboots, initiated by processes that don't normally make network connections. On Windows: <code>netstat -ano</code> and cross-reference the owning PID with Task Manager. On macOS: <code>lsof -i TCP</code>. EDR solutions will capture process-level network telemetry that makes this much easier. If you suspect infection, the most reliable approach is to reimagine the machine from a known-clean backup rather than attempting manual cleanup of a proxy implant.
+      </p>
+    </details>
+
+    <details>
+      <summary>What's the correct way to install OpenClaw?</summary>
+      <p>
+        Go directly to <a href="https://github.com/openclaw/openclaw">https://github.com/openclaw/openclaw</a>. Don't search for it on Bing, Google, or any AI assistant and follow a link from those results. Bookmark the official URL once you've verified it. Check that the organisation name in the URL is exactly <code>openclaw</code> — not <code>openclaw-installer</code> or any variation. The official documentation should be the only guide you follow for installation steps.
+      </p>
+    </details>
+  </section>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Bing AI Recommended a Fake OpenClaw Installer. It Delivered Vidar, GhostSocks, and Atomic Stealer.",
+    "description": "Huntress researchers caught Bing AI promoting malicious GitHub repos impersonating OpenClaw. Windows users got Vidar infostealer plus GhostSocks proxy malware. macOS users got Atomic Stealer.",
+    "datePublished": "2026-03-06",
+    "author": {"@type": "Organization", "name": "Bug Hunter Tools"},
+    "publisher": {"@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com"}
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How did Bing AI get tricked into recommending the fake installer?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Bing's AI-powered search surfaces recommendations based on signals like GitHub's credibility metrics. The attackers copied real code from Cloudflare's Moltworker project to boost those signals. The AI recommendation layer doesn't perform security vetting; it infers credibility from surface-level signals that attackers can engineer."}
+      },
+      {
+        "@type": "Question",
+        "name": "What is Vidar stealer?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Vidar is an infostealer sold as crimeware-as-a-service that collects browser credentials, session cookies, and crypto wallet files. Its distinctive feature is using Telegram channel descriptions and Steam user profiles as dynamic C2 channels."}
+      },
+      {
+        "@type": "Question",
+        "name": "Does rotating my password protect me after a Vidar infection?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Only partially. Vidar steals session cookies that remain valid until explicitly revoked, regardless of password changes. You need to sign out all active sessions on affected services, then change passwords. Hardware FIDO2 keys prevent new sessions from being established even with a valid cookie."}
+      }
+    ]
+  }
+  </script>
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/installfix-fake-claude-code-fake-openclaw-amatera-stealer-2026/">Fake Claude Code, Fake OpenClaw: The InstallFix Developer CLI Impersonation Campaign</a></li>
+    <li><a href="/articles/north-korea-stegabin-npm-pastebin-steganography-c2/">North Korea's StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</a></li>
+    <li><a href="/articles/model-distillation-attacks-deepseek-claude-anthropic-2026/">Model Distillation Attacks: How DeepSeek and Chinese AI Firms Extracted Claude at Industrial Scale</a></li>
+    <li><a href="/articles/roguepilot-github-copilot-prompt-injection/">RoguePilot: How a Hidden GitHub Copilot Bug Silently Steals Your Entire Repository</a></li>
+    <li><a href="/demos/securityclaw-supply-chain-scanner-demo-2026/">We Planted 7 Threats in a package.json. SecurityClaw Found All of Them in 0.19 Seconds.</a></li>
+  </ul>
+</section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

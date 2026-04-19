@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s guide to wireless security testing tools in 2026. Covers Wi-Fi, Bluetooth, and IoT testing with Aircrack-ng, Kismet, Bettercap, and more.">
+    <title>Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth &amp; IoT Assessment Guide</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/wireless-security-testing-tools-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/wireless-security-testing-tools-2026/">
+    <meta property="og:title" content="Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth &amp; IoT Assessment Guide">
+    <meta property="og:description" content="A practitioner&#39;s guide to wireless security testing tools in 2026. Covers Wi-Fi, Bluetooth, and IoT testing with Aircrack-ng, Kismet, Bettercap, and more.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/wireless-security-testing-tools-2026/">
+    <meta name="twitter:title" content="Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth &amp; IoT Assessment Guide">
+    <meta name="twitter:description" content="A practitioner&#39;s guide to wireless security testing tools in 2026. Covers Wi-Fi, Bluetooth, and IoT testing with Aircrack-ng, Kismet, Bettercap, and more.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth &amp; IoT Assessment Guide",
+      "description": "A practitioner&#39;s guide to wireless security testing tools in 2026. Covers Wi-Fi, Bluetooth, and IoT testing with Aircrack-ng, Kismet, Bettercap, and more.",
+      "url": "https://bughuntertools.com/articles/wireless-security-testing-tools-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth &amp; IoT Assessment Guide</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Wireless Security Testing Tools in 2026: Wi-Fi, Bluetooth & IoT Assessment Guide",
+      "description": "A practitioner's guide to wireless security testing tools in 2026. Covers Wi-Fi, Bluetooth, and IoT testing with Aircrack-ng, Kismet, Bettercap, and more.",
+      "datePublished": "2026-04-12",
+      "dateModified": "2026-04-12",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What tools do I need for wireless security testing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The core toolkit includes Aircrack-ng for Wi-Fi cracking and packet capture, Kismet for wireless network detection and sniffing, Bettercap for MITM attacks and network reconnaissance, and Wireshark for packet analysis. For Bluetooth testing, add Ubertooth One hardware and btlejack. For IoT, add Zigbee and Z-Wave sniffers. Most practitioners start with Aircrack-ng and Kismet, then expand based on engagement scope."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is wireless security testing legal?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Wireless security testing is legal only when you have explicit written authorization from the network owner. Unauthorized interception of wireless communications violates laws in most jurisdictions, including the US Computer Fraud and Abuse Act and the UK Computer Misuse Act. Even passive monitoring may be illegal without authorization in some regions. Always get written scope and authorization before testing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between WPA2 and WPA3 security testing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "WPA2 is vulnerable to offline dictionary attacks via the 4-way handshake capture — tools like Aircrack-ng and Hashcat can crack weak passwords. WPA3 uses Simultaneous Authentication of Equals (SAE), which eliminates offline attacks by requiring an active exchange for each guess. Testing WPA3 focuses on downgrade attacks (forcing WPA2 fallback), implementation flaws in the SAE handshake (Dragonblood vulnerabilities), and transition mode misconfigurations."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need special hardware for wireless security testing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. You need a wireless adapter that supports monitor mode and packet injection — most built-in laptop Wi-Fi cards do not. Popular choices include the Alfa AWUS036ACH (dual-band, well-supported) and the TP-Link TL-WN722N v1 (budget option). For Bluetooth testing, the Ubertooth One is the standard. For Zigbee, the ApiMote or TI CC2531 USB dongle. Budget around $30-150 for Wi-Fi adapters and $100-120 for an Ubertooth One."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I do wireless security testing from a virtual machine?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Partially. You can pass USB wireless adapters through to a VM (VMware and VirtualBox both support USB passthrough), and tools like Aircrack-ng work fine in a Kali Linux VM. However, performance is slightly reduced compared to bare metal, and some timing-sensitive attacks may be less reliable. Most practitioners use a dedicated laptop with Kali Linux installed natively for field work, and VMs for lab practice and report writing."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "Wireless Security Testing Tools 2026" }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li><strong>Aircrack-ng remains the foundation</strong> of Wi-Fi security testing in 2026, but WPA3 adoption means you need to expand your toolkit beyond handshake capture.</li>
+<li><strong>Hardware matters more than software</strong> — a $30 Alfa adapter that supports monitor mode is worth more than $10,000 in software licenses if your built-in card can't inject packets.</li>
+<li><strong>Bluetooth and IoT testing are no longer niche</strong> — with billions of BLE devices deployed, wireless assessments that skip Bluetooth are leaving critical attack surface untested.</li>
+<li><strong>Evil twin attacks are still the most reliable Wi-Fi attack</strong> in enterprise environments where WPA2-Enterprise with RADIUS is properly configured.</li>
+<li><strong>Automation is limited in wireless testing</strong> — unlike web app scanning, wireless assessments require physical proximity, manual judgment, and environment-specific adaptation.</li>
+</ul>
+</div>
+
+<h2>Why Wireless Security Testing Still Matters in 2026</h2>
+
+<p>Every organization has a wireless attack surface. Office Wi-Fi, Bluetooth peripherals, IoT sensors, guest networks, warehouse scanners, conference room displays — all of it transmits data over radio frequencies that anyone within range can intercept.</p>
+
+<p>Yet wireless security testing remains one of the most neglected areas of penetration testing. Most security programs focus on web applications and cloud infrastructure (and they should — that's where the data lives). But wireless networks are often the path attackers use to get <em>onto</em> the network in the first place.</p>
+
+<p>The wireless threat landscape in 2026 looks different from five years ago. WPA3 adoption is growing but uneven — most enterprises still run WPA2 or mixed-mode configurations. Bluetooth Low Energy (BLE) devices have exploded, creating attack surface that didn't exist at scale before. And IoT deployments using Zigbee, Z-Wave, and LoRaWAN introduce protocols that most security teams have never tested.</p>
+
+<p>This guide covers the tools and techniques you need for a comprehensive wireless security assessment in 2026. We'll focus on practical workflows — what to test, which tools to use, and how to chain them together for real engagements.</p>
+
+<h2>Wi-Fi Security Testing Tools</h2>
+
+<h3>Aircrack-ng — The Foundation</h3>
+
+<p>Aircrack-ng is a complete suite of tools for Wi-Fi security assessment. It's been the standard since 2006, and in 2026 it's still the first tool most testers reach for. The suite includes:</p>
+
+<ul>
+<li><strong>airmon-ng</strong> — enables monitor mode on your wireless adapter</li>
+<li><strong>airodump-ng</strong> — captures packets and identifies nearby access points and clients</li>
+<li><strong>aireplay-ng</strong> — injects packets for deauthentication attacks and handshake capture</li>
+<li><strong>aircrack-ng</strong> — cracks WPA/WPA2 handshakes using dictionary or brute-force attacks</li>
+</ul>
+
+<p>The typical WPA2 testing workflow: enable monitor mode, scan for target networks with airodump-ng, capture the 4-way handshake (either by waiting or forcing a deauth), then crack offline with aircrack-ng or pass the capture to Hashcat for GPU-accelerated cracking.</p>
+
+<p><strong>Limitations in 2026:</strong> Aircrack-ng doesn't handle WPA3-SAE attacks natively. For WPA3 testing, you need to combine it with wpa_supplicant modifications or use specialized tools like Dragonforce. It also doesn't do Bluetooth or IoT protocols — it's purely 802.11.</p>
+
+<h3>Kismet — Wireless Network Detection and Sniffing</h3>
+
+<p>Kismet is a wireless network detector, sniffer, and intrusion detection system. Where Aircrack-ng is focused on attacking specific networks, Kismet excels at <em>discovery</em> — finding every wireless device in range, logging their behavior over time, and identifying anomalies.</p>
+
+<p>In 2026, Kismet supports Wi-Fi, Bluetooth, Zigbee (with appropriate hardware), and some SDR sources. Its web-based UI makes it practical for long-running monitoring during physical security assessments. Key use cases:</p>
+
+<ul>
+<li>Mapping all wireless networks in a facility (including hidden SSIDs)</li>
+<li>Detecting rogue access points and evil twins</li>
+<li>Identifying client devices and their probe requests (which reveal networks they've connected to before)</li>
+<li>Long-duration monitoring for wireless IDS</li>
+</ul>
+
+<h3>Bettercap — The Swiss Army Knife</h3>
+
+<p>Bettercap is a network attack and monitoring framework that handles Wi-Fi, Bluetooth Low Energy, and Ethernet. It's the most versatile tool in the wireless tester's kit because it bridges multiple protocols and attack types:</p>
+
+<ul>
+<li><strong>Wi-Fi</strong>: Deauthentication, evil twin AP creation, handshake capture, PMKID attacks</li>
+<li><strong>BLE</strong>: Device enumeration, service discovery, characteristic reading/writing</li>
+<li><strong>Network</strong>: ARP spoofing, DNS spoofing, MITM proxy with SSL stripping</li>
+</ul>
+
+<p>Bettercap's interactive console and scriptable caplets make it efficient for chaining attacks. A common workflow: create an evil twin AP, capture credentials via a captive portal, then pivot to network-level MITM attacks once clients connect.</p>
+
+<h3>Wifite2 — Automated Wi-Fi Auditing</h3>
+
+<p>Wifite2 automates the Aircrack-ng workflow. Point it at a target network and it handles monitor mode, handshake capture, PMKID extraction, and cracking automatically. It's useful for quickly auditing multiple networks during a physical assessment, but experienced testers typically prefer manual Aircrack-ng for more control.</p>
+
+<h3>Hashcat — GPU-Accelerated Cracking</h3>
+
+<p>Once you've captured a WPA2 handshake or PMKID, Hashcat is the fastest way to crack it. With a modern GPU (RTX 4090), Hashcat can test hundreds of thousands of WPA2 passwords per second — orders of magnitude faster than CPU-based Aircrack-ng. It supports rule-based attacks, mask attacks, and combinator attacks that make short work of predictable password patterns.</p>
+
+<h2>Wi-Fi Tool Comparison</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Primary Use</th><th>WPA2</th><th>WPA3</th><th>Evil Twin</th><th>BLE</th><th>Automation</th><th>Cost</th></tr>
+</thead>
+<tbody>
+<tr><td>Aircrack-ng</td><td>Handshake capture + crack</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>Low</td><td>Free</td></tr>
+<tr><td>Kismet</td><td>Discovery + monitoring</td><td>✅</td><td>✅</td><td>Detect</td><td>✅</td><td>Medium</td><td>Free</td></tr>
+<tr><td>Bettercap</td><td>Multi-protocol attacks</td><td>✅</td><td>Partial</td><td>✅</td><td>✅</td><td>High</td><td>Free</td></tr>
+<tr><td>Wifite2</td><td>Automated auditing</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>High</td><td>Free</td></tr>
+<tr><td>Hashcat</td><td>Password cracking</td><td>✅</td><td>❌</td><td>N/A</td><td>N/A</td><td>High</td><td>Free</td></tr>
+<tr><td>Hostapd-mana</td><td>Rogue AP / evil twin</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>Medium</td><td>Free</td></tr>
+<tr><td>Eaphammer</td><td>WPA2-Enterprise attacks</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>Medium</td><td>Free</td></tr>
+</tbody>
+</table>
+
+<h2>Bluetooth Security Testing</h2>
+
+<h3>Why Bluetooth Testing Matters Now</h3>
+
+<p>Bluetooth Low Energy (BLE) is everywhere in 2026 — fitness trackers, medical devices, smart locks, industrial sensors, point-of-sale terminals, and building access systems. Many of these devices have minimal security: no encryption, default PINs, or firmware that hasn't been updated since manufacturing.</p>
+
+<p>BLE attacks are practical from 30-100 meters with a directional antenna. In a corporate environment, that means an attacker in the parking lot can enumerate every Bluetooth device in the building.</p>
+
+<h3>Ubertooth One</h3>
+
+<p>The Ubertooth One is an open-source Bluetooth test tool that can sniff Bluetooth Classic and BLE traffic. It's the hardware equivalent of a monitor-mode Wi-Fi adapter for Bluetooth. At around $120, it's the standard for Bluetooth security testing. Use it with:</p>
+
+<ul>
+<li><strong>ubertooth-btle</strong> — sniff BLE advertising packets and connections</li>
+<li><strong>ubertooth-btbb</strong> — sniff Bluetooth Classic (BR/EDR) traffic</li>
+<li><strong>Wireshark</strong> — analyze captured Bluetooth packets with the Ubertooth plugin</li>
+</ul>
+
+<h3>btlejack</h3>
+
+<p>btlejack uses cheap nRF51-based hardware (BBC micro:bit, around $15) to sniff and jam BLE connections. It can hijack existing BLE connections by exploiting the connection parameter update mechanism. This is particularly effective against devices that don't implement LE Secure Connections.</p>
+
+<h3>GATTacker</h3>
+
+<p>GATTacker is a BLE MITM tool that clones a BLE device's GATT profile and creates a spoofed device. When the victim's phone connects to the spoofed device instead of the real one, GATTacker proxies the connection and can intercept or modify data in transit. Effective against smart locks, medical devices, and any BLE peripheral that doesn't implement mutual authentication.</p>
+
+<h3>Bettercap BLE Module</h3>
+
+<p>Bettercap's BLE module provides device enumeration, service discovery, and characteristic read/write from the same interface you use for Wi-Fi attacks. It's less specialized than dedicated BLE tools but convenient for quick reconnaissance during a broader wireless assessment.</p>
+
+<h2>IoT Protocol Testing</h2>
+
+<h3>Zigbee</h3>
+
+<p>Zigbee is used in smart home devices, industrial sensors, and building automation. Testing requires a Zigbee-compatible radio — the ApiMote or TI CC2531 USB dongle are common choices. Key tools:</p>
+
+<ul>
+<li><strong>KillerBee</strong> — framework for Zigbee and IEEE 802.15.4 security testing. Supports packet capture, replay attacks, and network key extraction.</li>
+<li><strong>Attify Zigbee Framework</strong> — simplified Zigbee testing with device enumeration and packet sniffing.</li>
+</ul>
+
+<p>The most common Zigbee vulnerability: many devices use the default Trust Center link key (well-known value) during network joining, allowing an attacker to capture the network key and decrypt all traffic.</p>
+
+<h3>Z-Wave</h3>
+
+<p>Z-Wave is common in home automation (locks, thermostats, security systems). The Z-Wave protocol had significant security improvements in the S2 framework, but many deployed devices still use the older S0 security (which has a known key exchange vulnerability) or no security at all. Testing requires a Z-Wave USB stick (Aeotec Z-Stick or Silicon Labs UZB-7).</p>
+
+<h3>LoRaWAN</h3>
+
+<p>LoRaWAN is used for long-range IoT deployments (smart meters, agricultural sensors, asset tracking). Testing requires an SDR (Software Defined Radio) or a LoRa development board. Common issues include ABP (Activation by Personalization) devices with static session keys, weak or reused AppKeys, and missing frame counter validation.</p>
+
+<h2>Practical Wireless Assessment Workflow</h2>
+
+<p>A structured wireless assessment follows these phases:</p>
+
+<h3>Phase 1: Reconnaissance (Passive)</h3>
+
+<ol>
+<li>Set up Kismet with Wi-Fi and BLE sources for passive monitoring</li>
+<li>Map all wireless networks, access points, and client devices in range</li>
+<li>Identify network types (WPA2-Personal, WPA2-Enterprise, WPA3, open)</li>
+<li>Log BLE devices and their advertising data</li>
+<li>Capture probe requests to identify client device history</li>
+<li>Run for 30-60 minutes to build a complete picture</li>
+</ol>
+
+<h3>Phase 2: Targeted Testing (Active)</h3>
+
+<ol>
+<li><strong>WPA2-Personal networks</strong>: Capture handshake via deauth, crack with Hashcat</li>
+<li><strong>WPA2-Enterprise networks</strong>: Deploy evil twin with Eaphammer, capture RADIUS credentials</li>
+<li><strong>WPA3 networks</strong>: Test for transition mode downgrade, check SAE implementation</li>
+<li><strong>Guest networks</strong>: Test isolation from corporate network, check for captive portal bypasses</li>
+<li><strong>BLE devices</strong>: Enumerate services, test for unauthenticated read/write, attempt MITM</li>
+</ol>
+
+<h3>Phase 3: Exploitation and Pivoting</h3>
+
+<ol>
+<li>If Wi-Fi credentials obtained, connect and assess internal network access</li>
+<li>Test network segmentation between wireless and wired networks</li>
+<li>Check if compromised BLE devices provide access to backend systems</li>
+<li>Document the full attack chain from wireless entry to data access</li>
+</ol>
+
+<h2>Hardware Recommendations</h2>
+
+<p>Your hardware determines what you can test. Here's what to budget for a complete wireless testing kit:</p>
+
+<table>
+<thead>
+<tr><th>Hardware</th><th>Purpose</th><th>Price Range</th><th>Recommended Model</th></tr>
+</thead>
+<tbody>
+<tr><td>Wi-Fi Adapter (2.4GHz + 5GHz)</td><td>Monitor mode + injection</td><td>$30-70</td><td>Alfa AWUS036ACH</td></tr>
+<tr><td>Wi-Fi Adapter (budget)</td><td>Basic 2.4GHz testing</td><td>$15-25</td><td>TP-Link TL-WN722N v1</td></tr>
+<tr><td>Ubertooth One</td><td>Bluetooth sniffing</td><td>$100-120</td><td>Great Scott Gadgets Ubertooth One</td></tr>
+<tr><td>BLE Sniffer (budget)</td><td>BLE-only testing</td><td>$10-20</td><td>nRF52840 Dongle or BBC micro:bit</td></tr>
+<tr><td>Zigbee Adapter</td><td>Zigbee/802.15.4</td><td>$30-50</td><td>TI CC2531 USB Dongle</td></tr>
+<tr><td>SDR</td><td>LoRa, Z-Wave, custom protocols</td><td>$25-300</td><td>RTL-SDR v4 (budget) or HackRF One (full)</td></tr>
+<tr><td>Directional Antenna</td><td>Extended range testing</td><td>$20-50</td><td>Alfa APA-M25 (for AWUS036ACH)</td></tr>
+</tbody>
+</table>
+
+<p><strong>Total budget for a complete kit:</strong> $250-650 depending on how many protocols you need to cover. Most testers start with just the Alfa Wi-Fi adapter ($35) and add hardware as engagement scope requires.</p>
+
+<h2>WPA3 Testing: What's Changed</h2>
+
+<p>WPA3 eliminates the offline dictionary attack that made WPA2 testing straightforward. With SAE (Simultaneous Authentication of Equals), each password guess requires an active exchange with the access point — no more capturing a handshake and cracking offline at GPU speed.</p>
+
+<p>What to test in WPA3 environments:</p>
+
+<ul>
+<li><strong>Transition mode</strong>: Many WPA3 deployments run in transition mode (WPA2 + WPA3 simultaneously). If you can force a client to downgrade to WPA2, the old attacks still work.</li>
+<li><strong>Dragonblood vulnerabilities</strong>: Implementation flaws in the SAE handshake discovered in 2019. Most vendors have patched, but check firmware versions — especially on older access points.</li>
+<li><strong>Side-channel attacks</strong>: Timing-based attacks against SAE implementations can leak information about the password. Requires specialized tooling and is more research-oriented than practical for most assessments.</li>
+<li><strong>Management frame protection</strong>: WPA3 mandates Protected Management Frames (PMF), which prevents deauthentication attacks. Verify PMF is actually enforced — some configurations advertise WPA3 but don't enforce PMF.</li>
+</ul>
+
+<h2>Common Findings in Wireless Assessments</h2>
+
+<p>Based on real-world assessment patterns, these are the most frequently reported wireless security findings:</p>
+
+<ol>
+<li><strong>Weak WPA2-Personal passwords</strong> — still the #1 finding. "CompanyName2026!" cracks in seconds with a targeted wordlist.</li>
+<li><strong>No wireless network segmentation</strong> — guest Wi-Fi on the same VLAN as corporate, or IoT devices with full network access.</li>
+<li><strong>WPA2-Enterprise without certificate validation</strong> — clients configured to accept any RADIUS server certificate, enabling evil twin credential capture.</li>
+<li><strong>Rogue access points</strong> — employees plugging in personal Wi-Fi routers, creating unmonitored network entry points.</li>
+<li><strong>BLE devices with no authentication</strong> — smart locks, badge readers, or sensors that accept commands from any BLE client.</li>
+<li><strong>Legacy protocols still active</strong> — WEP or open networks still broadcasting, sometimes on forgotten infrastructure.</li>
+<li><strong>Probe request information leakage</strong> — corporate devices broadcasting SSIDs of networks they've connected to, revealing travel patterns and network names.</li>
+</ol>
+
+<h2>How This Fits Into a Broader Security Program</h2>
+
+<p>Wireless testing is one piece of a comprehensive security assessment. It complements <a href="/articles/web-app-security-testing-checklist-2026/">web application testing</a>, <a href="/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">cloud security scanning</a>, and <a href="/articles/automated-penetration-testing-guide-2026/">automated penetration testing</a>. The key difference: wireless testing requires physical proximity, which means it's typically done during on-site assessments rather than remote engagements.</p>
+
+<p>For organizations building their security testing program, wireless assessments should happen at least annually and after any significant changes to wireless infrastructure (new office, new access points, IoT deployments). Between formal assessments, wireless IDS tools like Kismet can provide continuous monitoring for rogue access points and anomalous behavior.</p>
+
+<p>If you're coming from a web security background and want to expand into wireless, start with the <a href="/articles/bug-bounty-recon-workflow-2026/">bug bounty recon workflow</a> — many of the same reconnaissance principles apply. The main difference is that your "scope" is defined by radio range rather than domain names.</p>
+
+<p>For the complete picture of what your security testing program should cover, see our <a href="/articles/security-scanner-comparison-hub-2026/">security scanner comparison hub</a> and <a href="/articles/owasp-top-10-testing-guide-hub-2026/">OWASP Top 10 testing guide</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

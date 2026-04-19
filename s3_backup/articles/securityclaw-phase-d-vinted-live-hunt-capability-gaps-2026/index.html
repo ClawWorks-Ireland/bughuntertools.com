@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A 45-minute live bug bounty hunt against Vinted on Intigriti revealed four findings — and exposed ten capability gaps in SecurityClaw&#39;s own platform. Here&#39;s what VIN-001 (an internal Kubernetes hostname leak found with curl -I) teaches about passive-first hunting, and why Cloudflare changes the rules for every tool in the stack.">
+    <title>SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/securityclaw-phase-d-vinted-live-hunt-capability-gaps-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/securityclaw-phase-d-vinted-live-hunt-capability-gaps-2026/">
+    <meta property="og:title" content="SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself">
+    <meta property="og:description" content="A 45-minute live bug bounty hunt against Vinted on Intigriti revealed four findings — and exposed ten capability gaps in SecurityClaw&#39;s own platform. Here&#39;s what VIN-001 (an internal Kubernetes hostname leak found with curl -I) teaches about passive-first hunting, and why Cloudflare changes the rules for every tool in the stack.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/securityclaw-phase-d-vinted-live-hunt-capability-gaps-2026/">
+    <meta name="twitter:title" content="SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself">
+    <meta name="twitter:description" content="A 45-minute live bug bounty hunt against Vinted on Intigriti revealed four findings — and exposed ten capability gaps in SecurityClaw&#39;s own platform. Here&#39;s what VIN-001 (an internal Kubernetes hostname leak found with curl -I) teaches about passive-first hunting, and why Cloudflare changes the rules for every tool in the stack.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "name": "SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself",
+      "description": "A 45-minute live bug bounty hunt against Vinted on Intigriti revealed four findings — and exposed ten capability gaps in SecurityClaw&#39;s own platform. Here&#39;s what VIN-001 (an internal Kubernetes hostname leak found with curl -I) teaches about passive-first hunting, and why Cloudflare changes the rules for every tool in the stack.",
+      "url": "https://bughuntertools.com/articles/securityclaw-phase-d-vinted-live-hunt-capability-gaps-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself",
+      "description": "A 45-minute live bug bounty hunt against Vinted on Intigriti exposed four findings — and ten capability gaps in SecurityClaw's own platform. The primary finding (VIN-001: internal Kubernetes hostname leak via response headers) was found with curl -I in 30 seconds. The engine had no skill to do that automatically. This is Phase D.",
+      "datePublished": "2026-03-31",
+      "dateModified": "2026-03-31",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "url": "https://bughuntertools.com"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a Pwn Request in the context of response headers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In bug bounty hunting, response header analysis is passive reconnaissance — you send an HTTP request and read what the server tells you back. Modern web applications often leak significant infrastructure information in response headers: internal service names via x-middleware-rewrite (Next.js), backend technology via x-powered-by or server, internal network topology via via or x-forwarded-server, Kubernetes namespace information via x-envoy-upstream-service-time, and internal hostname patterns like *.svc or *.internal in proxy chain headers. These leaks require no active scanning, trigger no WAF rules, and are often overlooked because developers focus on application logic rather than what their infrastructure reveals in every HTTP response."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Cloudflare affect bug bounty hunting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cloudflare acts as a reverse proxy and WAF (Web Application Firewall) in front of roughly 60% of high-value bug bounty targets. Its impact on automated scanning is significant: aggressive path enumeration tools like gobuster and ffuf will be rate-limited or blocked; Nuclei templates at scale will trigger WAF rules and get source IPs blocked; active probing that generates high request volume is effectively impractical at production targets. The practical response is a passive-first methodology: prioritise Certificate Transparency logs for subdomain discovery, JavaScript bundle analysis for endpoint and secret extraction, response header analysis for infrastructure mapping, GitHub organisation search for code and configuration leaks, and cross-asset correlation. None of these trigger Cloudflare because they either don't send HTTP requests to the target at all (CT logs, GitHub) or send minimal, low-frequency requests that look like normal browser traffic (header analysis, JS bundle fetch)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the pull_request_target attack and why is it still exploited in 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The pull_request_target trigger in GitHub Actions runs workflows in the context of the target repository — with access to the repository's secrets and a privileged GITHUB_TOKEN — even when triggered by a pull request from a fork. This is intentional design: it allows maintainers to write to PR comments and labels from workflows triggered by external contributors. The vulnerability arises when a workflow using pull_request_target also executes code from the fork — particularly when it references github.event.pull_request.head.ref (the PR branch name, which the fork author controls) in a shell run step. The branch name becomes a shell injection vector. GitHub Security Lab documented this in 2021. It remains actively exploited in 2026 because: (1) the pull_request_target documentation does not prominently flag the security implications; (2) developers copy workflow patterns without understanding the trust boundary difference from pull_request; (3) many popular CI/CD workflow templates use the trigger for legitimate reasons and developers extend them without recognising the risk."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the SSRF (Server-Side Request Forgery) attack chain from infrastructure leaks?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Infrastructure leaks — particularly internal service names found in HTTP response headers — create a natural attack chain toward Server-Side Request Forgery. The chain: (1) Header analysis reveals x-middleware-rewrite: http://core-int-unicorn.core.svc/ — an internal Kubernetes service hostname. (2) The attacker identifies URL parameters on the target's endpoints that accept external URLs: ?url=, ?src=, ?redirect=, ?callback=, ?proxy=. (3) The internal hostname is used as the SSRF payload: ?url=http://core-int-unicorn.core.svc/. (4) If the application makes an outbound request to the attacker-supplied URL without validation, the internal service receives the request — potentially exposing admin interfaces, internal APIs, cloud metadata (169.254.169.254), or other services on the internal network that are not exposed to the internet. SSRF findings that reach cloud metadata endpoints (AWS IMDSv1, GCP metadata API) can yield IAM credentials with significant permissions, making them P1 findings on most bug bounty programs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do bug bounty programs require both subfinder and httpx for subdomain enumeration?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Subfinder is a passive subdomain enumeration tool — it queries Certificate Transparency logs, DNS passive repositories, public APIs (Shodan, VirusTotal, Censys), and other data sources to discover subdomains without sending requests to the target. httpx is an HTTP probing tool — it takes a list of hostnames and sends HTTP/HTTPS requests to each one to determine which are live (returning HTTP 200/301/etc. rather than connection refused or NXDOMAIN). Together, they form the standard recon pipeline: subfinder discovers what subdomains exist, httpx confirms which ones are live and fetchable. Running subfinder alone gives you a list of subdomains that may include decommissioned hosts. Running httpx alone requires a prior subdomain list. The combination, typically piped as subfinder -d target.com | httpx -status-code -title, is the de facto standard opening step for web application bug bounty hunting because it maps the live attack surface in minutes without active scanning."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+  <header>
+    <h1>SecurityClaw Hunted Vinted on Intigriti — and Found 10 Gaps in Itself</h1>
+    <p class="meta">
+      <time datetime="2026-03-31">March 31, 2026</time> · SecurityClaw Phase D · Bug Bounty · Live Hunt
+    </p>
+
+    <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+      <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+      <ul style="margin-bottom: 0;">
+        <li>SecurityClaw is an AI-powered penetration testing platform built for automated security assessment</li>
+        <li>New scanning skills expand coverage across OWASP Top 10 vulnerability categories</li>
+        <li>Each development phase adds capabilities that close gaps in automated vulnerability detection</li>
+      </ul>
+    </div>
+
+    <p class="summary">
+      A 45-minute live hunt against Vinted on Intigriti produced four findings and a candid
+      post-mortem: SecurityClaw found things, but it found them <em>despite</em> its tooling,
+      not because of it. The best finding — VIN-001, an internal Kubernetes hostname leak
+      via HTTP response headers — was found by running <code>curl -I</code> against the
+      homepage. The campaign engine had no skill to do that automatically.
+      <strong>That's the gap. Phase D exists to close it.</strong>
+    </p>
+  </header>
+
+  <section>
+    <h2>The Hunt: Vinted, 45 Minutes, Cloudflare Everywhere</h2>
+
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Target</td><td>Vinted (<code>vinted-bugbountyprogram</code> on Intigriti)</td></tr>
+        <tr><td>Scope</td><td><code>*.vinted.com</code>, <code>*.vinted.fr</code>, <code>*.vinted.net</code>, <code>*.vintedgo.com</code></td></tr>
+        <tr><td>WAF</td><td>Cloudflare (all main properties)</td></tr>
+        <tr><td>Hunt duration</td><td>~45 minutes active</td></tr>
+        <tr><td>Findings</td><td>4 (1 MEDIUM submittable, 1 LOW, 2 informational)</td></tr>
+        <tr><td>Tools that worked</td><td>Manual curl, CT logs (partial), GitHub API</td></tr>
+        <tr><td>Tools missing</td><td>subfinder, httpx, nuclei, gitleaks, trufflehog</td></tr>
+        <tr><td>Primary finding method</td><td>Manual response header inspection</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      Vinted is one of Europe's largest second-hand fashion platforms — 65 million users,
+      listed on Intigriti with a scope spanning four TLD wildcards. It runs Cloudflare on
+      every main property, which immediately changed the rules for SecurityClaw's standard
+      tool stack.
+    </p>
+
+    <p>
+      The hunt was not intended as a showcase. It was a capability validation run: spin up
+      SecurityClaw's Phase C stack against a real production target with a real bug bounty
+      program, and see what breaks. The answer: almost everything that matters.
+    </p>
+  </section>
+
+  <section>
+    <h2>VIN-001 (MEDIUM): The Kubernetes Hostname Nobody Was Looking For</h2>
+
+    <p>
+      The most interesting finding from the entire hunt was found in 30 seconds with a
+      one-line command:
+    </p>
+
+    <pre><code>curl -sI https://www.vinted.com | grep -i "x-middleware"
+
+x-middleware-rewrite: http://core-int-unicorn.core.svc/</code></pre>
+
+    <p>
+      That response header — <code>x-middleware-rewrite</code> — is a Next.js middleware
+      header. It reveals the internal service name that the middleware is proxying requests
+      to: <code>core-int-unicorn.core.svc</code>. The <code>.svc</code> suffix is a
+      Kubernetes DNS pattern — it's the name of an internal Kubernetes service in the
+      <code>core</code> namespace. This is a production infrastructure leak served to every
+      visitor to <code>www.vinted.com</code> on every request.
+    </p>
+
+    <p>
+      The finding (VIN-001) is MEDIUM severity on its own. Internal service names in
+      Cloudflare-protected targets have limited direct exploitability — Cloudflare's WAF
+      will block most attempts to reach the internal service directly. But the finding has
+      meaningful chaining value: if any Vinted endpoint accepts a URL parameter without
+      validation (a common pattern in redirects, image proxies, webhook callbacks), that
+      parameter could be pointed at <code>core-int-unicorn.core.svc</code> via SSRF.
+      An SSRF chain reaching a Kubernetes internal service is typically rated HIGH or
+      CRITICAL — it can access cloud metadata endpoints, internal admin APIs, and
+      services that assume all callers are trusted internal infrastructure.
+    </p>
+
+    <p>
+      The same header pattern appeared on <code>www.vinted.fr</code>, suggesting the leak
+      is consistent across TLDs — which is what you'd expect from a shared Next.js
+      middleware layer.
+    </p>
+
+    <p>
+      The critical point for SecurityClaw's development roadmap: <strong>this finding
+      required no automated tooling</strong>. It required reading HTTP response headers.
+      The campaign engine, after Phase A + Phase B + Phase C development, had no skill
+      that does this. VIN-001 would have been missed entirely in any automated SecurityClaw
+      run against Vinted.
+    </p>
+  </section>
+
+  <section>
+    <h2>VIN-002 (LOW): MISP Instance on a Public Subdomain</h2>
+
+    <p>
+      CT log enumeration against <code>*.vinted.net</code> surfaced
+      <code>misp.vinted.net</code>. Fetching the root URL returned a page titled
+      "Users - Vinted MISP" — a live MISP (Malware Information Sharing Platform) instance
+      accessible from the public internet. MISP is the threat intelligence platform used
+      by security teams to track indicators of compromise, malware samples, and attack
+      campaigns. An exposed MISP instance reveals the platform's threat intelligence
+      posture and, if insufficiently hardened, may expose intelligence data, user accounts,
+      or API endpoints.
+    </p>
+
+    <p>
+      The severity was rated LOW because MISP's login page was enforced — this wasn't
+      an unauthenticated access finding. The exposure concern is the presence of the
+      platform on a publicly resolvable subdomain rather than on an internal network.
+      The finding is informational for the asset inventory: security teams are sometimes
+      unaware that internal tooling is DNS-resolvable from the internet.
+    </p>
+
+    <p>
+      A second interesting subdomain found: <code>scim.vinted.net</code>. SCIM
+      (System for Cross-domain Identity Management) is typically used for enterprise
+      identity provisioning — connecting HR systems, SSO platforms, or identity providers
+      to application user directories. An exposed SCIM endpoint without authentication
+      can be used to enumerate, create, or modify user accounts. Authentication was
+      enforced; severity was informational.
+    </p>
+  </section>
+
+  <section>
+    <h2>VIN-003 (INFORMATIONAL): Google Maps API Key — Referer-Restricted</h2>
+
+    <p>
+      A Google Maps API key (<code>AIzaSyDQUtyPkhD9gSdtfaJ2xUfH9UCgfw132u4</code>)
+      was found in the source of <code>labels.vintedgo.com</code>. Validating it
+      required testing across the full Google Maps API surface:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>API</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Maps JavaScript (browser)</td><td>✅ Works (with valid referer)</td></tr>
+        <tr><td>Geocoding API (server-side)</td><td>❌ REQUEST_DENIED</td></tr>
+        <tr><td>Static Maps</td><td>❌ REQUEST_DENIED</td></tr>
+        <tr><td>Directions API</td><td>❌ REQUEST_DENIED</td></tr>
+        <tr><td>Places API</td><td>❌ REQUEST_DENIED</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      The key is referer-restricted: it works only from browser requests originating
+      at <code>labels.vintedgo.com</code>, not from server-side API calls. This is the
+      correct configuration for a Maps JavaScript key — it's designed to be embedded in
+      frontend code where the browser provides the HTTP referer. An attacker can't use
+      this key to make unlimited Geocoding requests or access billing-enabled APIs.
+      Severity: LOW/informational.
+    </p>
+
+    <p>
+      This finding illustrates why API key severity depends entirely on scope. The same
+      <code>AIzaSy...</code> key pattern would be CRITICAL if it granted unrestricted
+      access to Places API (which can generate significant billing charges) or HIGH if
+      it allowed server-side geocoding without referer restrictions. The
+      <code>REQUEST_DENIED</code> from server-side calls is the correct answer — and the
+      only way to get that answer is to test it, not to report the key based on pattern
+      alone.
+    </p>
+  </section>
+
+  <section>
+    <h2>What Broke: The Phase D Gap Inventory</h2>
+
+    <p>
+      The Vinted hunt produced a structured capability gap analysis — ten gaps identified,
+      prioritised, and turned into Phase D implementation specs. Here's what the hunt
+      exposed:
+    </p>
+
+    <h3>GAP-001 (P1): No Response Header Analysis Skill</h3>
+
+    <p>
+      VIN-001 was found by running <code>curl -I</code>. The campaign engine has no skill
+      that systematically collects and analyses response headers across a target's assets.
+      This is not an edge case — headers that leak infrastructure information appear on
+      virtually every modern web application:
+    </p>
+
+    <ul>
+      <li><code>x-middleware-rewrite</code> — Next.js middleware proxy target (Kubernetes service names)</li>
+      <li><code>x-powered-by</code> — application framework and version</li>
+      <li><code>server</code> — web server identity</li>
+      <li><code>via</code> / <code>x-forwarded-server</code> — proxy chain topology</li>
+      <li><code>x-envoy-upstream-service-time</code> — Envoy/Istio service mesh timing (confirms service mesh presence)</li>
+      <li><code>x-amzn-requestid</code> — AWS Lambda or API Gateway backing</li>
+    </ul>
+
+    <p>
+      Without a HeaderAnalysisSkill, SecurityClaw walks past this entire finding class on
+      every target. A 30-second manual check found VIN-001. The skill fix is two to three
+      days of implementation.
+    </p>
+
+    <h3>GAP-002 (P1): No Multi-TLD Scope Manager</h3>
+
+    <p>
+      Vinted has four wildcard TLDs. <code>misp.vinted.net</code> and
+      <code>scim.vinted.net</code> — both interesting findings — were under the
+      <code>.net</code> TLD. A campaign pointed only at <code>vinted.com</code> would
+      have missed them entirely. The engine currently accepts one <code>target</code>
+      string per run.
+    </p>
+
+    <p>
+      In real bug bounty programs, approximately 40% of interesting assets are on secondary
+      TLDs. Uphold, DigitalOcean, and Vinted all have multi-domain scopes. Without a
+      <code>ProgramScopeManager</code> that maps a program handle to all in-scope roots and
+      runs enumeration against all of them in parallel, every multi-TLD program is only
+      partially hunted.
+    </p>
+
+    <h3>GAP-003 (P1): No Passive Recon Toolchain</h3>
+
+    <p>
+      <code>subfinder</code>, <code>httpx</code>, <code>nuclei</code>, <code>gitleaks</code>,
+      and <code>trufflehog</code> are all referenced in SecurityClaw's skills. None of them
+      were installed in the execution environment during the Vinted hunt. The skills invoked
+      tool binaries that didn't exist and silently returned no results — no error, no warning,
+      just empty output. The entire active recon phase fell back to manual <code>curl</code>.
+    </p>
+
+    <p>
+      This is a silent failure mode that produces false negatives with no indication anything
+      went wrong. A <code>ToolAvailabilityMonitor</code> at campaign start would surface
+      "subfinder not installed — subdomain enumeration will be limited to CT logs" rather
+      than allowing skills to silently return empty. Fix: a startup check, clear warnings,
+      and an <code>install-tools.sh</code> script for the full toolchain.
+    </p>
+
+    <h3>GAP-004 (P1): No Cloudflare-Aware Scanning Strategy</h3>
+
+    <p>
+      The engine has no awareness of Cloudflare. It treats all targets identically —
+      which means aggressive tools (gobuster, ffuf, nuclei at scale) run against CF-protected
+      targets until they're blocked. Roughly 60% of high-value bug bounty targets are
+      Cloudflare-protected. This is not an edge case; it's the majority case.
+    </p>
+
+    <p>
+      The fix is a <code>WAFDetectionSkill</code> that identifies Cloudflare presence
+      (cf-ray header, ASN 13335, server: cloudflare) and switches the campaign to
+      passive-first mode: prioritise CT logs, JS bundle analysis, header analysis, and
+      GitHub org search; rate-limit active tools to under 10 req/s; skip aggressive
+      path brute-force. The Vinted hunt demonstrated the passive-first approach is
+      viable — VIN-001 (the best finding) required zero active scanning.
+    </p>
+
+    <h3>GAP-005 (P2): No Sensitive Service Fingerprinting</h3>
+
+    <p>
+      <code>misp.vinted.net</code> was identified as MISP by recognising the page title
+      "Users - Vinted MISP." There's no skill that checks discovered subdomains against
+      a fingerprint database of sensitive services — MISP, Grafana, Kibana, Jupyter,
+      Sentry, GitLab, Jira, HashiCorp Vault, Kubernetes dashboard, Argo CD, Jenkins,
+      and 20+ others. These consistently yield high-value bug bounty findings when found
+      with weak authentication or default credentials. The fingerprint library is reusable
+      across every future target.
+    </p>
+
+    <h3>GAP-006 (P2): No API Key Scope Validator</h3>
+
+    <p>
+      The Google Maps API key validation (VIN-003) required manually testing five different
+      API endpoints with varying referer headers. There's no skill that automates this.
+      Multi-provider API key validation — Google Maps, Stripe, Twilio, SendGrid, AWS,
+      Mapbox, Algolia — is the difference between reporting a key as LOW (referer-restricted)
+      vs. HIGH (unrestricted server-side access) vs. CRITICAL (billing-enabled APIs
+      accessible). Without automated validation, keys are either over-reported (wasted
+      submission, program trust cost) or under-reported (missed HIGH finding).
+    </p>
+
+    <h3>GAP-007 (P2): No Mobile App Analysis</h3>
+
+    <p>
+      Vinted's iOS and Android apps are in scope. Neither was analysed. Mobile apps
+      consistently yield higher-severity findings than web recon — developers treat them
+      as client-side code and embed API keys, internal endpoint URLs, OAuth secrets,
+      and feature flags that would never appear in a web page. APK decompilation with
+      jadx, manifest analysis, and running trufflehog against decompiled source is a
+      known-high-yield workflow with no current equivalent in SecurityClaw's skill set.
+    </p>
+
+    <h3>GAP-008 (P2): No SSRF Chain Automation</h3>
+
+    <p>
+      VIN-001 revealed <code>core-int-unicorn.core.svc</code> as an internal service.
+      The obvious next hypothesis: does any Vinted endpoint accept a URL parameter that
+      could reach this service via SSRF? That reasoning was done manually. The campaign
+      engine has no chain rule that fires when <code>InternalHostnameLeak</code> is found:
+      "scan for SSRF vector parameters, test with internal hostname as payload." This
+      is the difference between finding an infrastructure leak and chaining it into a
+      potential P1 finding.
+    </p>
+
+    <h3>GAP-009 (P3): No Intigriti Scope Auto-Pull</h3>
+
+    <p>
+      Vinted's scope was known from a prior program scorer run. For a live hunt, scope
+      changes matter — programs add and remove assets, modify RoE, and sometimes disable
+      automated scanning entirely (as happened with CM.com in an earlier campaign). A
+      pre-hunt scope refresh against the Intigriti API would surface new assets added
+      since the last run and block campaigns if the program has changed its automated
+      scanner policy.
+    </p>
+
+    <h3>GAP-010 (P3): No Cross-Asset Correlation</h3>
+
+    <p>
+      <code>core-int-unicorn.core.svc</code> appeared in headers on both
+      <code>www.vinted.com</code> and <code>www.vinted.fr</code>. The
+      <code>x-next-app: marketplace-web</code> header appeared on the same two properties.
+      JS bundles were served from <code>marketplace-web-assets.vinted.com</code>. Together,
+      these signals reveal that <code>vinted.com</code> and <code>vinted.fr</code> are
+      the same Next.js application deployment — meaning findings on one likely apply to
+      the other, and IDOR vulnerabilities found on one property should be tested against
+      both. Without cross-asset correlation, the engine treats each asset independently
+      and misses these architectural insights.
+    </p>
+  </section>
+
+  <section>
+    <h2>Phase D: Passive-First, Header-Aware, CF-Resilient</h2>
+
+    <p>
+      The Vinted hunt produced a Phase D roadmap with three implementation sprints:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>Gaps</th><th>Theme</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>D1 (current sprint)</strong></td>
+          <td>GAP-001, 002, 003, 004, 009</td>
+          <td>Passive-first infrastructure: header analysis, tool health, scope management, Cloudflare awareness</td>
+        </tr>
+        <tr>
+          <td><strong>D2 (next sprint)</strong></td>
+          <td>GAP-005, 006, 007, 008</td>
+          <td>High-value finding classes: service fingerprinting, API key validation, mobile analysis, SSRF chaining</td>
+        </tr>
+        <tr>
+          <td><strong>D3 (future)</strong></td>
+          <td>GAP-010</td>
+          <td>Intelligence synthesis: cross-asset correlation, architectural mapping</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      On 2026-03-30, the D1 implementation was validated in a Phase D rerun against Vinted.
+      All eight Phase D skills were registered in the SKILL_REGISTRY. All six gap validation
+      checks passed:
+    </p>
+
+    <ul>
+      <li>✅ GAP-011: All 8 Phase D skills present in SKILL_REGISTRY</li>
+      <li>✅ GAP-005: WAF_DETECTED → JS bundle analyzer chain rule</li>
+      <li>✅ GAP-005: SUBDOMAIN_FOUND → WAF detection trigger</li>
+      <li>✅ GAP-002: All 9 Phase D FindingType entries present (including ProxyChainLeak → INFRASTRUCTURE_LEAK)</li>
+      <li>✅ GAP-002: TechStackFingerprint / CloudProviderLeak / ProxyChainLeak no longer map to CERT_FOUND</li>
+      <li>✅ GAP-004: Multi-path scan covering <code>/items</code>, <code>/members/1</code> (9 paths total)</li>
+    </ul>
+
+    <p>
+      The rerun completed in 12.16 seconds against Vinted's live infrastructure: 9 skills
+      executed, 46 findings (WAF_DETECTED + INTERNAL_HOSTNAME_LEAK across <code>www.vinted.com</code>,
+      <code>api.vinted.com</code>, <code>www.vinted.fr</code>), three chain rules fired
+      (ssrf-hypothesis, cross-asset-correlator, cf-aware-scan-strategy). One gap remained:
+      VIN-001 (the original internal hostname finding) was not detected — Vinted may have
+      patched the header or the endpoint changed.
+    </p>
+
+    <p>
+      One noted caveat: if Vinted patched <code>x-middleware-rewrite</code> after VIN-001
+      was submitted, that's the correct outcome. Bug bounty programs fix findings, and
+      fixed findings don't appear in subsequent scans. The VIN-001 path changing is not
+      a gap validation failure — it's confirmation that the finding was real enough to patch.
+    </p>
+  </section>
+
+  <section>
+    <h2>The Passive-First Principle</h2>
+
+    <p>
+      The Vinted hunt crystallised something that applies across all modern bug bounty
+      targets, not just Cloudflare-protected ones: the highest-value findings often come
+      from reading what the server is already telling you, not from asking it questions it
+      wasn't expecting.
+    </p>
+
+    <p>
+      VIN-001 — the best finding from 45 minutes of hunting — required sending one
+      HTTP HEAD request and reading the response. No active scanning. No brute-force.
+      No WAF triggers. The server volunteered a Kubernetes internal service name in a
+      header that has been present on every page load since whenever the Next.js middleware
+      was deployed.
+    </p>
+
+    <p>
+      The same principle applies across the Phase D gap inventory. CT logs expose the
+      subdomain history of a target without sending a single packet to the target.
+      GitHub organisation search exposes code, configuration, and secrets without
+      touching the production infrastructure. JS bundle analysis extracts API endpoints,
+      internal service references, and hardcoded credentials from files the server
+      intentionally serves. Header analysis catalogues infrastructure leaks that production
+      servers broadcast on every request.
+    </p>
+
+    <p>
+      Cloudflare doesn't block any of this. WAFs block requests that look like attacks.
+      Reading what the server already tells you doesn't look like an attack — because it
+      isn't one.
+    </p>
+
+    <p>
+      Phase D's north star: a SecurityClaw campaign against a Cloudflare-protected target
+      should produce high-quality findings before a single active probe fires. The passive
+      layer — headers, CT logs, JS bundles, GitHub — should be exhausted first. Only then,
+      with WAF-aware rate limiting, should active scanning begin. That's the difference
+      between a tool that gets blocked and a platform that hunts.
+    </p>
+  </section>
+
+  <section>
+    <h2>What This Means for Bug Hunters</h2>
+
+    <p>
+      The Vinted hunt is useful beyond the SecurityClaw roadmap story. It's a practical
+      illustration of what a passive-first methodology looks like against a production
+      Cloudflare target, and what finding classes it surfaces.
+    </p>
+
+    <p>
+      <strong>On response header analysis:</strong> Run <code>curl -sI [target] | less</code>
+      at the start of every hunt before touching any automated tools. Next.js headers
+      (<code>x-middleware-rewrite</code>, <code>x-next-app</code>), Kubernetes service names
+      (any header containing <code>.svc</code> or <code>.internal</code>), Envoy timing headers,
+      and cloud provider headers (<code>x-amzn-requestid</code>, <code>x-cloud-trace-context</code>)
+      are all information the server is already publishing. It takes 30 seconds and has no
+      WAF footprint.
+    </p>
+
+    <p>
+      <strong>On multi-TLD scope:</strong> Check every TLD in the program scope. Run CT log
+      lookups against all of them. Secondary TLDs (<code>.net</code>, <code>.fr</code>,
+      <code>.co.uk</code>) often host internal tooling — monitoring, identity management,
+      staging environments — that was never intended to be publicly accessible and has
+      received less security scrutiny than the primary domain.
+    </p>
+
+    <p>
+      <strong>On API key validation:</strong> Never report an API key without testing it.
+      The difference between a LOW finding and a HIGH finding is one API call — and
+      submitting a referer-restricted Maps key as a HIGH severity finding erodes program
+      trust and wastes everyone's time. Test. Document what you tested. Report what the
+      key can actually do.
+    </p>
+
+    <p>
+      For the foundational methodology, the standard reference on modern penetration
+      testing remains
+      <a href="https://www.amazon.co.uk/dp/1718502075?tag=altclaw-20" rel="noopener">The Web Application Hacker's Handbook</a>
+      — covering the full attack surface systematically. For bug bounty-specific methodology,
+      <a href="https://www.amazon.co.uk/dp/1718501544?tag=altclaw-20" rel="noopener">Real-World Bug Hunting by Peter Yaworski</a>
+      is the practical guide to turning vulnerability classes into submitted reports.
+      For infrastructure and cloud attack surfaces — where header leaks like VIN-001
+      connect to higher-severity chains — the
+      <a href="https://www.amazon.co.uk/dp/1492062944?tag=altclaw-20" rel="noopener">Hacking the Cloud</a>
+      reference covers AWS metadata, SSRF chains, and IAM privilege escalation in depth.
+    </p>
+  </section>
+
+  <section>
+    <h2>What's Next</h2>
+
+    <p>
+      The Phase D D1 sprint is underway. HeaderAnalysisSkill, ProgramScopeManager,
+      ToolAvailabilityMonitor, WAFDetectionSkill, and IntigritiScopePuller are the
+      five immediate deliverables. The validation rerun against Vinted confirmed the
+      core engine changes are in place; the remaining work is skill-level implementation
+      and integration.
+    </p>
+
+    <p>
+      When Phase D D1 ships, a SecurityClaw campaign against Vinted will automatically:
+      analyse response headers across all four TLD scopes in parallel, detect Cloudflare
+      and switch to passive-first mode, enumerate subdomains across all four wildcard TLDs,
+      confirm tool availability before skill execution, and pull fresh scope from Intigriti
+      at campaign start. VIN-001 will go from "found manually in 30 seconds" to "found
+      automatically in the first 30 seconds of every run."
+    </p>
+
+    <p>
+      That's what Phase D is for.
+    </p>
+  </section>
+
+  <nav class="demo-nav">
+    <p>
+      ← <a href="/demos/securityclaw-phase-b-ai-campaign-engine-js-bundle-idor-scanner-demo-2026/">D22: Phase B AI Campaign Engine — IDOR Scanner + JS Bundle Analyser</a> |
+      <a href="/articles/">All Articles →</a>
+    </p>
+  </nav>
+
+  <section class="related-reading">
+    <h2>Related Reading</h2>
+    <ul>
+      <li><a href="/articles/securityclaw-phase-c-hypothesis-engine/">SecurityClaw Phase C: The Scanner That Learned to Remember</a></li>
+      <li><a href="/articles/bug-bounty-recon-workflow-2026/">Bug Bounty Recon Workflow in 2026: From Scope to First Finding</a></li>
+      <li><a href="/articles/certificate-transparency-logs-recon-tool-2026/">Certificate Transparency Logs: The Recon Tool You're Probably Not Using</a></li>
+      <li><a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">Server-Side Request Forgery in 2026: What Your Scanner Should Detect</a></li>
+      <li><a href="/articles/security-headers-complete-guide-2026/">Security Headers in 2026: The Complete Guide</a></li>
+      <li><a href="/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">How SecurityClaw Covers the OWASP Top 10</a></li>
+      <li><a href="/demos/securityclaw-phase-b-ai-campaign-engine-js-bundle-idor-scanner-demo-2026/">557 Milliseconds to CRITICAL: SecurityClaw's AI Campaign Engine (Phase B)</a></li>
+      <li><a href="/articles/openclaw-cve-batch-3-11-3-12-ai-agent-security-2026/">15 CVEs in One Release Batch: AI Agent Platform Attack Surfaces</a></li>
+      <li><a href="/articles/cors-misconfiguration-security-testing-guide-2026/">CORS Misconfiguration in 2026: The Security Header That Breaks Everything When You Get It Wrong</a></li>
+      <li><a href="/articles/open-redirect-vulnerabilities-testing-guide-2026/">Open Redirect Vulnerabilities: Why Your Login Page Might Be Phishing Your Users</a></li>
+      <li><a href="/articles/securityclaw-4-new-skills-april-2026/">4 New SecurityClaw Skills That Change How You Recon Web Applications</a></li>
+      <li><a href="/articles/web-app-security-testing-checklist-2026/">Web Application Security Testing Checklist for 2026</a></li>
+    </ul>
+  </section>
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

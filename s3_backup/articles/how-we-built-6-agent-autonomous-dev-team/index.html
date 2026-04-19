@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Inside ClawWorks: a 6-agent AI team with cron orchestration, task queues, PR review tiers, and Slack integration — real architecture, real numbers, real lessons.">
+    <title>How We Built a 6-Agent Autonomous Dev Team That Runs 24/7</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/how-we-built-6-agent-autonomous-dev-team/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/how-we-built-6-agent-autonomous-dev-team/">
+    <meta property="og:title" content="How We Built a 6-Agent Autonomous Dev Team That Runs 24/7">
+    <meta property="og:description" content="Inside ClawWorks: a 6-agent AI team with cron orchestration, task queues, PR review tiers, and Slack integration — real architecture, real numbers, real lessons.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/how-we-built-6-agent-autonomous-dev-team/">
+    <meta name="twitter:title" content="How We Built a 6-Agent Autonomous Dev Team That Runs 24/7">
+    <meta name="twitter:description" content="Inside ClawWorks: a 6-agent AI team with cron orchestration, task queues, PR review tiers, and Slack integration — real architecture, real numbers, real lessons.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "How We Built a 6-Agent Autonomous Dev Team That Runs 24/7",
+      "description": "Inside ClawWorks: a 6-agent AI team with cron orchestration, task queues, PR review tiers, and Slack integration — real architecture, real numbers, real lessons.",
+      "url": "https://bughuntertools.com/articles/how-we-built-6-agent-autonomous-dev-team/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">How We Built a 6-Agent Autonomous Dev Team That Runs 24/7</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "How We Built a 6-Agent Autonomous Dev Team That Runs 24/7",
+      "description": "Inside ClawWorks: a 6-agent AI team with cron orchestration, task queues, PR review tiers, and Slack integration — real architecture, real numbers, real lessons.",
+      "datePublished": "2026-04-11",
+      "dateModified": "2026-04-11",
+      "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+      "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How many AI agents does ClawWorks run?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ClawWorks runs 6 AI agents: 1 SDM (Software Development Manager) that orchestrates the team, and 5 SDEs (Software Development Engineers) that handle code, content, infrastructure, security research, and trading bot operations. All 6 run 24/7 with heartbeats every 30 minutes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do autonomous AI agents coordinate without a human in the loop?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The agents coordinate through a combination of task queue files (TASK_QUEUE.md per agent), cron-scheduled heartbeats, Slack channels for cross-agent messaging, and a PR review workflow with tiered approval. The SDM agent runs every 30 minutes to triage work, dispatch sessions, and unblock other agents. No human approval is needed for routine operations."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What model do the AI agents use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Heartbeats use Claude Sonnet 4.6 for quick status checks and triage. Dedicated work sessions use Claude Opus 4.6 with a 1M token context window for deep, multi-step tasks like writing articles, building features, or debugging complex issues. The SDM uses Sonnet 4.6 with 1M context for both heartbeats and work sessions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you prevent AI agents from breaking production?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Three layers: (1) PR review tiers — docs self-merge, standard features require peer review from the SDE-3 reviewer agent, critical path changes (trading logic, auth, AWS infrastructure) require review plus a mandatory AWS Well-Architected Framework checklist. (2) TDD is required — agents write failing tests first, then implementation. (3) Session logs provide full audit trails of every command executed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is an autonomous AI dev team cost-effective?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on throughput requirements. ClawWorks has completed 45+ tasks across 44 work sessions in its first week, covering content production, infrastructure management, security research, trading bot operations, and SEO optimization. The team runs on cron schedules with no idle compute — agents only consume resources during their scheduled heartbeats and dispatched work sessions."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+        { "@type": "ListItem", "position": 3, "name": "How We Built a 6-Agent Autonomous Dev Team" }
+      ]
+    }
+  ]
+}
+</script>
+
+<div class="key-takeaways">
+  <h2>Key Takeaways</h2>
+  <ul>
+    <li>ClawWorks is a 6-agent AI team (1 SDM + 5 SDEs) that runs 24/7 on cron schedules — heartbeats every 30 minutes, work sessions dispatched on demand.</li>
+    <li>Coordination happens through per-agent task queues, Slack channels, and a 3-tier PR review system — no human in the loop for routine operations.</li>
+    <li>The team has completed 45+ tasks across 44 sessions in its first week, spanning content, infrastructure, security research, and live trading bot operations.</li>
+    <li>Key lessons: task queue files beat databases for agent state, heartbeat/work-session separation prevents runaway costs, and mandatory progress checkpointing saves you from lost work when sessions die.</li>
+    <li>The biggest failure mode isn't agents writing bad code — it's agents spending their entire tool budget investigating rabbit holes instead of delivering.</li>
+  </ul>
+</div>
+
+<article>
+
+<h2>Why We Built an Agent Team</h2>
+
+<p>In early 2026, we had a problem. We were running four products — <a href="https://github.com/delmarolivier/CoinClaw">CoinClaw</a> (algorithmic crypto trading bots), <a href="https://github.com/delmarolivier/SecurityClaw">SecurityClaw</a> (penetration testing platform), <a href="https://bughuntertools.com">AltClaw</a> (security tools content), and <a href="https://botversusbot.com">BotVsBotClaw</a> (trading bot content) — with one human. Content was falling behind. Infrastructure tasks piled up. Trading bots needed daily monitoring. Security research moved at a crawl.</p>
+
+<p>The solution wasn't hiring. It was building an autonomous agent team that could operate continuously, coordinate across domains, and ship real work without waiting for human approval on every decision.</p>
+
+<p>This is how ClawWorks works — the real architecture, the real numbers, and the real lessons from running 6 AI agents 24/7.</p>
+
+<h2>The Team: 6 Agents, 4 Products</h2>
+
+<p>ClawWorks has 6 agents organized in a flat hierarchy with one manager:</p>
+
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Role</th><th>Level</th><th>Specialization</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Morgan</td><td>SDM</td><td>SDM-6</td><td>Team management, platform oversight, task triage</td></tr>
+    <tr><td>Riley</td><td>SDE</td><td>SDE-3</td><td>PR review (all repos), backtesting framework</td></tr>
+    <tr><td>Pax</td><td>SDE</td><td>SDE-3</td><td>SecurityClaw, vulnerability research</td></tr>
+    <tr><td>Sage</td><td>SDE</td><td>SDE-2</td><td>AltClaw/BotVsBotClaw content, SEO</td></tr>
+    <tr><td>Quinn</td><td>SDE</td><td>SDE-2</td><td>Infrastructure, backups, finance</td></tr>
+    <tr><td>Kai</td><td>SDE</td><td>SDE-3</td><td>CoinClaw development, strategy research, live bot ops</td></tr>
+  </tbody>
+</table>
+
+<p>The role/level system isn't cosmetic. It determines what each agent can do autonomously versus what requires review. An SDE-2 self-merges documentation PRs. An SDE-3 reviews other agents' code. The SDM dispatches work sessions and resolves cross-agent blockers.</p>
+
+<h2>Architecture: How It Actually Works</h2>
+
+<h3>The Heartbeat/Work-Session Split</h3>
+
+<p>Every agent has two invocation modes:</p>
+
+<ol>
+  <li><strong>Heartbeat</strong> (every 30 minutes, ~10 minutes each): Quick status check. The agent reads its task queue, checks for blockers, posts status updates, and decides if a dedicated work session is needed. Uses Claude Sonnet 4.6 — fast and cheap.</li>
+  <li><strong>Dedicated Work Session</strong> (on-demand, ~60 minutes each): Deep work. The agent picks the highest-priority task and executes it end-to-end. Uses Claude Opus 4.6 with 1M token context — expensive but capable of complex multi-step work.</li>
+</ol>
+
+<p>This split is critical for cost control. Heartbeats are lightweight triage — they don't burn expensive Opus tokens on "nothing to do." Work sessions only fire when there's actual work queued. The SDM's heartbeat is the primary dispatcher: every 30 minutes, Morgan scans all agent queues and dispatches work sessions where needed.</p>
+
+<p>The cron schedules are staggered so agents don't all heartbeat simultaneously:</p>
+
+<pre><code>Morgan (SDM):  0,30 * * * *    # On the hour and half-hour
+Riley:         5,35 * * * *    # 5 minutes offset
+Pax:           10,40 * * * *   # 10 minutes offset
+Sage:          15,45 * * * *   # 15 minutes offset
+Quinn:         20,50 * * * *   # 20 minutes offset
+Kai:           25,55 * * * *   # 25 minutes offset</code></pre>
+
+<p>This means the team cycles through all 6 agents every 30 minutes. If Kai's trading bot hits an error at 10:02, Kai's heartbeat at 10:25 detects it, and Morgan's heartbeat at 10:30 can dispatch a work session to fix it.</p>
+
+<h3>Task Queues: Files, Not Databases</h3>
+
+<p>Each agent has a <code>TASK_QUEUE.md</code> file — a markdown file with a strict schema:</p>
+
+<pre><code>## TASK-35: AltClaw — New Article: "How We Built a 6-Agent Autonomous Dev Team"
+
+- **Priority**: 1
+- **Status**: in-progress
+- **Started At**: 2026-04-11T21:15:38Z
+- **Description**: Write and publish an article about the ClawWorks agent team...
+- **Acceptance Criteria**:
+  - Article published to bughuntertools.com
+  - 3000+ words, practitioner-focused
+  - Full Schema.org markup</code></pre>
+
+<p>Why markdown files instead of a database, API, or shared state store?</p>
+
+<ul>
+  <li><strong>Debuggability</strong>: You can read the entire system state by opening 6 text files. No query language, no admin console, no connection strings.</li>
+  <li><strong>Git history</strong>: Every state transition is a commit. You can <code>git log</code> any task queue and see exactly when tasks were created, started, completed, or blocked.</li>
+  <li><strong>No infrastructure</strong>: No database to provision, back up, or recover. The files live in the repo alongside the code.</li>
+  <li><strong>Agent-native</strong>: LLMs are excellent at reading and writing structured markdown. No serialization layer, no ORM, no API client.</li>
+</ul>
+
+<p>The tradeoff is concurrency. Two agents can't safely write to the same file simultaneously. We solve this by giving each agent its own queue — the SDM writes tasks to agent queues, agents read their own queue and update status. Cross-agent communication goes through Slack.</p>
+
+<h3>The SDM: Orchestrator, Not Bottleneck</h3>
+
+<p>Morgan (the SDM) is the only agent that writes to other agents' task queues. Every 30 minutes, Morgan:</p>
+
+<ol>
+  <li>Reads all 6 task queues for status</li>
+  <li>Checks for blocked tasks and attempts to unblock them</li>
+  <li>Triages new work from human directives or proactive identification</li>
+  <li>Dispatches work sessions to agents with queued high-priority tasks</li>
+  <li>Updates project trackers and team-level dashboards</li>
+</ol>
+
+<p>The key design decision: Morgan dispatches but doesn't micromanage. Once a work session starts, the agent owns it completely. Morgan doesn't check in mid-session or approve intermediate steps. This is what makes the system autonomous rather than just automated.</p>
+
+<p>Some agents have additional autonomy grants. For example, the content agent (Sage) has a standing directive to identify content gaps and publish articles without waiting for the SDM to queue individual tasks. The SEO analysis serves as the roadmap — the agent decides what to write and when.</p>
+
+<h3>PR Review Tiers: Graduated Trust</h3>
+
+<p>Not all changes carry the same risk. The PR review system has three tiers:</p>
+
+<ul>
+  <li><strong>Tier 1</strong> (docs, tests, config — no logic changes): Author self-merges after CI passes. No review needed.</li>
+  <li><strong>Tier 2</strong> (standard feature PRs): Riley (SDE-3) reviews all PRs across all repos. Riley is the designated reviewer — every non-trivial code change goes through one agent.</li>
+  <li><strong>Tier 3</strong> (critical path — trading logic, auth, deployment, live bot changes, AWS infrastructure): Riley reviews and merges, plus a mandatory AWS Well-Architected Framework checklist covering all 6 pillars (Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability).</li>
+</ul>
+
+<p>The WAF checklist isn't optional. A PR missing any checklist item gets REQUEST CHANGES, not approval. Even "N/A with justification" is acceptable — but silence on a pillar is not.</p>
+
+<h3>Slack Integration: Cross-Agent Communication</h3>
+
+<p>Each agent has a dedicated Slack channel (#morgan, #riley, #pax, #sage, #quinn, #kai) plus a shared #clawworks-team channel. Agents use Slack for:</p>
+
+<ul>
+  <li><strong>Unblock notifications</strong>: When an agent completes a task that unblocks another agent, it posts to #clawworks-team: <code>UNBLOCK: kai TASK-12 — sage TASK-34 completed</code>. The unblocked agent picks up the work at its next heartbeat.</li>
+  <li><strong>Escalations</strong>: Blocked agents post to #clawworks-team with the task ID, blocker description, and what help is needed.</li>
+  <li><strong>Status updates</strong>: The SDM posts daily summaries of team throughput and blockers.</li>
+</ul>
+
+<p>Slack is the async communication layer. Task queues are the source of truth for work state. Session logs are the audit trail. Each system has one job.</p>
+
+<h2>Session Logging: Full Audit Trail</h2>
+
+<p>Every agent session produces a structured log file:</p>
+
+<pre><code>INFO 2026-04-11T22:45:33Z === Session Start | Type: dedicated_work_session | Agent: sde-sage ===
+INFO -- Resuming TASK-35 (in-progress, P1): AltClaw article
+INFO -- Checked article template, gathered team operational data
+INFO 2026-04-11T23:30:00Z === Session End | Actions: Published article, updated tracker ===</code></pre>
+
+<p>Two types of timestamps: real timestamps (captured via <code>date -u</code> at session boundaries and task transitions) and sequential entries (marked with <code>--</code> to indicate ordering without precise timing). This prevents agents from fabricating timestamps while still providing useful ordering information.</p>
+
+<p>The team has generated 44 session logs across all agents in the first week of operation. Every command executed, every file modified, every decision made is recorded.</p>
+
+<h2>Progress Checkpointing: Surviving Session Death</h2>
+
+<p>Agent sessions can die without warning — token limits, timeouts, infrastructure issues. Without checkpointing, a 55-minute session that dies at minute 58 loses all context.</p>
+
+<p>The solution: mandatory progress files. After each meaningful step, agents write a <code>workspace/TASK-{ID}-progress.md</code> file with what's done, what remains, and key findings. When a new session picks up an in-progress task, it reads the progress file first and continues from where the previous session left off.</p>
+
+<p>This sounds simple. It's the single most important reliability mechanism in the system. Without it, agents would restart investigations from scratch every session, burning their tool budget on rediscovery instead of delivery.</p>
+
+<h2>Recurring Tasks: Independent Tracking</h2>
+
+<p>Some work repeats — scoreboard updates, content gap scans, backup verification. The naive approach is a permanently in-progress task. The problem: you can't tell if a recurring task is "working as designed" or stuck.</p>
+
+<p>Our approach: each run of a recurring task gets its own task ID. When an agent completes a recurring task run, it marks it completed with real timestamps, then creates a new queued task with the next ID. This makes each run independently trackable. If a recurring task shows "in-progress" for hours, something is actually wrong.</p>
+
+<h2>The Numbers: First Week of Operation</h2>
+
+<p>Real operational data from ClawWorks' first week (April 5–11, 2026):</p>
+
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Total tasks completed</td><td>45+</td></tr>
+    <tr><td>Total work sessions</td><td>44</td></tr>
+    <tr><td>Agents</td><td>6</td></tr>
+    <tr><td>Articles published (AltClaw)</td><td>32</td></tr>
+    <tr><td>Articles published (BotVsBotClaw)</td><td>27</td></tr>
+    <tr><td>Heartbeat frequency</td><td>Every 30 minutes per agent</td></tr>
+    <tr><td>Average work session duration</td><td>~60 minutes</td></tr>
+    <tr><td>Products maintained</td><td>4 (CoinClaw, SecurityClaw, AltClaw, BotVsBotClaw)</td></tr>
+  </tbody>
+</table>
+
+<p>Task distribution by agent:</p>
+
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Tasks Completed</th><th>Domain</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Morgan (SDM)</td><td>12</td><td>Orchestration, triage, project tracking</td></tr>
+    <tr><td>Quinn (SDE-2)</td><td>11</td><td>Infrastructure, backups, finance</td></tr>
+    <tr><td>Sage (SDE-2)</td><td>11</td><td>Content production, SEO</td></tr>
+    <tr><td>Pax (SDE-3)</td><td>6</td><td>SecurityClaw, vulnerability research</td></tr>
+    <tr><td>Kai (SDE-3)</td><td>3</td><td>CoinClaw trading bots</td></tr>
+    <tr><td>Riley (SDE-3)</td><td>2</td><td>PR review, backtesting</td></tr>
+  </tbody>
+</table>
+
+<p>Riley's low task count is misleading — Riley's primary job is reviewing other agents' PRs, which doesn't show up as completed tasks in Riley's queue. Kai's count is low because trading bot tasks are complex multi-session efforts (one task can span 8+ hours of work).</p>
+
+<h2>What Works</h2>
+
+<h3>1. The Heartbeat/Work-Session Split</h3>
+
+<p>This is the most important architectural decision. Heartbeats are cheap triage. Work sessions are expensive deep work. Without this split, you either burn expensive tokens on "nothing to do" checks or miss urgent issues because you only check hourly.</p>
+
+<h3>2. Per-Agent Task Queues</h3>
+
+<p>No shared state, no locking, no race conditions. Each agent owns its queue. The SDM is the only writer to other agents' queues, and it only writes during its own heartbeat — never concurrently with the agent's session.</p>
+
+<h3>3. Mandatory TDD</h3>
+
+<p>All new code must be written test-first. This isn't just good practice — it's essential for autonomous agents. Without TDD, an agent can write plausible-looking code that passes no tests because no tests exist. With TDD, the failing test is written first, and the agent can verify its own work.</p>
+
+<h3>4. Tool Budget Awareness</h3>
+
+<p>Agents have approximately 10 tool calls per session. This constraint forces prioritization. The explicit rule: "Every tool call spent on a rabbit hole is one fewer call for your actual deliverable." Agents are trained to check if a failure is pre-existing (also fails on main) before investigating — and if it is, to create a task for the SDM to triage rather than burning their budget on someone else's bug.</p>
+
+<h2>What Doesn't Work (Yet)</h2>
+
+<h3>1. Cross-Agent Dependencies</h3>
+
+<p>When Agent A's task depends on Agent B's output, the latency is painful. Agent A discovers the dependency, posts to Slack, and waits. Agent B picks it up at the next heartbeat (up to 30 minutes later), then maybe dispatches a work session (another 30 minutes). A simple dependency can cost an hour of wall-clock time.</p>
+
+<p>We mitigate this with UNBLOCK notifications — when an agent completes a task that unblocks another, it posts immediately so the blocked agent can pick up work at its next heartbeat instead of waiting for the SDM to notice.</p>
+
+<h3>2. Context Loss Between Sessions</h3>
+
+<p>Even with progress checkpointing, agents lose nuance between sessions. A progress file captures what was done and what remains, but not the reasoning behind decisions or the dead ends that were explored. Future sessions sometimes re-explore paths that a previous session already rejected.</p>
+
+<h3>3. Escalation Loops</h3>
+
+<p>When an agent is blocked and escalates to the SDM, the SDM creates a task for another agent. But if that agent is also blocked on something related, you get a circular dependency. We've seen cases where three agents are all waiting on each other. The SDM has to detect these loops and break them — sometimes by making a judgment call about which agent should proceed with an imperfect solution.</p>
+
+<h2>Lessons Learned</h2>
+
+<h3>Files Beat Databases for Agent State</h3>
+
+<p>We considered SQLite, Redis, and even a simple REST API for task state. Markdown files won because: (1) agents read and write them natively, (2) git provides free versioning and audit trails, (3) humans can debug the entire system by reading text files, (4) no infrastructure to maintain.</p>
+
+<h3>Autonomy Requires Guardrails, Not Approval Gates</h3>
+
+<p>The instinct is to require human approval for everything. This kills throughput. Instead, we use graduated trust: self-merge for low-risk changes, peer review for standard changes, mandatory checklists for critical changes. The agents operate autonomously within their guardrails.</p>
+
+<h3>Session Duration Matters More Than You Think</h3>
+
+<p>60-minute work sessions hit a sweet spot. Shorter sessions (30 minutes) don't leave enough time for complex tasks after the overhead of reading context, checking progress, and planning. Longer sessions (2+ hours) risk token exhaustion and context degradation. 60 minutes gives enough time for one meaningful deliverable per session.</p>
+
+<h3>The Biggest Failure Mode Is Rabbit Holes</h3>
+
+<p>Agents don't usually write catastrophically bad code. What they do is spend their entire tool budget investigating an interesting but irrelevant problem. A test fails, the agent investigates, discovers it's a pre-existing issue on main, but has already burned 7 of 10 tool calls. The actual task gets a rushed, incomplete implementation.</p>
+
+<p>The fix is explicit in the agent configuration: check if failures are pre-existing before investigating, create tasks for the SDM to triage, and move on. Prioritize delivery over curiosity.</p>
+
+<h2>The Stack</h2>
+
+<ul>
+  <li><strong>Agent runtime</strong>: Claude Sonnet 4.6 (heartbeats), Claude Opus 4.6 1M context (work sessions)</li>
+  <li><strong>Orchestration</strong>: Cron (system crontab, staggered schedules)</li>
+  <li><strong>State management</strong>: Markdown files in git (TASK_QUEUE.md, SESSION_LOG, LEARNINGS.md)</li>
+  <li><strong>Communication</strong>: Slack (per-agent channels + team channel)</li>
+  <li><strong>Code review</strong>: GitHub PRs with tiered review policy</li>
+  <li><strong>Content publishing</strong>: Eleventy static sites → S3 + CloudFront</li>
+  <li><strong>Monitoring</strong>: Session logs, heartbeat cron, disk usage checks</li>
+  <li><strong>Automation scripts</strong>: Bash (publish-content.sh, dispatch-work.sh, archive-completed-tasks.sh, backup-to-s3.sh)</li>
+</ul>
+
+<h2>Should You Build an Agent Team?</h2>
+
+<p>If you have a single product with a small surface area, probably not. The orchestration overhead isn't worth it.</p>
+
+<p>If you have multiple products, diverse task types (content, infrastructure, code, research), and a need for continuous operation — it's worth exploring. The key insight is that agent teams aren't about replacing developers. They're about maintaining velocity across a surface area that's too large for one person to cover.</p>
+
+<p>ClawWorks maintains 4 products, publishes 59 articles across 2 sites, manages AWS infrastructure, runs live trading bots, and conducts security research — all with one human providing strategic direction and 6 agents executing continuously.</p>
+
+<p>The architecture is simple. The hard part is getting the guardrails right.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

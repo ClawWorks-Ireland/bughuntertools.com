@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="JSON Web Tokens are everywhere — and they&#39;re frequently misconfigured. Here are the most common JWT vulnerabilities, how to test for them, and how to implement JWTs securely.">
+    <title>JWT Security in 2026: Common Vulnerabilities and How to Test for Them</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/jwt-security-vulnerabilities-testing-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/jwt-security-vulnerabilities-testing-2026/">
+    <meta property="og:title" content="JWT Security in 2026: Common Vulnerabilities and How to Test for Them">
+    <meta property="og:description" content="JSON Web Tokens are everywhere — and they&#39;re frequently misconfigured. Here are the most common JWT vulnerabilities, how to test for them, and how to implement JWTs securely.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/jwt-security-vulnerabilities-testing-2026/">
+    <meta name="twitter:title" content="JWT Security in 2026: Common Vulnerabilities and How to Test for Them">
+    <meta name="twitter:description" content="JSON Web Tokens are everywhere — and they&#39;re frequently misconfigured. Here are the most common JWT vulnerabilities, how to test for them, and how to implement JWTs securely.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "JWT Security in 2026: Common Vulnerabilities and How to Test for Them",
+      "description": "JSON Web Tokens are everywhere — and they&#39;re frequently misconfigured. Here are the most common JWT vulnerabilities, how to test for them, and how to implement JWTs securely.",
+      "url": "https://bughuntertools.com/articles/jwt-security-vulnerabilities-testing-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">JWT Security in 2026: Common Vulnerabilities and How to Test for Them</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "JWT Security in 2026: Common Vulnerabilities and How to Test for Them",
+  "description": "The most common JWT vulnerabilities, how to test for them, and how to implement JWTs securely.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are the most common JWT vulnerabilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most common JWT vulnerabilities are: algorithm confusion (changing RS256 to HS256), the 'none' algorithm bypass, weak signing secrets, missing expiration claims, and insufficient claim validation. These vulnerabilities allow attackers to forge tokens, escalate privileges, or bypass authentication entirely."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I test JWT security?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Test JWTs by: (1) decoding the token at jwt.io to understand its structure, (2) testing algorithm confusion by changing the alg header, (3) testing the none algorithm, (4) brute-forcing weak secrets with jwt_tool or hashcat, (5) modifying claims (user ID, role) and re-signing, and (6) checking expiration enforcement."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>JWT Security in 2026: Common Vulnerabilities and How to Test for Them</h1>
+
+<p class="article-meta">Published April 7, 2026 · 10 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>JWTs are frequently misconfigured — algorithm confusion, weak secrets, and missing expiration are the top flaws</li>
+    <li>The 'none' algorithm attack and RS256-to-HS256 confusion remain exploitable in production systems</li>
+    <li>Always validate the algorithm server-side, enforce expiration, and use strong asymmetric keys</li>
+    <li>Tools like jwt_tool and Burp's JWT extension automate testing for the most common JWT vulnerabilities</li>
+  </ul>
+</div>
+
+
+<p>JSON Web Tokens (JWTs) are the default authentication mechanism for modern APIs. They're stateless, scalable, and well-supported by every framework. They're also frequently misconfigured in ways that let attackers forge tokens, escalate privileges, or bypass authentication entirely.</p>
+
+<p>Here are the vulnerabilities that matter, how to test for them, and how to implement JWTs correctly.</p>
+
+<nav>
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#anatomy">JWT Anatomy (30-Second Refresher)</a></li>
+    <li><a href="#none">Vulnerability 1: The "none" Algorithm</a></li>
+    <li><a href="#confusion">Vulnerability 2: Algorithm Confusion (RS256 → HS256)</a></li>
+    <li><a href="#weak">Vulnerability 3: Weak Signing Secrets</a></li>
+    <li><a href="#claims">Vulnerability 4: Missing Claim Validation</a></li>
+    <li><a href="#expiry">Vulnerability 5: No Expiration or Long Expiration</a></li>
+    <li><a href="#jwk">Vulnerability 6: JWK Injection</a></li>
+    <li><a href="#testing">Testing Workflow</a></li>
+    <li><a href="#secure">Secure Implementation Checklist</a></li>
+  </ol>
+</nav>
+
+<h2 id="anatomy">JWT Anatomy (30-Second Refresher)</h2>
+
+<p>A JWT has three parts, separated by dots: <code>header.payload.signature</code></p>
+
+<ul>
+  <li><strong>Header</strong>: specifies the algorithm (<code>{"alg": "HS256", "typ": "JWT"}</code>)</li>
+  <li><strong>Payload</strong>: contains claims — user ID, role, expiration (<code>{"sub": "user123", "role": "user", "exp": 1712534400}</code>)</li>
+  <li><strong>Signature</strong>: cryptographic signature that proves the token hasn't been tampered with</li>
+</ul>
+
+<p>The header and payload are Base64URL-encoded (not encrypted — anyone can read them). The signature is what provides integrity. If you can forge the signature, you can forge the token.</p>
+
+<h2 id="none">Vulnerability 1: The "none" Algorithm</h2>
+
+<p><strong>What it is</strong>: The JWT spec includes an <code>"alg": "none"</code> option that means "no signature required." If the server accepts tokens with <code>alg: none</code>, an attacker can create any token they want without knowing the secret.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Decode the JWT header</li>
+  <li>Change <code>"alg"</code> to <code>"none"</code> (also try <code>"None"</code>, <code>"NONE"</code>, <code>"nOnE"</code>)</li>
+  <li>Remove the signature (everything after the second dot)</li>
+  <li>Send the modified token</li>
+  <li>If the server accepts it, the application is vulnerable</li>
+</ol>
+
+<p><strong>Fix</strong>: Never accept <code>alg: none</code>. Whitelist allowed algorithms explicitly in your JWT library configuration.</p>
+
+<h2 id="confusion">Vulnerability 2: Algorithm Confusion (RS256 → HS256)</h2>
+
+<p><strong>What it is</strong>: RS256 uses asymmetric cryptography (public/private key pair). HS256 uses symmetric cryptography (shared secret). If the server uses RS256 but also accepts HS256, an attacker can:</p>
+
+<ol>
+  <li>Get the server's public key (often available at <code>/.well-known/jwks.json</code>)</li>
+  <li>Change the token's <code>alg</code> from <code>RS256</code> to <code>HS256</code></li>
+  <li>Sign the token using the public key as the HS256 secret</li>
+  <li>The server verifies the HS256 signature using the public key — and it matches</li>
+</ol>
+
+<p>This works because the server uses the same key for verification regardless of algorithm. With RS256, it uses the public key to verify. With HS256, it uses the "secret" to verify — and the attacker set the "secret" to be the public key.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Fetch the public key from <code>/.well-known/jwks.json</code> or the OIDC discovery endpoint</li>
+  <li>Change the token header to <code>"alg": "HS256"</code></li>
+  <li>Sign the modified token using the public key as the HMAC secret</li>
+  <li>Send the token and check if it's accepted</li>
+</ol>
+
+<p><strong>Tool</strong>: <code>jwt_tool</code> automates this attack with the <code>-X k</code> flag.</p>
+
+<p><strong>Fix</strong>: Whitelist the expected algorithm. Never let the token's <code>alg</code> header determine which algorithm the server uses for verification.</p>
+
+<h2 id="weak">Vulnerability 3: Weak Signing Secrets</h2>
+
+<p><strong>What it is</strong>: HS256 tokens are signed with a shared secret. If the secret is weak (short, dictionary word, default value), it can be brute-forced.</p>
+
+<p><strong>Common weak secrets</strong>: <code>secret</code>, <code>password</code>, <code>jwt_secret</code>, <code>changeme</code>, the application name, empty string.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Capture a valid JWT</li>
+  <li>Use <code>hashcat</code> or <code>jwt_tool</code> to brute-force the secret</li>
+  <li>Hashcat mode 16500 handles JWT cracking: <code>hashcat -m 16500 jwt.txt wordlist.txt</code></li>
+  <li>If the secret is found, you can forge any token</li>
+</ol>
+
+<p><strong>Fix</strong>: Use a cryptographically random secret of at least 256 bits (32 bytes). Better yet, use RS256 with a proper key pair — there's no shared secret to brute-force.</p>
+
+<h2 id="claims">Vulnerability 4: Missing Claim Validation</h2>
+
+<p><strong>What it is</strong>: The server verifies the signature but doesn't validate the claims inside the token. An attacker can modify claims (user ID, role, permissions) and re-sign the token (if they know the secret or can exploit algorithm confusion).</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>Decode the payload and look for role/permission claims: <code>"role": "user"</code>, <code>"admin": false</code>, <code>"permissions": ["read"]</code></li>
+  <li>Modify them: <code>"role": "admin"</code>, <code>"admin": true</code>, <code>"permissions": ["read", "write", "delete"]</code></li>
+  <li>Re-sign the token (requires knowing the secret or exploiting another vulnerability)</li>
+  <li>Check if the server grants elevated access</li>
+</ul>
+
+<p><strong>Also check</strong>:</p>
+<ul>
+  <li><code>sub</code> (subject) — can you change the user ID to access another user's session?</li>
+  <li><code>iss</code> (issuer) — does the server validate who issued the token?</li>
+  <li><code>aud</code> (audience) — can a token for one service be used on another?</li>
+</ul>
+
+<p><strong>Fix</strong>: Validate all claims server-side. Don't trust the token's claims for authorization decisions without verification against the database.</p>
+
+<h2 id="expiry">Vulnerability 5: No Expiration or Long Expiration</h2>
+
+<p><strong>What it is</strong>: Tokens without an <code>exp</code> (expiration) claim are valid forever. Tokens with very long expiration (days, weeks) remain valid long after the user's session should have ended.</p>
+
+<p><strong>How to test</strong>:</p>
+<ul>
+  <li>Decode the token and check for <code>exp</code> claim</li>
+  <li>If <code>exp</code> is missing, the token never expires</li>
+  <li>If <code>exp</code> is set, check how far in the future it is (>1 hour is usually too long for access tokens)</li>
+  <li>Test with an expired token — does the server reject it?</li>
+  <li>Test after password change — is the old token still valid?</li>
+</ul>
+
+<p><strong>Fix</strong>: Always set <code>exp</code>. Access tokens should expire in 15-60 minutes. Use refresh tokens (with longer expiration) to get new access tokens. Implement token revocation for logout and password changes.</p>
+
+<h2 id="jwk">Vulnerability 6: JWK Injection</h2>
+
+<p><strong>What it is</strong>: Some JWT libraries allow the token header to include a <code>jwk</code> (JSON Web Key) parameter containing the public key to use for verification. An attacker can generate their own key pair, sign the token with their private key, and embed their public key in the token header. The server uses the attacker's public key to verify — and it passes.</p>
+
+<p><strong>How to test</strong>:</p>
+<ol>
+  <li>Generate a new RSA key pair</li>
+  <li>Add the public key to the JWT header as a <code>jwk</code> parameter</li>
+  <li>Sign the token with your private key</li>
+  <li>Send the token</li>
+</ol>
+
+<p><strong>Tool</strong>: <code>jwt_tool -X i</code> automates JWK injection.</p>
+
+<p><strong>Fix</strong>: Never use the <code>jwk</code> header parameter for verification. Always use a server-side key store.</p>
+
+<h2 id="testing">Testing Workflow</h2>
+
+<p>Here's the order to test JWT security:</p>
+
+<ol>
+  <li><strong>Decode</strong>: Paste the token into <a href="https://jwt.io">jwt.io</a> to understand its structure</li>
+  <li><strong>Check expiration</strong>: Is <code>exp</code> present? Is it reasonable?</li>
+  <li><strong>Test none algorithm</strong>: Quick check, high impact if vulnerable</li>
+  <li><strong>Test algorithm confusion</strong>: If the server uses RS256, try HS256 with the public key</li>
+  <li><strong>Brute-force secret</strong>: If HS256, try common secrets with hashcat</li>
+  <li><strong>Modify claims</strong>: If you can forge tokens, test privilege escalation</li>
+  <li><strong>Test revocation</strong>: Change password, logout — is the old token still valid?</li>
+</ol>
+
+<p><strong>Primary tool</strong>: <code>jwt_tool</code> by ticarpi — handles all of the above attacks with a single tool.</p>
+
+<h2 id="secure">Secure Implementation Checklist</h2>
+
+<pre><code>## JWT Security Checklist
+
+- [ ] Algorithm whitelisted (never accept from token header)
+- [ ] "none" algorithm rejected
+- [ ] Secret is cryptographically random, ≥256 bits
+- [ ] RS256 preferred over HS256 for public-facing APIs
+- [ ] exp claim always set (15-60 min for access tokens)
+- [ ] iss and aud claims validated
+- [ ] sub claim verified against database
+- [ ] Token revocation implemented (logout, password change)
+- [ ] Refresh token rotation enabled
+- [ ] JWK header parameter ignored
+- [ ] Tokens stored in httpOnly cookies (not localStorage)
+</code></pre>
+
+<h2>Bottom Line</h2>
+
+<p>JWT vulnerabilities are some of the highest-impact findings in API security testing. A single algorithm confusion or weak secret can give an attacker full admin access. The fixes are straightforward — whitelist algorithms, use strong secrets, validate claims, enforce expiration. Most JWT libraries support all of these out of the box; the vulnerabilities come from misconfiguration, not missing features.</p>
+
+<p>For the full API security testing workflow, see our <a href="/articles/api-security-testing-10-checks-2026/">10 API security checks</a>. For the broader testing methodology, see the <a href="/articles/web-app-security-testing-checklist-2026/">complete security testing checklist</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

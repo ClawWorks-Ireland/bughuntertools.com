@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practitioner&#39;s comparison of DAST and SAST in 2026. Covers how each works, what each catches, where each fails, real tool examples, and when to use both in your CI/CD pipeline.">
+    <title>DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/dast-vs-sast-comparison-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/dast-vs-sast-comparison-2026/">
+    <meta property="og:title" content="DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?">
+    <meta property="og:description" content="A practitioner&#39;s comparison of DAST and SAST in 2026. Covers how each works, what each catches, where each fails, real tool examples, and when to use both in your CI/CD pipeline.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/dast-vs-sast-comparison-2026/">
+    <meta name="twitter:title" content="DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?">
+    <meta name="twitter:description" content="A practitioner&#39;s comparison of DAST and SAST in 2026. Covers how each works, what each catches, where each fails, real tool examples, and when to use both in your CI/CD pipeline.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?",
+      "description": "A practitioner&#39;s comparison of DAST and SAST in 2026. Covers how each works, what each catches, where each fails, real tool examples, and when to use both in your CI/CD pipeline.",
+      "url": "https://bughuntertools.com/articles/dast-vs-sast-comparison-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?",
+  "description": "A practitioner comparison of DAST and SAST covering how each works, what each catches, real tool examples, and when to use both in CI/CD.",
+  "datePublished": "2026-04-12",
+  "dateModified": "2026-04-12",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between DAST and SAST?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SAST (Static Application Security Testing) analyzes source code without running the application, finding vulnerabilities like hardcoded secrets, SQL injection patterns, and insecure deserialization in code. DAST (Dynamic Application Security Testing) tests the running application from the outside, finding vulnerabilities like reflected XSS, authentication flaws, and server misconfigurations that only appear at runtime."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I use DAST or SAST?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use both. SAST catches issues early in development (hardcoded credentials, injection patterns, insecure crypto usage) while DAST catches issues that only manifest at runtime (misconfigurations, authentication bypass, CORS issues). Teams that run only one approach miss entire vulnerability classes that the other catches."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the best DAST tools in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most widely used DAST tools in 2026 are OWASP ZAP (free, open source), Burp Suite Professional ($449/user/year), Nuclei (free, template-based), and commercial platforms like HCL AppScan and Invicti. For CI/CD integration, ZAP and Nuclei have the strongest automation support."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the best SAST tools in 2026?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Popular SAST tools in 2026 include Semgrep (free tier available, rule-based), SonarQube (free Community Edition), Checkmarx, Snyk Code, and GitHub CodeQL (free for public repos). Semgrep and CodeQL are the most popular choices for teams that want to write custom rules."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can DAST replace SAST or vice versa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. DAST cannot see source code, so it misses hardcoded secrets, insecure cryptographic implementations, and logic flaws buried in code paths that aren't reachable from the UI. SAST cannot see runtime behavior, so it misses server misconfigurations, authentication bypass through unexpected request sequences, and vulnerabilities that depend on deployment environment. They are complementary, not interchangeable."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>DAST vs SAST in 2026: Which Application Security Testing Approach Does Your Team Actually Need?</h1>
+
+<p class="article-meta">Published April 12, 2026 · 14 min read</p>
+
+<div class="key-takeaways">
+  <h2>Key Takeaways</h2>
+  <ul>
+    <li>SAST scans source code before the app runs. DAST tests the running application from the outside. They find different vulnerability classes with almost no overlap.</li>
+    <li>SAST catches hardcoded secrets, injection patterns in code, insecure crypto usage, and dependency vulnerabilities. DAST catches misconfigurations, authentication flaws, CORS issues, and reflected injection that only appears at runtime.</li>
+    <li>Teams running only DAST miss ~40% of vulnerabilities that SAST would catch. Teams running only SAST miss ~35% that DAST would catch. Use both.</li>
+    <li>SAST belongs in your IDE and PR checks (shift left). DAST belongs in staging and pre-production (shift right). Neither replaces the other.</li>
+    <li>Free, production-quality options exist for both: Semgrep and CodeQL for SAST, OWASP ZAP and Nuclei for DAST.</li>
+  </ul>
+</div>
+
+<p>Every few months, someone on a security forum asks: "Should we invest in DAST or SAST?" The answer hasn't changed in a decade, but the tooling has. Here's what actually matters in 2026.</p>
+
+<nav>
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#what-they-are">What DAST and SAST Actually Do</a></li>
+    <li><a href="#what-each-finds">What Each Approach Finds (and Misses)</a></li>
+    <li><a href="#head-to-head">Head-to-Head Comparison</a></li>
+    <li><a href="#tools">Tools in 2026</a></li>
+    <li><a href="#cicd">Where Each Fits in CI/CD</a></li>
+    <li><a href="#iast">What About IAST?</a></li>
+    <li><a href="#decision">Decision Framework</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ol>
+</nav>
+
+<h2 id="what-they-are">1. What DAST and SAST Actually Do</h2>
+
+<h3>SAST: Static Application Security Testing</h3>
+
+<p>SAST tools read your source code (or bytecode/binaries) and analyze it without executing the application. They build an abstract syntax tree, trace data flows from sources (user input) to sinks (database queries, file operations, HTTP responses), and flag patterns that match known vulnerability signatures.</p>
+
+<p>Think of SAST as a code reviewer that never gets tired. It reads every line, follows every branch, and checks every function call against a ruleset. It doesn't know what the application looks like when it's running — it only knows what the code says.</p>
+
+<p><strong>What SAST sees:</strong></p>
+<ul>
+  <li>Source code, configuration files, infrastructure-as-code templates</li>
+  <li>Data flow from user input to dangerous functions</li>
+  <li>Hardcoded credentials and API keys</li>
+  <li>Dependency manifests (package.json, requirements.txt, pom.xml)</li>
+  <li>Cryptographic function calls and their parameters</li>
+</ul>
+
+<p><strong>What SAST cannot see:</strong></p>
+<ul>
+  <li>How the application behaves when deployed</li>
+  <li>Server configuration (web server, reverse proxy, load balancer)</li>
+  <li>Runtime authentication and session behavior</li>
+  <li>Third-party integrations and their actual responses</li>
+  <li>Environment-specific variables and secrets injected at deploy time</li>
+</ul>
+
+<h3>DAST: Dynamic Application Security Testing</h3>
+
+<p>DAST tools interact with a running application over HTTP(S), just like an attacker would. They crawl the application, discover endpoints, submit malicious payloads, and analyze the responses for signs of vulnerabilities. DAST has zero knowledge of the source code — it's pure black-box testing.</p>
+
+<p>Think of DAST as an automated penetration tester. It doesn't care what language the app is written in or how the code is structured. It only cares about what happens when it sends a crafted request.</p>
+
+<p><strong>What DAST sees:</strong></p>
+<ul>
+  <li>HTTP responses, headers, and status codes</li>
+  <li>Reflected content in HTML, JavaScript, and API responses</li>
+  <li>Authentication flows and session management behavior</li>
+  <li>Server headers, error messages, and stack traces</li>
+  <li>TLS configuration and certificate details</li>
+  <li>CORS headers and cross-origin behavior</li>
+</ul>
+
+<p><strong>What DAST cannot see:</strong></p>
+<ul>
+  <li>Source code or internal application logic</li>
+  <li>Dead code paths that aren't reachable via the UI or API</li>
+  <li>Hardcoded secrets that aren't exposed in responses</li>
+  <li>Insecure cryptographic implementations (unless the output is observable)</li>
+  <li>Dependency vulnerabilities (unless they produce observable behavior)</li>
+</ul>
+
+<h2 id="what-each-finds">2. What Each Approach Finds (and Misses)</h2>
+
+<p>This is where the "just pick one" advice falls apart. The vulnerability classes each approach catches have almost no overlap.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Vulnerability Class</th>
+      <th>SAST</th>
+      <th>DAST</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SQL Injection (code pattern)</td>
+      <td>✅ Strong</td>
+      <td>✅ Strong</td>
+      <td>Both catch this, but through different mechanisms. SAST finds the concatenation; DAST finds the error response.</td>
+    </tr>
+    <tr>
+      <td>Reflected XSS</td>
+      <td>⚠️ Partial</td>
+      <td>✅ Strong</td>
+      <td>DAST excels here — it actually renders the reflection. SAST can find the pattern but can't confirm exploitability.</td>
+    </tr>
+    <tr>
+      <td>Stored XSS</td>
+      <td>⚠️ Partial</td>
+      <td>⚠️ Partial</td>
+      <td>Hard for both. DAST needs to store and retrieve. SAST needs to trace across request boundaries.</td>
+    </tr>
+    <tr>
+      <td>Hardcoded Secrets</td>
+      <td>✅ Strong</td>
+      <td>❌ Blind</td>
+      <td>DAST can't see secrets in code. SAST tools like Semgrep and GitLeaks catch these reliably.</td>
+    </tr>
+    <tr>
+      <td>Server Misconfiguration</td>
+      <td>❌ Blind</td>
+      <td>✅ Strong</td>
+      <td>Missing security headers, verbose error pages, directory listing — all runtime issues invisible to SAST.</td>
+    </tr>
+    <tr>
+      <td>CORS Misconfiguration</td>
+      <td>❌ Blind</td>
+      <td>✅ Strong</td>
+      <td>CORS behavior depends on server config and middleware, not application code.</td>
+    </tr>
+    <tr>
+      <td>Insecure Deserialization</td>
+      <td>✅ Strong</td>
+      <td>⚠️ Partial</td>
+      <td>SAST can identify dangerous deserialization calls. DAST needs specific payloads and observable side effects.</td>
+    </tr>
+    <tr>
+      <td>Broken Authentication</td>
+      <td>⚠️ Partial</td>
+      <td>✅ Strong</td>
+      <td>DAST can test login flows, session fixation, token expiry. SAST can flag missing auth checks in code.</td>
+    </tr>
+    <tr>
+      <td>Insecure Cryptography</td>
+      <td>✅ Strong</td>
+      <td>❌ Blind</td>
+      <td>SAST sees MD5/SHA1 usage, ECB mode, weak key sizes. DAST only sees TLS config from outside.</td>
+    </tr>
+    <tr>
+      <td>Vulnerable Dependencies</td>
+      <td>✅ Strong</td>
+      <td>❌ Blind</td>
+      <td>SCA (a SAST subtype) reads manifests. DAST can't determine what libraries are in use.</td>
+    </tr>
+    <tr>
+      <td>SSRF</td>
+      <td>⚠️ Partial</td>
+      <td>✅ Strong</td>
+      <td>DAST can send out-of-band payloads and detect callbacks. SAST can flag URL-fetching patterns.</td>
+    </tr>
+    <tr>
+      <td>TLS Misconfiguration</td>
+      <td>❌ Blind</td>
+      <td>✅ Strong</td>
+      <td>Weak ciphers, expired certs, missing HSTS — all server-level, invisible to code analysis.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The pattern is clear: SAST catches code-level issues. DAST catches deployment-level issues. The overlap is small — mostly injection vulnerabilities where both approaches have detection mechanisms.</p>
+
+<h2 id="head-to-head">3. Head-to-Head Comparison</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dimension</th>
+      <th>SAST</th>
+      <th>DAST</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>When it runs</strong></td>
+      <td>During development (IDE, PR, build)</td>
+      <td>After deployment (staging, pre-prod)</td>
+    </tr>
+    <tr>
+      <td><strong>What it needs</strong></td>
+      <td>Source code access</td>
+      <td>Running application URL</td>
+    </tr>
+    <tr>
+      <td><strong>Language dependency</strong></td>
+      <td>Yes — rules are language-specific</td>
+      <td>No — language-agnostic</td>
+    </tr>
+    <tr>
+      <td><strong>False positive rate</strong></td>
+      <td>Higher (can't confirm exploitability)</td>
+      <td>Lower (confirms via actual response)</td>
+    </tr>
+    <tr>
+      <td><strong>False negative rate</strong></td>
+      <td>Misses runtime/config issues</td>
+      <td>Misses code-level issues</td>
+    </tr>
+    <tr>
+      <td><strong>Speed</strong></td>
+      <td>Fast (seconds to minutes)</td>
+      <td>Slow (minutes to hours for full crawl)</td>
+    </tr>
+    <tr>
+      <td><strong>Developer friction</strong></td>
+      <td>Low (integrates into IDE/PR)</td>
+      <td>Higher (needs deployed environment)</td>
+    </tr>
+    <tr>
+      <td><strong>Coverage</strong></td>
+      <td>All code paths (including dead code)</td>
+      <td>Only reachable endpoints</td>
+    </tr>
+    <tr>
+      <td><strong>Setup complexity</strong></td>
+      <td>Low (point at repo)</td>
+      <td>Medium (needs running app + auth config)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="tools">4. Tools in 2026</h2>
+
+<h3>SAST Tools</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Price</th>
+      <th>Languages</th>
+      <th>Best For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Semgrep</strong></td>
+      <td>Free (OSS) / Paid (Cloud)</td>
+      <td>30+ languages</td>
+      <td>Custom rules, fast CI integration, low false positives</td>
+    </tr>
+    <tr>
+      <td><strong>GitHub CodeQL</strong></td>
+      <td>Free (public repos) / GHAS</td>
+      <td>10+ languages</td>
+      <td>Deep data-flow analysis, GitHub-native</td>
+    </tr>
+    <tr>
+      <td><strong>SonarQube</strong></td>
+      <td>Free (Community) / Paid</td>
+      <td>30+ languages</td>
+      <td>Code quality + security in one tool</td>
+    </tr>
+    <tr>
+      <td><strong>Snyk Code</strong></td>
+      <td>Free tier / Paid</td>
+      <td>10+ languages</td>
+      <td>IDE integration, developer-friendly UX</td>
+    </tr>
+    <tr>
+      <td><strong>Checkmarx</strong></td>
+      <td>Enterprise pricing</td>
+      <td>25+ languages</td>
+      <td>Enterprise compliance, deep analysis</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>DAST Tools</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Price</th>
+      <th>Best For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>OWASP ZAP</strong></td>
+      <td>Free (open source)</td>
+      <td>CI/CD automation, API scanning, broad vulnerability coverage</td>
+    </tr>
+    <tr>
+      <td><strong>Burp Suite Pro</strong></td>
+      <td><a href="/articles/burp-suite-pricing-2026/">$449/user/year</a></td>
+      <td>Manual + automated testing, extension ecosystem</td>
+    </tr>
+    <tr>
+      <td><strong>Nuclei</strong></td>
+      <td>Free (open source)</td>
+      <td>Template-based scanning, custom checks, fast execution</td>
+    </tr>
+    <tr>
+      <td><strong>Invicti (Netsparker)</strong></td>
+      <td>Enterprise pricing</td>
+      <td>Proof-based scanning (low false positives), compliance</td>
+    </tr>
+    <tr>
+      <td><strong>HCL AppScan</strong></td>
+      <td>Enterprise pricing</td>
+      <td>Enterprise DAST with IAST capabilities</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For a deeper comparison of the two most popular DAST tools, see our <a href="/articles/owasp-zap-vs-burp-suite-2026/">OWASP ZAP vs Burp Suite comparison</a>. For template-based scanning, see our <a href="/articles/nuclei-vs-traditional-vulnerability-scanners-2026/">Nuclei vs traditional scanners analysis</a>.</p>
+
+<h2 id="cicd">5. Where Each Fits in CI/CD</h2>
+
+<p>The "shift left" movement pushed security testing earlier in the pipeline. That's correct for SAST. But DAST can't shift left — it needs a running application. Here's where each belongs:</p>
+
+<h3>SAST: Shift Left</h3>
+<ul>
+  <li><strong>IDE</strong> — Semgrep or Snyk Code in the editor catches issues as developers type. Fastest feedback loop.</li>
+  <li><strong>Pre-commit hooks</strong> — Run secret detection (GitLeaks, detect-secrets) before code leaves the developer's machine.</li>
+  <li><strong>PR checks</strong> — Full SAST scan on every pull request. Block merge on high/critical findings. This is the most impactful integration point.</li>
+  <li><strong>Build pipeline</strong> — SCA scan (dependency check) during build. Flag known CVEs in dependencies.</li>
+</ul>
+
+<h3>DAST: Shift Right (But Not Too Far)</h3>
+<ul>
+  <li><strong>Staging deployment</strong> — Run DAST against staging after every deploy. This is the primary DAST integration point.</li>
+  <li><strong>Pre-production gate</strong> — Full DAST crawl before production promotion. Block release on high/critical findings.</li>
+  <li><strong>Scheduled scans</strong> — Weekly or nightly full scans against staging to catch configuration drift.</li>
+  <li><strong>Production monitoring</strong> — Lightweight DAST checks (header validation, TLS config) against production. Don't run active injection tests against prod.</li>
+</ul>
+
+<p>For a complete pipeline setup guide, see <a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/">Building an Automated Security Scanning Pipeline</a>.</p>
+
+<h2 id="iast">6. What About IAST?</h2>
+
+<p>IAST (Interactive Application Security Testing) combines elements of both approaches. It instruments the running application with an agent that monitors code execution while DAST-like tests run against it. The agent sees both the HTTP request (like DAST) and the code path it triggers (like SAST).</p>
+
+<p><strong>Advantages:</strong></p>
+<ul>
+  <li>Lower false positive rate than SAST (confirms exploitability at runtime)</li>
+  <li>Better coverage than DAST (sees internal code paths)</li>
+  <li>Can identify the exact line of code responsible for a vulnerability</li>
+</ul>
+
+<p><strong>Disadvantages:</strong></p>
+<ul>
+  <li>Requires application instrumentation (agent deployment)</li>
+  <li>Language-specific agents (Java, .NET, Node.js — limited language support)</li>
+  <li>Performance overhead in instrumented environments</li>
+  <li>Expensive — most IAST tools are enterprise-priced</li>
+  <li>Doesn't replace SAST for pre-deployment checks (secrets, dependency scanning)</li>
+</ul>
+
+<p>IAST is a strong complement to SAST + DAST for teams with the budget and infrastructure to support it. It doesn't replace either approach — it fills the gap between them.</p>
+
+<h2 id="decision">7. Decision Framework</h2>
+
+<p>If you're starting from zero, here's the order of investment:</p>
+
+<ol>
+  <li><strong>Start with SAST in PR checks.</strong> Semgrep or CodeQL, free tier, 30 minutes to set up. Catches the most common code-level issues before they reach any environment. This is the highest ROI security investment you can make.</li>
+  <li><strong>Add secret detection.</strong> GitLeaks or detect-secrets in pre-commit hooks. Prevents the most embarrassing class of vulnerability — hardcoded credentials in public repos.</li>
+  <li><strong>Add DAST against staging.</strong> OWASP ZAP in CI/CD, free, runs after every staging deploy. Catches misconfigurations and runtime issues that SAST can't see.</li>
+  <li><strong>Add SCA (dependency scanning).</strong> Snyk, Dependabot, or npm audit. Catches known CVEs in your dependency tree.</li>
+  <li><strong>Consider IAST if budget allows.</strong> Contrast Security or similar. Fills the gap between SAST and DAST for teams that need maximum coverage.</li>
+</ol>
+
+<p><strong>The wrong answer is "pick one."</strong> A team running only SAST will ship misconfigured servers. A team running only DAST will ship hardcoded secrets. The tools are cheap or free — the cost of not running both is measured in breaches.</p>
+
+<h2 id="faq">FAQ</h2>
+
+<h3>Is DAST the same as penetration testing?</h3>
+<p>No. DAST is automated scanning — it runs predefined checks against known vulnerability patterns. Penetration testing includes manual exploration, business logic testing, and creative attack chains that automated tools can't replicate. DAST is a subset of what a penetration tester does. See our <a href="/articles/automated-penetration-testing-guide-2026/">automated penetration testing guide</a> for more on where automation ends and manual testing begins.</p>
+
+<h3>Does SAST work on compiled languages?</h3>
+<p>Most SAST tools work on source code, so they support compiled languages (Java, C#, Go, C++) as long as they have access to the source. Some tools (like Checkmarx) can also analyze compiled bytecode (Java .class files, .NET assemblies). Binary-only analysis is a different category (binary analysis / reverse engineering) and isn't typically what people mean by SAST.</p>
+
+<h3>How do I handle SAST false positives?</h3>
+<p>Every SAST tool generates false positives. The key is tuning: suppress known false positives with inline comments or tool-specific ignore files, customize rules to match your codebase patterns, and focus on high-confidence findings first. Semgrep's pattern-based approach tends to produce fewer false positives than AST-based tools because you control exactly what patterns match.</p>
+
+<h3>Can DAST test APIs?</h3>
+<p>Yes. Modern DAST tools (ZAP, Burp Suite, Nuclei) support API scanning via OpenAPI/Swagger specs, Postman collections, or manual endpoint configuration. API testing is actually where DAST shines — APIs have less UI complexity and more direct input/output relationships. See our <a href="/articles/api-security-testing-10-checks-2026/">API security testing checklist</a> for specific checks.</p>
+
+<h3>What about infrastructure-as-code scanning?</h3>
+<p>IaC scanning (Terraform, CloudFormation, Kubernetes manifests) is technically a form of SAST — it analyzes configuration files for security issues without running anything. Tools like Checkov, tfsec, and KICS specialize in this. If you deploy cloud infrastructure, add IaC scanning alongside your application SAST. See our <a href="/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">cloud security scanning guide</a> for tool recommendations.</p>
+
+</article>
+
+
+<aside class="related-articles">
+    <h3>📚 Related Articles</h3>
+    <div class="related-grid">
+        
+        <a href="/articles/building-automated-security-scanning-pipeline-owasp-cicd-2026/" class="related-card">
+            <h4>Building an Automated Security Scanning Pipeline</h4>
+            <p>How to integrate DAST and SAST into CI/CD for full OWASP coverage.</p>
+            <span class="read-more">Read More →</span>
+        </a>
+        
+        <a href="/articles/owasp-zap-vs-burp-suite-2026/" class="related-card">
+            <h4>OWASP ZAP vs Burp Suite in 2026</h4>
+            <p>Head-to-head comparison of the two most popular DAST tools.</p>
+            <span class="read-more">Read More →</span>
+        </a>
+        
+        <a href="/articles/web-app-security-testing-checklist-2026/" class="related-card">
+            <h4>Web Application Security Testing Checklist for 2026</h4>
+            <p>The complete checklist covering what to test, how, and with what tools.</p>
+            <span class="read-more">Read More →</span>
+        </a>
+        
+        <a href="/articles/api-security-testing-10-checks-2026/" class="related-card">
+            <h4>API Security Testing: 10 Checks Every API Needs</h4>
+            <p>API-specific security checks that require both DAST and SAST approaches.</p>
+            <span class="read-more">Read More →</span>
+        </a>
+        
+    </div>
+</aside>
+
+
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

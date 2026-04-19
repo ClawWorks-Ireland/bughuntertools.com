@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A step-by-step recon workflow for bug bounty hunters in 2026. Covers subdomain enumeration, tech stack fingerprinting, endpoint discovery, and how to prioritize what to test first.">
+    <title>Bug Bounty Recon Workflow in 2026: From Scope to First Finding</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bug-bounty-recon-workflow-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bug-bounty-recon-workflow-2026/">
+    <meta property="og:title" content="Bug Bounty Recon Workflow in 2026: From Scope to First Finding">
+    <meta property="og:description" content="A step-by-step recon workflow for bug bounty hunters in 2026. Covers subdomain enumeration, tech stack fingerprinting, endpoint discovery, and how to prioritize what to test first.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bug-bounty-recon-workflow-2026/">
+    <meta name="twitter:title" content="Bug Bounty Recon Workflow in 2026: From Scope to First Finding">
+    <meta name="twitter:description" content="A step-by-step recon workflow for bug bounty hunters in 2026. Covers subdomain enumeration, tech stack fingerprinting, endpoint discovery, and how to prioritize what to test first.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Bug Bounty Recon Workflow in 2026: From Scope to First Finding",
+      "description": "A step-by-step recon workflow for bug bounty hunters in 2026. Covers subdomain enumeration, tech stack fingerprinting, endpoint discovery, and how to prioritize what to test first.",
+      "url": "https://bughuntertools.com/articles/bug-bounty-recon-workflow-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bug Bounty Recon Workflow in 2026: From Scope to First Finding</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Bug Bounty Recon Workflow in 2026: From Scope to First Finding",
+  "description": "A step-by-step recon workflow for bug bounty hunters covering subdomain enumeration, tech stack fingerprinting, endpoint discovery, and prioritization.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is recon in bug bounty hunting?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Recon (reconnaissance) is the process of mapping a target's attack surface before testing for vulnerabilities. It includes subdomain enumeration, technology stack identification, endpoint discovery, and content analysis. Good recon determines the quality of your findings — most critical bugs are found on assets that other hunters missed during recon."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long should recon take before testing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For a typical bug bounty target, initial recon takes 1-4 hours. Subdomain enumeration and tech fingerprinting can run in parallel. The key is to start testing high-value targets (admin panels, APIs, login flows) as soon as you find them, while continuing recon in the background."
+      }
+    }
+  ]
+}
+</script>
+
+<article>
+
+<h1>Bug Bounty Recon Workflow in 2026: From Scope to First Finding</h1>
+
+<p class="article-meta">Published April 7, 2026 · 10 min read</p>
+
+<div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+  <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+  <ul style="margin-bottom: 0;">
+    <li>Bug bounty success depends on systematic methodology, not just tool knowledge</li>
+    <li>Thorough reconnaissance is the foundation — most hunters spend 80% of time on recon</li>
+    <li>Document everything — clear reports with reproduction steps get paid faster</li>
+  </ul>
+</div>
+
+
+<p>The difference between hunters who find critical bugs and hunters who find duplicates is usually recon. Not skill, not luck — recon. The hunter who maps the attack surface more thoroughly finds the assets that everyone else missed.</p>
+
+<p>This is the recon workflow I use. It's not the only way, but it's systematic, repeatable, and it works.</p>
+
+<nav>
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#scope">Step 1: Read the Scope (Seriously)</a></li>
+    <li><a href="#subdomains">Step 2: Subdomain Enumeration</a></li>
+    <li><a href="#alive">Step 3: Alive Check and Port Scan</a></li>
+    <li><a href="#tech">Step 4: Technology Fingerprinting</a></li>
+    <li><a href="#endpoints">Step 5: Endpoint Discovery</a></li>
+    <li><a href="#js">Step 6: JavaScript Analysis</a></li>
+    <li><a href="#prioritize">Step 7: Prioritize Targets</a></li>
+    <li><a href="#automate">Automating the Workflow</a></li>
+    <li><a href="#mistakes">Common Recon Mistakes</a></li>
+  </ol>
+</nav>
+
+<h2 id="scope">Step 1: Read the Scope (Seriously)</h2>
+
+<p>Before running any tools, read the program's scope document completely. Look for:</p>
+
+<ul>
+  <li><strong>In-scope domains</strong> — the exact domains and wildcards you're allowed to test</li>
+  <li><strong>Out-of-scope assets</strong> — third-party services, specific subdomains, or functionality that's excluded</li>
+  <li><strong>Testing restrictions</strong> — rate limits, no automated scanning, no DoS testing</li>
+  <li><strong>Reward structure</strong> — what severity levels pay, what vulnerability types are prioritized</li>
+</ul>
+
+<p>The scope tells you where to focus. A wildcard scope (<code>*.example.com</code>) means subdomain enumeration is critical. A single-domain scope means you should go deep on that one application.</p>
+
+<h2 id="subdomains">Step 2: Subdomain Enumeration</h2>
+
+<p>For wildcard scopes, subdomain enumeration is the highest-value recon step. Forgotten subdomains — staging servers, old APIs, internal tools accidentally exposed — are where critical bugs live.</p>
+
+<h3>Passive Enumeration (No Target Contact)</h3>
+
+<p>Start passive. These sources don't touch the target at all:</p>
+
+<ul>
+  <li><strong>Certificate Transparency logs</strong> — <code>crt.sh</code> shows every SSL certificate issued for a domain. Run: <code>curl -s "https://crt.sh/?q=%25.example.com&amp;output=json" | jq -r '.[].name_value' | sort -u</code></li>
+  <li><strong>DNS datasets</strong> — SecurityTrails, VirusTotal, Shodan have historical DNS records</li>
+  <li><strong>Search engines</strong> — <code>site:example.com</code> in Google reveals indexed subdomains</li>
+  <li><strong>GitHub/GitLab</strong> — search for the domain in public repos. Developers leak internal hostnames in config files, CI/CD pipelines, and documentation.</li>
+</ul>
+
+<h3>Active Enumeration (Touches Target DNS)</h3>
+
+<p>After passive, run active enumeration:</p>
+
+<ul>
+  <li><strong>DNS brute-force</strong> — tools like <code>amass</code>, <code>subfinder</code>, or <code>massdns</code> with a good wordlist</li>
+  <li><strong>DNS zone transfer</strong> — unlikely to work, but always try: <code>dig axfr example.com @ns1.example.com</code></li>
+  <li><strong>Permutation scanning</strong> — tools like <code>altdns</code> generate permutations of known subdomains (e.g., if <code>api.example.com</code> exists, try <code>api-v2.example.com</code>, <code>api-staging.example.com</code>)</li>
+</ul>
+
+<p><strong>Combine results</strong>: merge all subdomain lists, deduplicate, and sort. A typical target yields 50-500 unique subdomains.</p>
+
+<h2 id="alive">Step 3: Alive Check and Port Scan</h2>
+
+<p>Not all discovered subdomains are alive. Filter to only live hosts:</p>
+
+<ul>
+  <li><strong>HTTP probe</strong> — <code>httpx</code> or <code>httprobe</code> checks which subdomains respond on ports 80/443</li>
+  <li><strong>Extended port scan</strong> — for high-value targets, scan common web ports (8080, 8443, 3000, 4443, 9090) with <code>nmap</code> or <code>masscan</code></li>
+  <li><strong>Screenshot</strong> — tools like <code>gowitness</code> or <code>aquatone</code> take screenshots of every live host. Visual review catches things automated tools miss — login pages, admin panels, error pages that leak information.</li>
+</ul>
+
+<h2 id="tech">Step 4: Technology Fingerprinting</h2>
+
+<p>For each live host, identify the technology stack. This determines what vulnerabilities to test for.</p>
+
+<ul>
+  <li><strong>Web server</strong> — Apache, Nginx, IIS, Caddy (check <code>Server</code> header)</li>
+  <li><strong>Application framework</strong> — Next.js, React, Angular, Django, Rails, Spring (check response headers, HTML source, JavaScript files)</li>
+  <li><strong>CMS</strong> — WordPress, Drupal, Joomla (check <code>/wp-admin</code>, <code>/wp-login.php</code>, generator meta tags)</li>
+  <li><strong>WAF</strong> — Cloudflare, AWS WAF, Akamai (check response headers, cookie names, error pages)</li>
+</ul>
+
+<p><strong>Tools</strong>: Wappalyzer (browser extension), Nuclei (tech detection templates), <code>whatweb</code>. SecurityClaw's <code>nextjs-recon</code> and <code>tech-stack-cve-scanner</code> skills automate this for specific stacks — see our <a href="/articles/securityclaw-4-new-skills-april-2026/">new skills coverage</a>.</p>
+
+<p><strong>Why this matters</strong>: If you find a Next.js app, test for <code>_next/data</code> exposure and environment variable leaks. If you find WordPress, test for plugin vulnerabilities. If you find an API gateway, test CORS configuration. The tech stack determines the attack surface.</p>
+
+<h2 id="endpoints">Step 5: Endpoint Discovery</h2>
+
+<p>Now find every endpoint on each live host:</p>
+
+<h3>Crawling</h3>
+<ul>
+  <li>Spider the application with ZAP or Burp to discover linked pages</li>
+  <li>Check <code>robots.txt</code> and <code>sitemap.xml</code> for disclosed paths</li>
+  <li>Look for API documentation endpoints (<code>/api-docs</code>, <code>/swagger</code>, <code>/graphql</code>)</li>
+</ul>
+
+<h3>Directory Brute-Force</h3>
+<ul>
+  <li>Use <code>ffuf</code> or <code>gobuster</code> with a targeted wordlist</li>
+  <li>Match wordlist to tech stack: use a WordPress wordlist for WordPress, a Node.js wordlist for Node apps</li>
+  <li>Check for backup files: <code>.bak</code>, <code>.old</code>, <code>.swp</code>, <code>~</code> suffixes</li>
+  <li>Check for exposed config: <code>.env</code>, <code>.git/config</code>, <code>web.config</code>, <code>application.yml</code></li>
+</ul>
+
+<h3>Wayback Machine</h3>
+<ul>
+  <li>Check <code>web.archive.org</code> for historical URLs — endpoints that were removed may still be accessible</li>
+  <li>Tool: <code>waybackurls</code> extracts all archived URLs for a domain</li>
+</ul>
+
+<h2 id="js">Step 6: JavaScript Analysis</h2>
+
+<p>Modern web applications ship their logic in JavaScript bundles. These bundles contain:</p>
+
+<ul>
+  <li><strong>API endpoints</strong> — hardcoded paths like <code>/api/v2/users</code>, <code>/internal/admin</code></li>
+  <li><strong>API keys and tokens</strong> — developers accidentally ship secrets in client-side code</li>
+  <li><strong>Hidden functionality</strong> — admin features, debug endpoints, feature flags</li>
+  <li><strong>Internal hostnames</strong> — references to staging servers, internal APIs, microservice names</li>
+</ul>
+
+<p><strong>How to analyze</strong>:</p>
+<ol>
+  <li>Download all <code>.js</code> files from the application</li>
+  <li>Search for patterns: <code>/api/</code>, <code>Authorization</code>, <code>Bearer</code>, <code>apiKey</code>, <code>secret</code>, <code>internal</code></li>
+  <li>Use tools like <code>LinkFinder</code> to extract URLs from JavaScript</li>
+  <li>Beautify minified code with <code>js-beautify</code> for manual review</li>
+</ol>
+
+<p>SecurityClaw's <code>js_analyzer</code> and <code>js-bundle-recon</code> skills automate this — they extract endpoints, secrets, and internal references from JavaScript bundles.</p>
+
+<h2 id="prioritize">Step 7: Prioritize Targets</h2>
+
+<p>You now have a list of live hosts, their tech stacks, and their endpoints. Don't test everything equally. Prioritize:</p>
+
+<h3>High Priority (Test First)</h3>
+<ol>
+  <li><strong>Admin panels and login pages</strong> — authentication bypass, default credentials, brute-force</li>
+  <li><strong>API endpoints with authentication</strong> — IDOR, broken access control, mass assignment</li>
+  <li><strong>File upload functionality</strong> — unrestricted upload, path traversal, command injection via filename</li>
+  <li><strong>Search and filter parameters</strong> — SQL injection, XSS (these accept user input and often lack sanitization)</li>
+  <li><strong>Forgotten/staging subdomains</strong> — often have weaker security controls than production</li>
+</ol>
+
+<h3>Medium Priority</h3>
+<ol>
+  <li><strong>User profile and settings pages</strong> — stored XSS, IDOR on profile data</li>
+  <li><strong>Payment and checkout flows</strong> — business logic flaws, price manipulation</li>
+  <li><strong>OAuth/SSO integration points</strong> — redirect URI manipulation, token leakage</li>
+</ol>
+
+<h3>Lower Priority</h3>
+<ol>
+  <li><strong>Static content pages</strong> — limited attack surface</li>
+  <li><strong>Well-known third-party integrations</strong> — Stripe checkout, Google Maps embed (bugs here are usually the third party's responsibility)</li>
+</ol>
+
+<h2 id="automate">Automating the Workflow</h2>
+
+<p>The recon steps above can be chained into a single automated pipeline. Here's the flow:</p>
+
+<pre><code>1. subfinder + amass + crt.sh → merged subdomain list
+2. httpx → alive hosts with status codes
+3. nuclei (tech-detect templates) → tech stack per host
+4. ffuf → endpoint discovery per host
+5. waybackurls → historical endpoints
+6. LinkFinder → JS-extracted endpoints
+7. Merge all endpoints → deduplicated target list
+</code></pre>
+
+<p>Tools like <code>reconftw</code> and <code>axiom</code> automate this entire chain. For CI/CD integration, see our guide on <a href="/articles/automate-zap-scans-github-actions-2026/">automating ZAP in GitHub Actions</a> — the same pattern works for recon tools.</p>
+
+<h2 id="mistakes">Common Recon Mistakes</h2>
+
+<ol>
+  <li><strong>Skipping passive recon</strong> — jumping straight to active scanning misses CT log subdomains, GitHub leaks, and Wayback Machine endpoints.</li>
+  <li><strong>Using default wordlists only</strong> — generic wordlists miss application-specific paths. Build custom wordlists from the target's JavaScript, documentation, and error messages.</li>
+  <li><strong>Not checking non-standard ports</strong> — many interesting services run on 8080, 8443, 3000, or custom ports. A port 80/443-only scan misses them.</li>
+  <li><strong>Ignoring JavaScript bundles</strong> — the richest source of hidden endpoints and secrets in modern web apps.</li>
+  <li><strong>Testing before understanding scope</strong> — testing out-of-scope assets gets you banned from the program. Read the scope first.</li>
+</ol>
+
+<h2>Bottom Line</h2>
+
+<p>Recon is the foundation. A thorough recon workflow — subdomain enumeration, alive checking, tech fingerprinting, endpoint discovery, JavaScript analysis — gives you a complete map of the attack surface. From there, use the <a href="/articles/web-app-security-testing-checklist-2026/">security testing checklist</a> to systematically test what you've found.</p>
+
+<p>The hunters who find the best bugs aren't necessarily the most skilled testers. They're the ones who found the assets that nobody else was looking at.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="How to find exposed credentials, leaked API keys, and misconfigured secrets vaults in cloud environments. Covers AWS Secrets Manager, HashiCorp Vault, and GCP Secret Manager.">
+    <title>Cloud Secrets Exposed: Finding Leaked Credentials, API Keys, and Misconfigured Vaults</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/cloud-secrets-management-testing-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/cloud-secrets-management-testing-bug-bounty-guide-2026/">
+    <meta property="og:title" content="Cloud Secrets Exposed: Finding Leaked Credentials, API Keys, and Misconfigured Vaults">
+    <meta property="og:description" content="How to find exposed credentials, leaked API keys, and misconfigured secrets vaults in cloud environments. Covers AWS Secrets Manager, HashiCorp Vault, and GCP Secret Manager.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/cloud-secrets-management-testing-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="Cloud Secrets Exposed: Finding Leaked Credentials, API Keys, and Misconfigured Vaults">
+    <meta name="twitter:description" content="How to find exposed credentials, leaked API keys, and misconfigured secrets vaults in cloud environments. Covers AWS Secrets Manager, HashiCorp Vault, and GCP Secret Manager.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Cloud Secrets Exposed: Finding Leaked Credentials, API Keys, and Misconfigured Vaults",
+      "description": "How to find exposed credentials, leaked API keys, and misconfigured secrets vaults in cloud environments. Covers AWS Secrets Manager, HashiCorp Vault, and GCP Secret Manager.",
+      "url": "https://bughuntertools.com/articles/cloud-secrets-management-testing-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Cloud Secrets Exposed: Finding Leaked Credentials, API Keys, and Misconfigured Vaults</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Cloud Secrets Management Testing for Bug Bounty in 2026: How to Find Exposed Credentials, API Keys, and Misconfigured Vaults in Real Targets",
+  "description": "Learn how to find cloud secrets management vulnerabilities in bug bounty targets. Covers exposed API keys, misconfigured HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, GCP Secret Manager, hardcoded credentials, and real-world exploitation techniques for 2026.",
+  "datePublished": "2026-04-15",
+  "dateModified": "2026-04-15",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools",
+    "url": "https://bughuntertools.com"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://bughuntertools.com/articles/cloud-secrets-management-testing-bug-bounty-guide-2026/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bughuntertools.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Articles", "item": "https://bughuntertools.com/articles/" },
+    { "@type": "ListItem", "position": 3, "name": "Cloud Secrets Management Testing for Bug Bounty in 2026" }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Can you find exposed secrets in bug bounty programs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Exposed API keys, hardcoded credentials, and misconfigured secrets managers are among the most commonly reported and highest-paying bug bounty findings. Programs routinely pay critical-severity bounties for leaked cloud credentials that grant access to production infrastructure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What tools do you need for cloud secrets testing in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Key tools include trufflehog and gitleaks for scanning repositories, nuclei with secrets-detection templates, httpx for probing exposed vault endpoints, cloud-specific CLIs (aws, az, gcloud) for validating discovered credentials, and custom scripts for scanning JavaScript bundles and API responses for leaked keys."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the most common secrets vulnerability in bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Hardcoded API keys in public GitHub repositories and exposed in client-side JavaScript bundles are the most commonly reported secrets vulnerabilities. AWS access keys, Stripe API keys, and Firebase credentials are found most frequently because developers accidentally commit them or embed them in frontend code."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you validate found credentials without causing damage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use read-only validation methods: for AWS keys run aws sts get-caller-identity, for GCP service accounts use gcloud auth print-access-token, for API keys make a minimal GET request to a non-destructive endpoint. Never modify data, create resources, or access customer information. Document the validation method in your report."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are secrets found in public repositories in scope for bug bounty?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on the program. Many programs explicitly include leaked credentials in public repos as in-scope findings. Check the program policy — some require the secret to be currently valid and grant meaningful access. Always verify the repository belongs to the target organization before reporting."
+      }
+    }
+  ]
+}
+</script>
+
+<div class="key-takeaways">
+  <h2>Key Takeaways</h2>
+  <ul>
+    <li>Exposed cloud secrets are consistently among the highest-paying bug bounty findings — a single leaked AWS root key can earn $10,000+ bounties</li>
+    <li>Secrets leak through predictable channels: Git history, client-side JavaScript, environment files, error messages, and misconfigured vault endpoints</li>
+    <li>Automated scanning with trufflehog and gitleaks catches low-hanging fruit, but manual analysis of JavaScript bundles and API responses finds what scanners miss</li>
+    <li>Always validate credentials using read-only methods — never modify data or access customer information</li>
+    <li>Cloud-specific misconfigurations (overly permissive IAM roles, unencrypted secrets, missing rotation policies) are valid findings even when individual secrets aren't exposed</li>
+  </ul>
+</div>
+
+<h2>Why Cloud Secrets Management Testing Matters for Bug Bounty</h2>
+
+<p>Every cloud application depends on secrets — API keys, database passwords, service account credentials, encryption keys, OAuth tokens. When these secrets leak or their management infrastructure is misconfigured, attackers gain direct access to production systems without needing to exploit any application vulnerability.</p>
+
+<p>In 2026, secrets exposure remains one of the most impactful vulnerability classes in bug bounty. The reason is simple: a single leaked credential often provides more access than any SQL injection or XSS chain. Programs know this, which is why exposed production credentials routinely earn critical-severity bounties.</p>
+
+<p>This guide covers the complete methodology for finding secrets management vulnerabilities in bug bounty targets — from automated scanning to manual analysis of vault misconfigurations.</p>
+
+<h2>Understanding the Secrets Attack Surface</h2>
+
+<p>Before hunting for secrets, you need to understand where they live and how they leak. The attack surface breaks down into three categories:</p>
+
+<h3>1. Secrets in Code and Artifacts</h3>
+
+<p>The most common exposure vector. Secrets end up in:</p>
+
+<ul>
+  <li><strong>Git repositories</strong> — committed directly in source code, configuration files, or .env files. Even if removed in later commits, they persist in Git history</li>
+  <li><strong>Client-side JavaScript</strong> — API keys, Firebase configs, and service credentials embedded in frontend bundles</li>
+  <li><strong>Docker images</strong> — secrets baked into image layers during build, visible via <code>docker history</code> or layer extraction</li>
+  <li><strong>CI/CD artifacts</strong> — build logs, deployment scripts, and pipeline configurations that reference or print secrets</li>
+  <li><strong>Mobile app binaries</strong> — API keys and backend credentials embedded in APK/IPA files</li>
+</ul>
+
+<h3>2. Secrets Management Infrastructure</h3>
+
+<p>Organizations use dedicated tools to manage secrets, and these tools themselves become targets:</p>
+
+<ul>
+  <li><strong>HashiCorp Vault</strong> — exposed UI/API endpoints, misconfigured auth methods, overly permissive policies</li>
+  <li><strong>AWS Secrets Manager / Parameter Store</strong> — IAM misconfigurations allowing unauthorized access</li>
+  <li><strong>Azure Key Vault</strong> — misconfigured access policies, exposed management endpoints</li>
+  <li><strong>GCP Secret Manager</strong> — overly permissive IAM bindings on secret resources</li>
+  <li><strong>Kubernetes Secrets</strong> — base64-encoded (not encrypted) secrets accessible via misconfigured RBAC</li>
+</ul>
+
+<h3>3. Secrets in Transit</h3>
+
+<p>Secrets leak during runtime through:</p>
+
+<ul>
+  <li><strong>Error messages</strong> — stack traces that include connection strings or API keys</li>
+  <li><strong>API responses</strong> — endpoints that return configuration data including secrets</li>
+  <li><strong>Logs</strong> — application logs exposed via misconfigured log aggregation endpoints</li>
+  <li><strong>Environment variable dumps</strong> — debug endpoints like <code>/env</code>, <code>/debug/vars</code>, <code>/actuator/env</code></li>
+</ul>
+
+<h2>Phase 1: Automated Secrets Scanning</h2>
+
+<p>Start every engagement with automated scanning to catch the obvious leaks. This is your baseline — it finds the low-hanging fruit that many programs still haven't addressed.</p>
+
+<h3>GitHub Repository Scanning</h3>
+
+<p>If the target has public repositories, scan them immediately:</p>
+
+<pre><code># TruffleHog — scans entire Git history for high-entropy strings and known patterns
+trufflehog github --org=target-org --only-verified
+
+# Gitleaks — fast pattern-based scanning
+gitleaks detect --source=https://github.com/target-org/repo --verbose
+
+# Search for specific file patterns that commonly contain secrets
+# .env files, config files, key files
+github-dorking: "org:target-org filename:.env"
+github-dorking: "org:target-org filename:credentials"
+github-dorking: "org:target-org filename:secret"
+github-dorking: "org:target-org extension:pem"
+github-dorking: "org:target-org extension:key"</code></pre>
+
+<p>TruffleHog's <code>--only-verified</code> flag is critical — it actually tests discovered credentials against their respective APIs, so you only get results that are currently valid. This saves hours of manual validation.</p>
+
+<h3>JavaScript Bundle Analysis</h3>
+
+<p>Modern web applications bundle secrets into client-side JavaScript more often than you'd expect:</p>
+
+<pre><code># Download and extract JavaScript bundles
+wget -r -l 1 -A "*.js" https://target.com/
+
+# Search for common secret patterns
+grep -rn "AKIA[0-9A-Z]{16}" *.js          # AWS Access Key IDs
+grep -rn "sk_live_[a-zA-Z0-9]{24}" *.js    # Stripe Live Secret Keys
+grep -rn "AIza[0-9A-Za-z_-]{35}" *.js      # Google API Keys
+grep -rn "ghp_[a-zA-Z0-9]{36}" *.js        # GitHub Personal Access Tokens
+grep -rn "xox[bpsa]-[a-zA-Z0-9-]+" *.js    # Slack Tokens
+
+# Use nuclei for structured scanning
+nuclei -u https://target.com -t exposures/tokens/</code></pre>
+
+<h3>Cloud-Specific Scanning</h3>
+
+<p>If you discover cloud credentials during recon, validate them safely:</p>
+
+<pre><code># AWS — validate without making changes
+aws sts get-caller-identity  # Shows account ID, user/role ARN
+aws iam list-attached-user-policies --user-name $(aws iam get-user --query 'User.UserName' --output text)
+
+# GCP — validate service account
+gcloud auth activate-service-account --key-file=found-key.json
+gcloud projects list  # Shows accessible projects
+
+# Azure — validate service principal
+az login --service-principal -u $APP_ID -p $SECRET --tenant $TENANT_ID
+az account list  # Shows accessible subscriptions</code></pre>
+
+<h2>Phase 2: Manual Secrets Discovery</h2>
+
+<p>Automated tools catch known patterns, but many secrets don't match standard regex patterns. Manual analysis finds what scanners miss.</p>
+
+<h3>Environment and Debug Endpoints</h3>
+
+<p>Probe for endpoints that dump configuration data:</p>
+
+<pre><code># Spring Boot Actuator (Java applications)
+/actuator/env
+/actuator/configprops
+/actuator/heapdump    # Memory dump — may contain secrets
+
+# Django/Flask debug mode
+/debug/
+/__debug__/
+
+# Node.js/Express
+/env
+/debug/vars
+
+# PHP
+/phpinfo.php          # Shows environment variables
+/.env                 # Laravel/Symfony environment file
+
+# Generic
+/server-info
+/server-status
+/config
+/configuration</code></pre>
+
+<p>Spring Boot Actuator's <code>/actuator/env</code> endpoint is particularly valuable — even when it masks secret values with asterisks, the key names reveal what secrets exist, and the <code>/actuator/heapdump</code> endpoint often contains the actual values in memory.</p>
+
+<h3>Error-Based Secret Extraction</h3>
+
+<p>Trigger errors that may reveal secrets in stack traces:</p>
+
+<ul>
+  <li>Send malformed input to database-connected endpoints — connection strings often appear in error messages</li>
+  <li>Request non-existent resources on APIs that return verbose errors</li>
+  <li>Send oversized payloads to trigger memory-related errors</li>
+  <li>Use invalid authentication tokens to trigger auth-related error messages that may reveal the expected format or backend service</li>
+</ul>
+
+<h3>API Response Analysis</h3>
+
+<p>Some APIs return more data than intended:</p>
+
+<pre><code># Check user profile endpoints for leaked tokens
+GET /api/v1/me
+GET /api/v1/user/profile
+GET /api/v1/account/settings
+
+# Check configuration endpoints
+GET /api/v1/config
+GET /api/v1/settings
+GET /api/v1/app/config
+
+# Check admin endpoints (even without admin access — some leak data in 403 responses)
+GET /api/v1/admin/config
+GET /api/v1/internal/config</code></pre>
+
+<h2>Phase 3: Secrets Management Infrastructure Testing</h2>
+
+<p>When targets use dedicated secrets management tools, test the infrastructure itself.</p>
+
+<h3>HashiCorp Vault</h3>
+
+<p>Vault is the most common secrets manager in production environments. Look for:</p>
+
+<pre><code># Discover Vault endpoints
+# Default ports: 8200 (HTTP), 8201 (cluster)
+nmap -p 8200,8201 target.com
+
+# Check if Vault UI is exposed
+curl -s https://target.com:8200/ui/ | grep -i vault
+
+# Check Vault health (unauthenticated)
+curl -s https://target.com:8200/v1/sys/health
+
+# Check seal status
+curl -s https://target.com:8200/v1/sys/seal-status
+
+# Test for unauthenticated access to secret paths
+curl -s https://target.com:8200/v1/secret/data/test
+curl -s https://target.com:8200/v1/kv/data/test
+
+# Check if token auth allows listing
+curl -s -H "X-Vault-Token: root" https://target.com:8200/v1/sys/mounts</code></pre>
+
+<p>Common Vault misconfigurations:</p>
+
+<ul>
+  <li><strong>Development mode in production</strong> — Vault started with <code>-dev</code> flag, uses root token "root", stores data in memory</li>
+  <li><strong>Overly permissive policies</strong> — policies granting <code>path "*" { capabilities = ["read", "list"] }</code></li>
+  <li><strong>Exposed UI without authentication</strong> — Vault UI accessible without login</li>
+  <li><strong>Unsealed with default configuration</strong> — single unseal key, no auto-unseal with KMS</li>
+</ul>
+
+<h3>AWS Secrets Manager and Parameter Store</h3>
+
+<p>If you have any level of AWS access (even read-only), check for secrets access:</p>
+
+<pre><code># List secrets you can access
+aws secretsmanager list-secrets
+aws ssm describe-parameters
+
+# Attempt to read secret values
+aws secretsmanager get-secret-value --secret-id production/database
+aws ssm get-parameter --name /production/db-password --with-decryption
+
+# Check for unencrypted SSM parameters (SecureString vs String)
+aws ssm describe-parameters --query "Parameters[?Type=='String']"</code></pre>
+
+<p>Key findings to report:</p>
+
+<ul>
+  <li>Secrets stored as plaintext SSM String parameters instead of SecureString</li>
+  <li>IAM roles with <code>secretsmanager:GetSecretValue</code> on <code>*</code> resources</li>
+  <li>Missing resource-based policies on secrets</li>
+  <li>Secrets without automatic rotation configured</li>
+  <li>Cross-account access to secrets without explicit policy</li>
+</ul>
+
+<h3>Azure Key Vault</h3>
+
+<pre><code># List accessible Key Vaults
+az keyvault list
+
+# Attempt to list secrets in a vault
+az keyvault secret list --vault-name target-vault
+
+# Check access policies
+az keyvault show --name target-vault --query "properties.accessPolicies"
+
+# Look for soft-deleted secrets (recoverable)
+az keyvault secret list-deleted --vault-name target-vault</code></pre>
+
+<h3>Kubernetes Secrets</h3>
+
+<p>If you have any Kubernetes access, secrets are a prime target:</p>
+
+<pre><code># List secrets in all namespaces
+kubectl get secrets --all-namespaces
+
+# Read a specific secret (base64-encoded, not encrypted)
+kubectl get secret db-credentials -o jsonpath='{.data}' | base64 -d
+
+# Check RBAC — can your service account read secrets?
+kubectl auth can-i get secrets --all-namespaces
+
+# Look for secrets mounted as environment variables in pods
+kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{range .spec.containers[*]}{.env[*]}{"\n"}{end}{end}'</code></pre>
+
+<h2>Phase 4: Git History Deep Dive</h2>
+
+<p>Secrets removed from the current codebase often persist in Git history. This is one of the most productive manual techniques.</p>
+
+<pre><code># Search entire Git history for secrets
+git log -p --all -S 'AKIA'           # AWS keys
+git log -p --all -S 'password'       # Passwords
+git log -p --all -S 'secret_key'     # Generic secrets
+git log -p --all -S 'BEGIN RSA'      # Private keys
+
+# Find deleted files that may have contained secrets
+git log --diff-filter=D --summary | grep -E '\.(env|key|pem|p12|pfx|json)$'
+
+# Check specific commits where .gitignore was modified
+# (developers often add .env to .gitignore AFTER committing it)
+git log -p -- .gitignore
+
+# Extract a deleted file from history
+git show &lt;commit-hash&gt;:path/to/.env</code></pre>
+
+<h2>Phase 5: Reporting Secrets Findings</h2>
+
+<p>Secrets findings require careful reporting to demonstrate impact without causing harm.</p>
+
+<h3>Report Structure</h3>
+
+<ol>
+  <li><strong>What was found</strong> — type of secret (AWS key, database password, API token), where it was found (Git commit, JS bundle, API response)</li>
+  <li><strong>Validation method</strong> — exactly how you confirmed the secret is valid, using only read-only operations</li>
+  <li><strong>Access scope</strong> — what the secret grants access to (list IAM permissions, accessible resources, data exposure)</li>
+  <li><strong>Impact</strong> — what an attacker could do with this access (data exfiltration, infrastructure compromise, lateral movement)</li>
+  <li><strong>Remediation</strong> — rotate the secret immediately, remove from source code, implement proper secrets management</li>
+</ol>
+
+<h3>Severity Guidelines</h3>
+
+<ul>
+  <li><strong>Critical</strong> — production database credentials, cloud admin keys, secrets manager root tokens</li>
+  <li><strong>High</strong> — API keys with write access, service account credentials, OAuth client secrets</li>
+  <li><strong>Medium</strong> — read-only API keys, expired but recently valid credentials, internal service tokens</li>
+  <li><strong>Low</strong> — test/development credentials, API keys for non-sensitive services, secrets management misconfigurations without direct exposure</li>
+</ul>
+
+<h2>Common Secrets Patterns by Cloud Provider</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Provider</th>
+      <th>Secret Type</th>
+      <th>Pattern / Identifier</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AWS</td>
+      <td>Access Key ID</td>
+      <td><code>AKIA[0-9A-Z]{16}</code></td>
+    </tr>
+    <tr>
+      <td>AWS</td>
+      <td>Secret Access Key</td>
+      <td>40-character base64 string</td>
+    </tr>
+    <tr>
+      <td>GCP</td>
+      <td>Service Account Key</td>
+      <td>JSON file with <code>type: "service_account"</code></td>
+    </tr>
+    <tr>
+      <td>GCP</td>
+      <td>API Key</td>
+      <td><code>AIza[0-9A-Za-z_-]{35}</code></td>
+    </tr>
+    <tr>
+      <td>Azure</td>
+      <td>Storage Account Key</td>
+      <td>88-character base64 string</td>
+    </tr>
+    <tr>
+      <td>Azure</td>
+      <td>Connection String</td>
+      <td><code>DefaultEndpointsProtocol=https;AccountName=...</code></td>
+    </tr>
+    <tr>
+      <td>Stripe</td>
+      <td>Live Secret Key</td>
+      <td><code>sk_live_[a-zA-Z0-9]{24,}</code></td>
+    </tr>
+    <tr>
+      <td>GitHub</td>
+      <td>Personal Access Token</td>
+      <td><code>ghp_[a-zA-Z0-9]{36}</code></td>
+    </tr>
+    <tr>
+      <td>Slack</td>
+      <td>Bot/User Token</td>
+      <td><code>xox[bpsa]-[a-zA-Z0-9-]+</code></td>
+    </tr>
+    <tr>
+      <td>Firebase</td>
+      <td>Config</td>
+      <td><code>apiKey</code> in <code>firebaseConfig</code> object</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Tools Reference</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Purpose</th>
+      <th>Best For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/trufflesecurity/trufflehog" target="_blank" rel="noopener">TruffleHog</a></td>
+      <td>Git history + live credential scanning</td>
+      <td>Verified credential discovery across repos</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/gitleaks/gitleaks" target="_blank" rel="noopener">Gitleaks</a></td>
+      <td>Pattern-based secret scanning</td>
+      <td>Fast CI/CD integration, custom rules</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/projectdiscovery/nuclei" target="_blank" rel="noopener">Nuclei</a></td>
+      <td>Template-based vulnerability scanning</td>
+      <td>Exposed tokens in web responses</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/aquasecurity/trivy" target="_blank" rel="noopener">Trivy</a></td>
+      <td>Container and filesystem scanning</td>
+      <td>Secrets in Docker images and filesystems</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/streaak/keyhacks" target="_blank" rel="noopener">KeyHacks</a></td>
+      <td>API key validation techniques</td>
+      <td>Verifying discovered keys are valid</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Internal Links</h2>
+
+<ul>
+  <li><a href="/articles/cloud-security-scanning-aws-gcp-azure-tools-2026/">Cloud Security Scanning Tools for AWS, GCP, and Azure</a> — comprehensive cloud security tool comparison</li>
+  <li><a href="/articles/api-hacking-bug-bounty-guide-2026/">API Hacking for Bug Bounty</a> — API testing techniques that complement secrets discovery</li>
+  <li><a href="/articles/bug-bounty-automation-scripts-tools-2026/">Bug Bounty Automation Scripts and Tools</a> — automate your secrets scanning workflow</li>
+  <li><a href="/articles/container-security-testing-bug-bounty-guide-2026/">Container Security Testing for Bug Bounty</a> — find secrets in Docker and Kubernetes environments</li>
+  <li><a href="/articles/bug-bounty-methodology-guide-2026/">Bug Bounty Methodology Guide</a> — where secrets testing fits in your overall methodology</li>
+  <li><a href="/articles/how-to-write-bug-bounty-reports-2026/">How to Write Bug Bounty Reports</a> — report secrets findings effectively</li>
+</ul>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

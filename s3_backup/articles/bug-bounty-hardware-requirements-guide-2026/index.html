@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical guide to hardware for bug bounty hunting. Covers laptop specs, RAM and CPU requirements for Burp Suite and recon tools, VM setups, monitors, and what gear actually matters versus what&#39;s marketing hype.">
+    <title>Bug Bounty Hardware Requirements: What You Actually Need in 2026</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/bug-bounty-hardware-requirements-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/bug-bounty-hardware-requirements-guide-2026/">
+    <meta property="og:title" content="Bug Bounty Hardware Requirements: What You Actually Need in 2026">
+    <meta property="og:description" content="A practical guide to hardware for bug bounty hunting. Covers laptop specs, RAM and CPU requirements for Burp Suite and recon tools, VM setups, monitors, and what gear actually matters versus what&#39;s marketing hype.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/bug-bounty-hardware-requirements-guide-2026/">
+    <meta name="twitter:title" content="Bug Bounty Hardware Requirements: What You Actually Need in 2026">
+    <meta name="twitter:description" content="A practical guide to hardware for bug bounty hunting. Covers laptop specs, RAM and CPU requirements for Burp Suite and recon tools, VM setups, monitors, and what gear actually matters versus what&#39;s marketing hype.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Bug Bounty Hardware Requirements: What You Actually Need in 2026",
+      "description": "A practical guide to hardware for bug bounty hunting. Covers laptop specs, RAM and CPU requirements for Burp Suite and recon tools, VM setups, monitors, and what gear actually matters versus what&#39;s marketing hype.",
+      "url": "https://bughuntertools.com/articles/bug-bounty-hardware-requirements-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">Bug Bounty Hardware Requirements: What You Actually Need in 2026</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Bug Bounty Hardware Requirements: What You Actually Need in 2026",
+      "description": "A practical guide to hardware for bug bounty hunting. Covers laptop specs, RAM and CPU requirements for Burp Suite and recon tools, VM setups, monitors, and what gear actually matters versus what's marketing hype.",
+      "author": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Bug Hunter Tools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/images/logos/altclaw-logo-512.png"
+        }
+      },
+      "datePublished": "2026-04-15",
+      "dateModified": "2026-04-15"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much RAM do I need for bug bounty hunting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "16 GB is the practical minimum. Burp Suite alone can consume 4-8 GB on large targets, and running a Kali VM alongside your host browser and note-taking tools pushes you past 12 GB easily. 32 GB gives comfortable headroom for parallel recon tools and multiple VMs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need a dedicated GPU for bug bounty?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Bug bounty work is CPU and RAM intensive, not GPU intensive. Integrated graphics are fine. The only exception is if you're cracking password hashes with Hashcat, which benefits from a discrete GPU — but that's a niche use case, not a daily requirement."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I do bug bounty hunting on a Chromebook or tablet?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not effectively. You need to run Burp Suite (Java), browser DevTools, terminal tools, and often a Linux VM. Chromebooks lack the RAM and processing power. A used ThinkPad with 16 GB RAM running Linux is a far better investment than any Chromebook."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Mac or Windows better for bug bounty?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Both work. macOS has a Unix terminal built in and runs most tools natively. Windows works well with WSL2 for Linux tools. Many hunters use Linux directly (Kali, Parrot, or Ubuntu) for the best tool compatibility. The OS matters less than having enough RAM and a fast SSD."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+<h1>Bug Bounty Hardware Requirements: What You Actually Need in 2026</h1>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li><strong>16 GB RAM minimum, 32 GB recommended</strong> — Burp Suite, VMs, and recon tools are memory-hungry</li>
+<li><strong>SSD is non-negotiable</strong> — spinning disks make tool loading and VM snapshots painfully slow</li>
+<li><strong>CPU matters more than GPU</strong> — bug bounty is not graphics work; get more cores, not a better GPU</li>
+<li><strong>A second monitor pays for itself</strong> — Burp on one screen, browser and notes on the other</li>
+<li><strong>You don't need expensive gear to start</strong> — a used ThinkPad with 16 GB RAM and an SSD is enough</li>
+</ul>
+</div>
+
+<p>Every week someone asks in a bug bounty Discord: "What laptop do I need?" The answers range from "any laptop works" to "$3,000 gaming rigs." Both are wrong. Here's what actually matters based on what the tools demand.</p>
+
+<h2>The Minimum Viable Setup</h2>
+
+<p>If you're starting out and want to spend as little as possible while still being productive:</p>
+
+<table>
+<thead>
+<tr><th>Component</th><th>Minimum</th><th>Why</th></tr>
+</thead>
+<tbody>
+<tr><td>RAM</td><td>16 GB</td><td>Burp Suite (4-8 GB) + browser + OS + terminal tools</td></tr>
+<tr><td>CPU</td><td>4 cores / 8 threads</td><td>Parallel recon tools (subfinder, httpx, nuclei) saturate fewer cores</td></tr>
+<tr><td>Storage</td><td>256 GB SSD</td><td>VM snapshots, wordlists, and tool installations add up fast</td></tr>
+<tr><td>OS</td><td>Linux, macOS, or Windows + WSL2</td><td>Most tools are Linux-native; macOS works; Windows needs WSL2</td></tr>
+<tr><td>GPU</td><td>Integrated</td><td>Not needed for web app testing</td></tr>
+</tbody>
+</table>
+
+<p>This is genuinely enough to find bugs and earn bounties. Many successful hunters started on hardware worse than this.</p>
+
+<h2>What Each Tool Actually Needs</h2>
+
+<h3>Burp Suite Professional</h3>
+<p>Burp is a Java application and the single biggest resource consumer in most hunters' workflows. On a large target with thousands of requests in the sitemap:</p>
+<ul>
+<li><strong>RAM:</strong> 4-8 GB (configurable via JVM flags, but it will use what you give it)</li>
+<li><strong>CPU:</strong> Active scanning is CPU-intensive — more cores = faster scans</li>
+<li><strong>Disk:</strong> Project files can reach several GB on large engagements</li>
+</ul>
+<p>If you're running Burp with the default 1 GB heap on a target with 10,000+ requests, you'll hit OutOfMemoryError. Allocate at least 4 GB: <code>java -jar -Xmx4g burpsuite_pro.jar</code></p>
+
+<h3>Recon Tools (subfinder, amass, httpx, nuclei)</h3>
+<p>These are Go binaries that are lightweight individually but run in parallel during recon:</p>
+<ul>
+<li><strong>RAM:</strong> 1-4 GB total for a full recon pipeline</li>
+<li><strong>CPU:</strong> Highly parallelized — more cores directly reduces scan time</li>
+<li><strong>Network:</strong> Recon is often network-bound, not hardware-bound. A fast internet connection matters more than CPU here.</li>
+</ul>
+
+<h3>Virtual Machines (Kali, Parrot, custom labs)</h3>
+<p>If you run VMs for testing or to isolate your hunting environment:</p>
+<ul>
+<li><strong>RAM:</strong> 4-8 GB per VM (this is why 32 GB total is recommended)</li>
+<li><strong>CPU:</strong> 2+ cores allocated per VM</li>
+<li><strong>Disk:</strong> 40-80 GB per VM, and snapshots multiply this</li>
+</ul>
+<p>VMs are where 16 GB systems start struggling. If you regularly run a Kali VM alongside Burp on your host, you'll want 32 GB.</p>
+
+<h3>Browser with DevTools</h3>
+<p>Chrome with 20+ tabs, DevTools open, and extensions (FoxyProxy, Wappalyzer, Cookie Editor) running:</p>
+<ul>
+<li><strong>RAM:</strong> 2-4 GB easily</li>
+<li><strong>CPU:</strong> Minimal unless you're running heavy JavaScript-based testing</li>
+</ul>
+
+<h2>The Recommended Setup for Serious Hunting</h2>
+
+<p>Once you're earning bounties and want to invest in productivity:</p>
+
+<table>
+<thead>
+<tr><th>Component</th><th>Recommended</th><th>Why</th></tr>
+</thead>
+<tbody>
+<tr><td>RAM</td><td>32 GB</td><td>Run Burp + VM + browser + recon without swapping</td></tr>
+<tr><td>CPU</td><td>8+ cores (AMD Ryzen 7 / Intel i7 12th gen+)</td><td>Parallel scanning and recon at full speed</td></tr>
+<tr><td>Storage</td><td>512 GB - 1 TB NVMe SSD</td><td>Fast VM snapshots, large wordlists, multiple project files</td></tr>
+<tr><td>Monitor</td><td>Second external monitor (24"+)</td><td>Burp on one, browser + notes on the other — massive productivity gain</td></tr>
+<tr><td>Network</td><td>Ethernet or strong Wi-Fi + VPN</td><td>Recon is network-bound; unstable connections waste time</td></tr>
+</tbody>
+</table>
+
+<h2>Laptop Recommendations by Budget</h2>
+
+<h3>Under $500: Used ThinkPad</h3>
+<p>A Lenovo ThinkPad T480/T490 with 16 GB RAM and a 256 GB SSD runs $200-400 on the used market. These are corporate fleet machines with excellent keyboards, good Linux support, and enough power for web app testing. Upgrade the RAM yourself if it ships with 8 GB — the T480 supports up to 32 GB.</p>
+
+<h3>$500-1,000: Mid-Range New Laptop</h3>
+<p>Look for: 16 GB RAM (upgradeable to 32 GB), AMD Ryzen 5/7 or Intel i5/i7, 512 GB SSD. Lenovo IdeaPad, ASUS VivoBook, or HP Pavilion lines all have options here. Prioritize RAM and SSD over screen quality or GPU.</p>
+
+<h3>$1,000-2,000: Performance Laptop</h3>
+<p>At this range you can get 32 GB RAM, a fast 8-core CPU, and 1 TB NVMe. ThinkPad X1 Carbon, Dell XPS 15, or MacBook Air M3 (with 24 GB unified memory) are all excellent choices. This is the sweet spot for full-time hunters.</p>
+
+<h3>$2,000+: Diminishing Returns</h3>
+<p>Beyond $2,000, you're paying for features that don't help bug bounty: discrete GPUs, 4K OLED screens, ultra-thin form factors. The only exception is if you need 64 GB RAM for running multiple VMs simultaneously (e.g., building lab environments with several target machines).</p>
+
+<h2>What Doesn't Matter (Despite What Forums Say)</h2>
+
+<ul>
+<li><strong>Discrete GPU:</strong> Web app bug bounty is not password cracking. Integrated graphics are fine.</li>
+<li><strong>Mechanical keyboard:</strong> Nice to have, zero impact on finding bugs.</li>
+<li><strong>4K display:</strong> 1080p is perfectly fine. Spend the money on RAM instead.</li>
+<li><strong>Gaming laptop aesthetics:</strong> RGB lighting doesn't find XSS.</li>
+<li><strong>Brand new hardware:</strong> A 3-year-old ThinkPad with 32 GB RAM outperforms a new Chromebook for this work.</li>
+</ul>
+
+<h2>The One Upgrade That Actually Matters Most</h2>
+
+<p>If you can only upgrade one thing: <strong>add more RAM</strong>. Every tool in the bug bounty workflow is memory-hungry. An SSD is second — if you're still on a spinning disk, that's your bottleneck. CPU is third. GPU is irrelevant.</p>
+
+<p>A second monitor is the highest-ROI peripheral purchase. Having Burp Suite on one screen while you browse the target and take notes on the other eliminates constant window switching. A $150 used 24" monitor will make you faster than a $500 keyboard.</p>
+
+<h2>Cloud VPS as a Complement (Not a Replacement)</h2>
+
+<p>Some hunters run recon tools on a cloud VPS (DigitalOcean, Linode, AWS) to offload long-running scans. This works well for:</p>
+<ul>
+<li>Subdomain enumeration (amass, subfinder) — runs for hours on large scopes</li>
+<li>Nuclei scans against thousands of hosts</li>
+<li>Port scanning with masscan/nmap</li>
+</ul>
+<p>A $10-20/month VPS with 4 GB RAM handles recon while your laptop stays responsive for manual testing in Burp. This is a smart complement to modest hardware — not a replacement for a local machine, since Burp Suite and browser-based testing need to run locally.</p>
+
+<h2>Summary: Spend Smart, Not Big</h2>
+
+<p>Bug bounty hunting is one of the few technical disciplines where expensive hardware is genuinely unnecessary to start. The tools are lightweight compared to video editing, machine learning, or game development. A used laptop with 16 GB RAM, an SSD, and a Linux install gets you 90% of the way there. Invest in skills and methodology first — hardware upgrades can follow the bounties.</p>
+
+<p>For a complete guide to getting started beyond hardware, see our <a href="/articles/bug-bounty-starter-kit/">Bug Bounty Starter Kit</a> and <a href="/articles/bug-bounty-recon-workflow-2026/">Recon Workflow Guide</a>.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

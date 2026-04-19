@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Famous Chollima published 26 malicious npm packages that extract C2 URLs hidden in Pastebin essays using text steganography. Multi-platform RAT with VS Code persistence and crypto theft.">
+    <title>North Korea&#39;s StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/north-korea-stegabin-npm-packages-pastebin-steganography-c2/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/north-korea-stegabin-npm-packages-pastebin-steganography-c2/">
+    <meta property="og:title" content="North Korea&#39;s StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure">
+    <meta property="og:description" content="Famous Chollima published 26 malicious npm packages that extract C2 URLs hidden in Pastebin essays using text steganography. Multi-platform RAT with VS Code persistence and crypto theft.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/north-korea-stegabin-npm-packages-pastebin-steganography-c2/">
+    <meta name="twitter:title" content="North Korea&#39;s StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure">
+    <meta name="twitter:description" content="Famous Chollima published 26 malicious npm packages that extract C2 URLs hidden in Pastebin essays using text steganography. Multi-platform RAT with VS Code persistence and crypto theft.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "name": "North Korea&#39;s StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure",
+      "description": "Famous Chollima published 26 malicious npm packages that extract C2 URLs hidden in Pastebin essays using text steganography. Multi-platform RAT with VS Code persistence and crypto theft.",
+      "url": "https://bughuntertools.com/articles/north-korea-stegabin-npm-packages-pastebin-steganography-c2/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">North Korea&#39;s StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<article class="article-content">
+
+<header class="article-header">
+  <div class="article-meta">
+    <span class="tag tag-critical">⚠️ Supply Chain</span>
+    <span class="tag tag-apt">North Korea / Famous Chollima</span>
+    <time datetime="2026-03-02">March 2, 2026</time>
+  </div>
+  <h1>North Korea's StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure</h1>
+  <p class="article-lead">North Korean threat group Famous Chollima hid malware command-and-control infrastructure inside Pastebin essays using character-level steganography. Their 26 malicious npm packages looked like developer utilities, used TruffleHog to steal your secrets, and persisted via VS Code's own task runner.</p>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>Supply chain attacks target the tools and packages developers trust implicitly</li>
+      <li>Package manager ecosystems remain a primary vector for malware distribution</li>
+      <li>Attackers increasingly use legitimate services as command-and-control infrastructure</li>
+      <li>Verify package integrity and monitor for unexpected network connections in your environment</li>
+    </ul>
+  </div>
+
+</header>
+
+<section>
+<h2>The Attack in One Sentence</h2>
+<p>Famous Chollima — the North Korean group behind the Contagious Interview campaign — published 26 npm packages that, on installation, decoded hidden C2 addresses from computer science essays on Pastebin, then deployed a nine-module cross-platform RAT that steals credentials, cryptocurrency wallets, and developer secrets.</p>
+
+<p>Researchers from Socket (<a href="https://socket.dev/blog/stegabin-26-malicious-npm-packages-use-pastebin-steganography" rel="nofollow">Philipp Burckhardt and Peter van der Zee</a>) and independent researcher <a href="https://kmsec.uk/blog/dprk-text-steganography/" rel="nofollow">Kieran Miyamoto</a> disclosed the campaign — tracked as <strong>StegaBin</strong> — on March 2, 2026. It represents a meaningful evolution from prior Contagious Interview waves, which used comparatively straightforward scripts and Bitbucket-hosted payloads.</p>
+</section>
+
+<section>
+<h2>The Steganography Trick: How C2 URLs Hide in Plain Text</h2>
+<p>The technical innovation here is the C2 extraction mechanism. The malicious install script contacts a Pastebin URL and receives what appears to be an innocent computer science essay. But the decoder isn't reading the essay — it's reading specific characters at evenly-spaced positions throughout the text.</p>
+
+<p>The extraction algorithm works like this:</p>
+<ol>
+  <li>Strip zero-width Unicode characters (common in modern steganography to hide metadata)</li>
+  <li>Read a 5-digit length marker from the beginning of the text</li>
+  <li>Calculate evenly-spaced character positions throughout the remainder of the document</li>
+  <li>Extract and concatenate the characters at those positions</li>
+  <li>Split on a <code>|||</code> separator (with an <code>===END===</code> termination marker) to produce an array of C2 domain names</li>
+</ol>
+
+<p>The result is a list of Vercel domains — the actual C2 infrastructure — which the payload then contacts to fetch platform-specific binaries for Windows, macOS, and Linux.</p>
+
+<p>Why Pastebin? Two reasons. First, Pastebin is categorically clean in most corporate DNS and proxy allow-lists. Blocking Pastebin would break a significant amount of legitimate developer workflow. Second, the content itself — an essay about computer science — passes casual visual inspection. An analyst reviewing DNS logs sees outbound Pastebin queries; nothing flags.</p>
+
+<p>The C2 is then hosted on Vercel across 31 deployments. Again: legitimate infrastructure. Vercel hosts production applications for tens of thousands of companies. Blocking it wholesale is not an option for most security teams.</p>
+
+<p>This is the Living Off Trusted Sites (LOTS) technique applied with unusual sophistication — not just using a trusted platform as a C2 channel, but encoding the infrastructure address in a deniable plaintext document on that platform.</p>
+</section>
+
+<section>
+<h2>The 26 Packages</h2>
+<p>All 26 packages follow the same pattern: they typosquat a legitimate, well-known npm dependency (which they then declare as an explicit dependency to appear credible), include an <code>install.js</code> script executed automatically on install, and embed the malicious payload in <code>vendor/scrypt-js/version.js</code> — a path chosen to blend in with legitimate cryptographic library files.</p>
+
+<p>The full list:</p>
+<ul class="package-list">
+  <li><code>argonist</code> (argon2 typosquat)</li>
+  <li><code>bcryptance</code> (bcrypt)</li>
+  <li><code>bee-quarl</code></li>
+  <li><code>bubble-core</code></li>
+  <li><code>corstoken</code> (cors)</li>
+  <li><code>daytonjs</code> (dayjs)</li>
+  <li><code>ether-lint</code></li>
+  <li><code>expressjs-lint</code> (express)</li>
+  <li><code>fastify-lint</code> (fastify)</li>
+  <li><code>formmiderable</code> (formidable)</li>
+  <li><code>hapi-lint</code> (@hapi/hapi)</li>
+  <li><code>iosysredis</code> (ioredis)</li>
+  <li><code>jslint-config</code></li>
+  <li><code>jsnwebapptoken</code></li>
+  <li><code>kafkajs-lint</code> (kafkajs)</li>
+  <li><code>loadash-lint</code> (lodash)</li>
+  <li><code>mqttoken</code> (mqtt)</li>
+  <li><code>prism-lint</code> (prismjs)</li>
+  <li><code>promanage</code></li>
+  <li><code>sequelization</code> (sequelize)</li>
+  <li><code>typoriem</code></li>
+  <li><code>undicy-lint</code> (undici)</li>
+  <li><code>uuindex</code> (uuid)</li>
+  <li><code>vitetest-lint</code> (vitest)</li>
+  <li><code>windowston</code> (winston)</li>
+  <li><code>zoddle</code> (zod)</li>
+</ul>
+
+<p>The naming convention is consistent: either subtle typos of common packages (<code>loadash</code> for <code>lodash</code>, <code>formmiderable</code> for <code>formidable</code>) or the legitimate package name with <code>-lint</code> appended — a suffix that suggests code quality tooling, which many developers add to projects without scrutiny.</p>
+</section>
+
+<section>
+<h2>The Nine-Module RAT</h2>
+<p>Once the C2 is reached, the payload fetches a RAT tailored to the victim's operating system. The RAT is modular — nine discrete components, each with a specific function:</p>
+
+<table class="findings-table">
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Function</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>vs</code></td>
+      <td>VS Code persistence — injects malicious <code>tasks.json</code> into all workspace configs using <code>runOn: "folderOpen"</code>. Executes every time the developer opens any project. Cross-platform: Windows, macOS, Linux.</td>
+    </tr>
+    <tr>
+      <td><code>clip</code></td>
+      <td>Keylogger, mouse tracker, and clipboard stealer. Logs active window context. Exfiltrates every 10 minutes.</td>
+    </tr>
+    <tr>
+      <td><code>bro</code></td>
+      <td>Python payload targeting browser credential stores (login databases, cookies, saved passwords).</td>
+    </tr>
+    <tr>
+      <td><code>j</code></td>
+      <td>Node.js module targeting Chrome, Brave, Firefox, Opera, and Edge credential stores, plus crypto extensions: MetaMask, Phantom, Coinbase Wallet, Binance, Trust, Exodus, Keplr. On macOS: also targets iCloud Keychain.</td>
+    </tr>
+    <tr>
+      <td><code>z</code></td>
+      <td>File system enumerator — steals files matching predefined patterns (typically SSH keys, config files, credential stores).</td>
+    </tr>
+    <tr>
+      <td><code>n</code></td>
+      <td>Full RAT — persistent WebSocket connection to 103.106.67[.]63:1247 for real-time control. Separate FTP channel for data exfiltration.</td>
+    </tr>
+    <tr>
+      <td><code>truffle</code></td>
+      <td>Downloads the legitimate TruffleHog binary from GitHub and runs it against the victim's repositories to discover developer secrets (API keys, tokens, credentials) for exfiltration.</td>
+    </tr>
+    <tr>
+      <td><code>git</code></td>
+      <td>Collects <code>.ssh</code> directories, Git credentials, and repository contents.</td>
+    </tr>
+    <tr>
+      <td><code>sched</code></td>
+      <td>Persistence mechanism — redeploys the initial loader as a scheduled task.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The <code>truffle</code> module deserves particular attention. TruffleHog is designed to detect secrets accidentally committed to Git repositories — it's a defender's tool. Famous Chollima has weaponised it: rather than writing their own secrets scanner, they download the legitimate binary from GitHub and point it at the victim's codebase. The effect is that the attacker benefits from TruffleHog's pattern library of 700+ credential types across 900+ API integrations. If you committed a secret to any repository on that machine, they'll find it.</p>
+</section>
+
+<section>
+<h2>The VS Code Persistence Mechanism</h2>
+<p>The VS Code persistence module is notable because it exploits a legitimate VS Code feature. The <code>tasks.json</code> file — part of VS Code's task runner — supports a <code>"runOn": "folderOpen"</code> trigger that executes defined tasks whenever a project folder is opened.</p>
+
+<p>The module:</p>
+<ol>
+  <li>Locates VS Code configuration directories across Windows (<code>%APPDATA%</code>), macOS (<code>~/Library/Application Support</code>), and Linux (<code>~/.config</code>)</li>
+  <li>Injects a malicious <code>tasks.json</code> into each workspace config</li>
+  <li>Contacts a Vercel C2 domain to send fresh commands on each VS Code startup</li>
+</ol>
+
+<p>The effect is that the persistence mechanism fires every time the developer opens VS Code — which for an active developer is multiple times per day. It's not a system-level service, so it's less visible in process monitors, and it's inside the user's application data directory, which doesn't require elevated permissions to write.</p>
+</section>
+
+<section>
+<h2>Network IOCs</h2>
+<p>The following network indicators were published in the Socket and kmsec.uk disclosures:</p>
+
+<ul>
+  <li><strong>RAT C2:</strong> <code>103.106.67[.]63:1244</code> (initial connection)</li>
+  <li><strong>RAT WebSocket:</strong> <code>103.106.67[.]63:1247</code> (real-time control)</li>
+  <li><strong>Vercel C2 staging:</strong> <code>ext-checkdin.vercel[.]app</code> (and 30 additional Vercel deployments)</li>
+  <li><strong>Pastebin dead-drop resolver:</strong> Multiple Pastebin pastes (URLs not published; monitor for install scripts accessing Pastebin programmatically)</li>
+</ul>
+
+<p>Block <code>103.106.67[.]63</code> at the firewall. For the Vercel traffic: you can't block Vercel wholesale, but you can detect via anomalous patterns — developer workstations making outbound connections to fresh/unknown Vercel subdomains during npm install operations is suspicious.</p>
+</section>
+
+<section>
+<h2>Detection: What to Look For</h2>
+
+<h3>Pre-install (proactive)</h3>
+<ul>
+  <li><strong>Audit your <code>package.json</code></strong> for any of the 26 package names above. <code>grep -r "loadash-lint\|expressjs-lint\|zoddle\|corstoken" package.json package-lock.json</code></li>
+  <li><strong>Run your <code>npm install</code> commands in a sandboxed environment</strong> (Docker, VM) and capture all outbound DNS and HTTP requests. Legitimate packages do not contact Pastebin during installation.</li>
+  <li><strong>Use Socket Security</strong> (the researchers who found this) or similar supply-chain scanning tools before adding new dependencies.</li>
+</ul>
+
+<h3>Post-compromise indicators</h3>
+<ul>
+  <li><strong>Unexpected <code>tasks.json</code> modifications:</strong> Check <code>~/.config/Code/User/tasks.json</code> and workspace-level <code>.vscode/tasks.json</code> for entries with <code>runOn: "folderOpen"</code> that you didn't create.</li>
+  <li><strong>TruffleHog process execution:</strong> Alert on <code>trufflehog</code> processes spawned by non-user shell processes (node, npm, sh) — legitimate TruffleHog runs are interactive.</li>
+  <li><strong>Outbound Pastebin access from CI/CD or automated npm processes:</strong> Flag any DNS queries to <code>pastebin.com</code> originating from package managers or install hooks.</li>
+  <li><strong>WebSocket connections to <code>103.106.67.63</code>:</strong> Block and alert at the perimeter.</li>
+</ul>
+
+<h3>Tooling for analysis</h3>
+<p>If you suspect a package is malicious before running it, tools like <a href="https://www.amazon.co.uk/dp/1718501129?tag=altclaw-20" rel="nofollow">Black Hat Python (2nd Edition)</a> provide the foundational understanding of how Python-based payloads work — useful for reading the <code>bro</code> credential-stealing module without running it. For understanding Node.js payloads (the <code>j</code> module), reviewing JavaScript runtime behaviour via browser devtools in a sandboxed container is practical. <a href="https://www.amazon.co.uk/dp/1118026470?tag=altclaw-20" rel="nofollow">The Web Application Hacker's Handbook</a> provides essential proxy and traffic analysis patterns for understanding how these modules exfiltrate data over HTTP.</p>
+</section>
+
+<section>
+<h2>How This Fits the Contagious Interview Pattern</h2>
+<p>Contagious Interview (also tracked as Famous Chollima) is a multi-year North Korean operation targeting software developers, particularly in crypto and DeFi. The consistent playbook: publish typosquatted npm packages targeting JavaScript/TypeScript developers, execute malware on install, and steal credentials with a bias toward cryptocurrency wallets and private keys.</p>
+
+<p>Previous waves used simpler techniques — Bitbucket-hosted payloads, direct domain C2. StegaBin represents a meaningful step up in operational security. The use of steganography to hide C2 addresses means:</p>
+<ul>
+  <li>The Pastebin "pastes" don't contain obvious IOCs — they look like essays</li>
+  <li>C2 rotation is trivial: update the paste, and all deployed implants automatically get new C2 addresses without code changes</li>
+  <li>DNS-based IOC feeds won't catch it — there's no static C2 domain in the payload</li>
+</ul>
+
+<p>The Vercel C2 hosting compounds this. Vercel is a content delivery network used by production applications globally. Sinkholing a Vercel domain is possible, but Vercel domains rotate: at 31 deployments, taking one down doesn't kill the campaign.</p>
+
+<p>We also covered <a href="/articles/malicious-go-module-xinfeisoft-crypto-apt31-rekoobe-backdoor/">APT31's supply chain attack via a malicious Go module</a> (February 2026) and <a href="/articles/scarcruft-ruby-jumper-north-korea-zoho-workdrive-c2-air-gap/">ScarCruft's Zoho WorkDrive C2 campaign</a> — all three share the LOTS technique of abusing legitimate, trusted platforms as attack infrastructure.</p>
+</section>
+
+<section>
+<h2>What Developers Should Do Right Now</h2>
+
+<ol>
+  <li><strong>Audit your dependencies immediately.</strong> Check the full list of 26 packages against your <code>node_modules</code> and <code>package-lock.json</code>. <code>npm ls | grep -E "loadash-lint|expressjs-lint|zoddle|bcryptance|argonist|corstoken|daytonjs|formmiderable|jslint-config|jsnwebapptoken|windowston|prism-lint|sequelization|uuindex|vitetest-lint|undicy-lint|typoriem|kafkajs-lint|mqttoken|hapi-lint|iosysredis|bee-quarl|bubble-core|ether-lint|promanage"</code></li>
+  <li><strong>Check your VS Code tasks.json.</strong> On macOS: <code>cat ~/Library/Application\ Support/Code/User/tasks.json</code>. On Linux: <code>cat ~/.config/Code/User/tasks.json</code>. Any <code>runOn: "folderOpen"</code> entry you didn't add is a red flag.</li>
+  <li><strong>Rotate credentials from affected machines.</strong> If any of these packages were installed on a developer workstation, treat all secrets (API keys, tokens, SSH keys, browser-stored passwords, crypto wallets) on that machine as compromised. Rotate them all.</li>
+  <li><strong>Enable Socket Security or equivalent in your CI pipeline.</strong> Supply-chain scanning should run before any package is installed, not after.</li>
+  <li><strong>Run TruffleHog on your repositories yourself</strong> to understand what the attacker would have found — and to confirm nothing sensitive is already committed. The irony is this is exactly what the malware does, so you should do it first.</li>
+</ol>
+
+<p>For developers setting up a comprehensive security lab environment to test these defences, a dedicated <a href="/articles/security-lab-setup-guide-2026/">security lab setup</a> that includes sandbox environments for npm package analysis is strongly recommended. <a href="https://www.amazon.co.uk/dp/1593275641?tag=altclaw-20" rel="nofollow">Penetration Testing by Georgia Weidman</a> covers controlled lab environment setup extensively, including network isolation techniques applicable to malware analysis.</p>
+</section>
+
+<section>
+<h2>The Bigger Picture: Supply Chain Is the Attack Surface</h2>
+<p>This campaign is a reminder that the npm registry remains a high-value attack surface for nation-state actors. The numbers work in favour of attackers: there are millions of npm packages, automated dependency resolution means developers install packages they've never read, and the lag between malicious publication and npm registry takedown creates an exploitation window measured in hours to days.</p>
+
+<p>Famous Chollima is targeting developers specifically because developers have access to the most valuable credentials: production API keys, cloud access tokens, private keys for signing code, and cryptocurrency wallets. A single compromised developer workstation at a crypto exchange can be worth millions of dollars to North Korea's weapons programme — which is why they invest in increasingly sophisticated evasion techniques like StegaBin.</p>
+
+<p>The TruffleHog weaponisation detail is particularly pointed: the very tools the security community built to detect secrets in code are being turned against the developers who wrote that code. Defence here requires moving the detection earlier — before the package runs — not after.</p>
+</section>
+
+<section class="article-faq">
+<h2>FAQ</h2>
+
+<details>
+<summary>What is the StegaBin npm campaign?</summary>
+<p>StegaBin is a North Korean supply chain attack campaign (attributed to Famous Chollima) that published 26 malicious npm packages. These packages use text steganography — hiding C2 infrastructure URLs inside Pastebin essays — to evade detection, then deploy a multi-module RAT targeting developer credentials, cryptocurrency wallets, and secrets.</p>
+</details>
+
+<details>
+<summary>What is text steganography and how is it used here?</summary>
+<p>Text steganography hides information within seemingly innocent text by encoding it in the structure of the document. In StegaBin, characters at evenly-spaced positions within Pastebin essays spell out C2 domain names when extracted by the malware's decoder. The essays themselves look like legitimate computer science writing to a human reader or content scanner.</p>
+</details>
+
+<details>
+<summary>Which npm packages are malicious?</summary>
+<p>The 26 identified packages include: argonist, bcryptance, bee-quarl, bubble-core, corstoken, daytonjs, ether-lint, expressjs-lint, fastify-lint, formmiderable, hapi-lint, iosysredis, jslint-config, jsnwebapptoken, kafkajs-lint, loadash-lint, mqttoken, prism-lint, promanage, sequelization, typoriem, undicy-lint, uuindex, vitetest-lint, windowston, and zoddle.</p>
+</details>
+
+<details>
+<summary>How does the VS Code persistence work?</summary>
+<p>The malware injects a malicious <code>tasks.json</code> file into VS Code's user and workspace configuration directories. VS Code supports a <code>"runOn": "folderOpen"</code> task trigger that executes commands every time a project folder is opened. This gives the attacker persistent execution that fires multiple times daily on active developer machines without requiring elevated privileges or modifying system files.</p>
+</details>
+
+<details>
+<summary>Why does the malware use TruffleHog?</summary>
+<p>TruffleHog is a secrets scanning tool that detects API keys, tokens, and credentials accidentally committed to Git repositories. Rather than writing their own scanner, Famous Chollima downloads the legitimate TruffleHog binary from GitHub and points it at the victim's repositories. This gives them access to TruffleHog's 700+ credential type patterns without having to maintain a custom tool.</p>
+</details>
+
+<details>
+<summary>How do I check if I've been compromised?</summary>
+<p>Check your node_modules and package-lock.json against the list of 26 package names. Check your VS Code tasks.json for unexpected runOn: "folderOpen" entries. Monitor for outbound connections to 103.106.67.63. If any of these packages were installed, treat all secrets on that machine as potentially compromised and rotate them.</p>
+</details>
+</section>
+
+
+<section class="related-reading">
+  <h2>Related Reading</h2>
+  <ul>
+    <li><a href="/articles/malicious-go-module-xinfeisoft-crypto-apt31-rekoobe/">Malicious Go Package 'xinfeisoft/crypto' Deployed APT31's Rekoobe Backdoor</a></li>
+    <li><a href="/articles/fake-laravel-packagist-php-rat-supply-chain-attack-2026/">PHP RAT in Your Composer Dependencies: The Fake Laravel Packagist Packages</a></li>
+    <li><a href="/articles/trivy-supply-chain-attack-teampcp-canisterworm-voidstealer-chrome-abe-bypass-2026/">The Scanner That Became the Threat: Trivy Compromised in Supply Chain Attack, CanisterWorm Follows</a></li>
+    <li><a href="/demos/securityclaw-npm-audit-supply-chain-demo-2026/">15 Vulnerabilities in Your package.json. 2 Seconds to Find Them.</a></li>
+    <li><a href="/demos/securityclaw-supply-chain-scanner-demo-2026/">We Planted 7 Threats in a package.json. SecurityClaw Found All of Them in 0.19 Seconds.</a></li>
+  </ul>
+</section>
+</article>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "North Korea's StegaBin: 26 npm Packages Using Pastebin Steganography to Hide C2 Infrastructure",
+  "description": "Famous Chollima published 26 malicious npm packages that extract C2 URLs hidden in Pastebin essays using text steganography. Multi-platform RAT with VS Code persistence and crypto theft.",
+  "datePublished": "2026-03-02",
+  "author": {
+    "@type": "Organization",
+    "name": "BugHunterTools"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BugHunterTools",
+    "url": "https://bughuntertools.com"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the StegaBin npm campaign?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "StegaBin is a North Korean supply chain attack campaign published by Famous Chollima that pushed 26 malicious npm packages using text steganography to hide C2 URLs in Pastebin essays, then deployed a multi-module RAT targeting developer credentials, cryptocurrency wallets, and secrets."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which npm packages are malicious in the StegaBin campaign?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The 26 packages are: argonist, bcryptance, bee-quarl, bubble-core, corstoken, daytonjs, ether-lint, expressjs-lint, fastify-lint, formmiderable, hapi-lint, iosysredis, jslint-config, jsnwebapptoken, kafkajs-lint, loadash-lint, mqttoken, prism-lint, promanage, sequelization, typoriem, undicy-lint, uuindex, vitetest-lint, windowston, and zoddle."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the VS Code persistence in StegaBin work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The malware injects a malicious tasks.json into VS Code's configuration directories using the runOn: folderOpen trigger, which executes commands every time any project folder is opened in VS Code."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I detect and remove StegaBin malware?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Check node_modules and package-lock.json for the 26 package names. Review VS Code tasks.json for unexpected runOn: folderOpen entries. Block 103.106.67.63 at your firewall. Rotate all credentials on affected machines as a precaution."
+      }
+    }
+  ]
+}
+</script>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

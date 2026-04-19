@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SecurityClaw now has skills covering all 10 OWASP Top 10 categories. This comprehensive guide maps every skill to its OWASP category, explains what it detects, and identifies remaining gaps. The definitive reference for automated OWASP coverage.">
+    <title>How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">
+    <meta property="og:title" content="How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category">
+    <meta property="og:description" content="SecurityClaw now has skills covering all 10 OWASP Top 10 categories. This comprehensive guide maps every skill to its OWASP category, explains what it detects, and identifies remaining gaps. The definitive reference for automated OWASP coverage.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/">
+    <meta name="twitter:title" content="How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category">
+    <meta name="twitter:description" content="SecurityClaw now has skills covering all 10 OWASP Top 10 categories. This comprehensive guide maps every skill to its OWASP category, explains what it detects, and identifies remaining gaps. The definitive reference for automated OWASP coverage.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category",
+      "description": "SecurityClaw now has skills covering all 10 OWASP Top 10 categories. This comprehensive guide maps every skill to its OWASP category, explains what it detects, and identifies remaining gaps. The definitive reference for automated OWASP coverage.",
+      "url": "https://bughuntertools.com/articles/securityclaw-owasp-top-10-complete-mapping-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills",
+  "description": "SecurityClaw now has skills covering all 10 OWASP Top 10 categories. Complete mapping with detection details and gap analysis.",
+  "datePublished": "2026-04-07",
+  "dateModified": "2026-04-07",
+  "author": { "@type": "Organization", "name": "Bug Hunter Tools" },
+  "publisher": { "@type": "Organization", "name": "Bug Hunter Tools", "url": "https://bughuntertools.com" }
+}
+</script>
+
+<article>
+  <h1>How SecurityClaw Covers the OWASP Top 10: A Complete Mapping of Automated Security Skills to Every Category</h1>
+
+  <div class="meta">
+    <span>Published: April 7, 2026</span>
+    <span>Reading time: 15 min</span>
+  </div>
+
+  <div class="affiliate-disclosure">
+    <p><em>Some links in this article may be affiliate links. We may earn a commission if you purchase through them, at no extra cost to you.</em></p>
+  </div>
+
+  <div class="intro">
+    <p><strong>SecurityClaw now has automated skills covering all 10 OWASP Top 10 (2021) categories. This guide maps every skill to its OWASP category, explains what each skill detects, identifies where coverage is deep vs thin, and notes which skills require approval before running. If you're evaluating automated security scanning coverage, this is the reference.</strong></p>
+  </div>
+
+  <div class="key-takeaways" style="background: #f0f7ff; border-left: 4px solid #667eea; padding: 16px 20px; margin: 24px 0; border-radius: 0 4px 4px 0;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Key Takeaways</h2>
+    <ul style="margin-bottom: 0;">
+      <li>Automated scanners miss vulnerabilities that require multi-step or context-aware testing</li>
+      <li>SecurityClaw skills map directly to OWASP Top 10 categories for systematic coverage</li>
+      <li>OWASP Top 10 provides the baseline — real-world testing goes beyond the checklist</li>
+    </ul>
+  </div>
+
+
+  <nav class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#overview">Coverage Overview</a></li>
+      <li><a href="#a01">A01: Broken Access Control (6 skills)</a></li>
+      <li><a href="#a02">A02: Cryptographic Failures (1 skill)</a></li>
+      <li><a href="#a03">A03: Injection (2 skills)</a></li>
+      <li><a href="#a04">A04: Insecure Design (1 skill)</a></li>
+      <li><a href="#a05">A05: Security Misconfiguration (3 skills)</a></li>
+      <li><a href="#a06">A06: Vulnerable and Outdated Components (2 skills)</a></li>
+      <li><a href="#a07">A07: Identification and Authentication Failures (4 skills)</a></li>
+      <li><a href="#a08">A08: Software and Data Integrity Failures (1 skill)</a></li>
+      <li><a href="#a09">A09: Security Logging and Monitoring Failures (1 skill)</a></li>
+      <li><a href="#a10">A10: Server-Side Request Forgery (1 skill)</a></li>
+      <li><a href="#gaps">Where Coverage Is Thin</a></li>
+      <li><a href="#approval">Skills Requiring Approval</a></li>
+      <li><a href="#whats-next">What's Next</a></li>
+    </ol>
+  </nav>
+
+  <section id="overview">
+    <h2>Coverage Overview</h2>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">OWASP Category</th>
+          <th style="padding:10px; text-align:center;">Skills</th>
+          <th style="padding:10px; text-align:center;">Depth</th>
+          <th style="padding:10px; text-align:center;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">A01 Broken Access Control</td>
+          <td style="padding:10px; text-align:center;">6</td>
+          <td style="padding:10px; text-align:center;">🟢 Deep</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A02 Cryptographic Failures</td>
+          <td style="padding:10px; text-align:center;">1</td>
+          <td style="padding:10px; text-align:center;">🟡 Basic</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A03 Injection</td>
+          <td style="padding:10px; text-align:center;">2</td>
+          <td style="padding:10px; text-align:center;">🟢 Good</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A04 Insecure Design</td>
+          <td style="padding:10px; text-align:center;">1</td>
+          <td style="padding:10px; text-align:center;">🟡 Basic</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A05 Security Misconfiguration</td>
+          <td style="padding:10px; text-align:center;">3</td>
+          <td style="padding:10px; text-align:center;">🟢 Good</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A06 Vulnerable Components</td>
+          <td style="padding:10px; text-align:center;">2</td>
+          <td style="padding:10px; text-align:center;">🟢 Good</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A07 Auth Failures</td>
+          <td style="padding:10px; text-align:center;">4</td>
+          <td style="padding:10px; text-align:center;">🟢 Deep</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A08 Data Integrity</td>
+          <td style="padding:10px; text-align:center;">1</td>
+          <td style="padding:10px; text-align:center;">🟡 Basic</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A09 Logging/Monitoring</td>
+          <td style="padding:10px; text-align:center;">1</td>
+          <td style="padding:10px; text-align:center;">🟡 Basic</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A10 SSRF</td>
+          <td style="padding:10px; text-align:center;">1</td>
+          <td style="padding:10px; text-align:center;">🟡 Basic</td>
+          <td style="padding:10px; text-align:center;">✅</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr style="background:#f8f9fa; font-weight:bold;">
+          <td style="padding:10px;">Total</td>
+          <td style="padding:10px; text-align:center;">22</td>
+          <td style="padding:10px;"></td>
+          <td style="padding:10px; text-align:center;">10/10 ✅</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p>22 skills across 10 categories. Coverage ranges from deep (A01 with 6 skills) to basic (A02, A04, A08, A09, A10 with 1 skill each). The deep categories have multiple detection approaches; the basic categories have a single skill that covers the primary attack vector.</p>
+  </section>
+
+  <section id="a01">
+    <h2>A01: Broken Access Control (6 Skills) — 🟢 Deep Coverage</h2>
+
+    <p>Broken Access Control is the #1 OWASP category and SecurityClaw's deepest coverage area. Six skills target different access control failure modes:</p>
+
+    <p><strong>idor-scanner</strong> — Detects Insecure Direct Object References by manipulating resource identifiers (IDs, filenames, UUIDs) in API requests and checking if the application returns data belonging to other users. Finds horizontal privilege escalation where User A can access User B's resources.</p>
+
+    <p><strong>business-logic-scanner</strong> — Tests for business logic flaws that bypass access controls through unexpected workflows: skipping steps in multi-step processes, manipulating quantities or prices, accessing admin functions through parameter tampering.</p>
+
+    <p><strong>authenticated_api_sweep</strong> — Crawls authenticated API endpoints and tests each one with different privilege levels. Finds vertical privilege escalation where a regular user can access admin endpoints.</p>
+
+    <p><strong>swagger_admin_probe</strong> — Discovers and tests admin endpoints exposed through Swagger/OpenAPI documentation. Many applications expose their full API schema including admin routes that should be restricted.</p>
+
+    <p><strong>auth-portal-tester</strong> — Tests authentication portals for common access control weaknesses: default credentials, account enumeration via error messages, missing rate limiting on login attempts, and password reset flow vulnerabilities.</p>
+
+    <p><strong>oauth_scope_abuse</strong> — Tests OAuth implementations for scope escalation: requesting broader scopes than authorized, manipulating scope parameters, and testing token exchange flows for privilege escalation.</p>
+
+    <p><em>Practical example:</em> The idor-scanner might find that <code>GET /api/users/123/profile</code> returns User 123's data when called by User 456 — a classic IDOR that exposes personal information across accounts.</p>
+  </section>
+
+  <section id="a02">
+    <h2>A02: Cryptographic Failures (1 Skill) — 🟡 Basic Coverage</h2>
+
+    <p><strong>tls-crypto-auditor</strong> — Audits TLS configuration for weak protocols, cipher suites, certificate issues, and missing security headers. Detects: TLS 1.0/1.1 (deprecated), weak cipher suites (RC4, DES, 3DES), expired or self-signed certificates, missing HSTS headers, and certificate chain issues.</p>
+
+    <p><em>Practical example:</em> Finds a server still accepting TLS 1.0 connections with RC4 cipher — vulnerable to BEAST and RC4 bias attacks. Reports the specific cipher suites offered and recommends TLS 1.2+ with AEAD ciphers only.</p>
+
+    <p>For a deep dive on TLS auditing, see <a href="/articles/tls-crypto-auditing-what-scanners-should-check-2026/">How to Audit TLS Configuration: What Your Security Scanner Should Check in 2026</a>.</p>
+
+    <p><em>Gap:</em> No coverage for application-layer cryptographic failures — weak password hashing (MD5, SHA1), hardcoded encryption keys, or insecure random number generation. These typically require source code analysis rather than black-box scanning.</p>
+  </section>
+
+  <section id="a03">
+    <h2>A03: Injection (2 Skills) — 🟢 Good Coverage</h2>
+
+    <p><strong>xss-probe</strong> — Detects reflected Cross-Site Scripting by injecting payloads into URL parameters, form fields, and headers, then checking if the payload appears unescaped in the response. Tests multiple encoding contexts (HTML, JavaScript, attribute, URL) and bypass techniques for common WAF rules.</p>
+
+    <p><strong>sqli-probe</strong> — Detects SQL injection using two techniques: error-based detection (injecting syntax that triggers database error messages) and boolean-based detection (injecting conditions that change the response based on true/false evaluation). Covers MySQL, PostgreSQL, MSSQL, and Oracle error patterns.</p>
+
+    <p><em>Practical example:</em> The sqli-probe injects <code>' OR '1'='1</code> into a search parameter and detects that the response changes — indicating the input is being concatenated into a SQL query without parameterization.</p>
+
+    <p>For detailed coverage: <a href="/articles/detecting-sql-injection-what-scanners-should-check-2026/">Detecting SQL Injection</a> and <a href="/articles/detecting-reflected-xss-what-scanners-should-check-2026/">Detecting Reflected XSS</a>.</p>
+
+    <p><em>Gap:</em> No coverage for stored XSS (requires multi-step testing), DOM-based XSS (requires JavaScript execution), command injection, LDAP injection, or XML injection. The two skills cover the most common injection types but not the full A03 surface.</p>
+
+    <p><em>Note:</em> Both xss-probe and sqli-probe are active injection skills — they send potentially malicious payloads to the target. They require explicit approval before running against production systems.</p>
+  </section>
+
+  <section id="a04">
+    <h2>A04: Insecure Design (1 Skill) — 🟡 Basic Coverage</h2>
+
+    <p><strong>security-header-checker</strong> — Verifies the presence and correct configuration of security-related HTTP response headers: Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and Cross-Origin headers (CORP, COEP, COOP).</p>
+
+    <p><em>Practical example:</em> Finds a web application missing Content-Security-Policy entirely — meaning any injected script will execute without restriction. Reports the missing header and recommends a baseline CSP policy.</p>
+
+    <p>For the complete header guide: <a href="/articles/security-headers-complete-guide-2026/">Security Headers in 2026: The Complete Guide</a>.</p>
+
+    <p><em>Gap:</em> A04 (Insecure Design) is the broadest OWASP category — it covers design-level flaws like missing rate limiting, lack of abuse case modeling, and insufficient input validation patterns. Security headers are one aspect, but the category fundamentally requires threat modeling and design review, which are difficult to automate with black-box scanning.</p>
+  </section>
+
+  <section id="a05">
+    <h2>A05: Security Misconfiguration (3 Skills) — 🟢 Good Coverage</h2>
+
+    <p><strong>apigw-cors-tester</strong> — Tests CORS (Cross-Origin Resource Sharing) configuration for overly permissive policies: wildcard origins, reflected origins, null origin acceptance, and credentials with wildcard. A misconfigured CORS policy can allow any website to make authenticated requests to your API.</p>
+
+    <p><strong>api-key-validator</strong> — Tests API endpoints for missing or weak authentication: endpoints accessible without API keys, keys accepted in URL parameters (logged in server access logs), and keys that work across environments (dev key accepted in production).</p>
+
+    <p><strong>sensitive-service-fingerprint</strong> — Identifies exposed services that should not be publicly accessible: database admin panels (phpMyAdmin, Adminer), monitoring dashboards (Grafana, Kibana), CI/CD interfaces (Jenkins), and debug endpoints (Spring Actuator, Django debug toolbar).</p>
+
+    <p><em>Practical example:</em> The apigw-cors-tester sends a request with <code>Origin: https://evil.com</code> and finds the server responds with <code>Access-Control-Allow-Origin: https://evil.com</code> — a reflected origin that allows any site to make cross-origin requests.</p>
+
+    <p>For CORS deep dive: <a href="/articles/cors-misconfiguration-security-testing-guide-2026/">CORS Misconfiguration: The Security Header That Breaks Everything</a>.</p>
+  </section>
+
+  <section id="a06">
+    <h2>A06: Vulnerable and Outdated Components (2 Skills) — 🟢 Good Coverage</h2>
+
+    <p><strong>tech-stack-cve-scanner</strong> — Fingerprints the target's technology stack (web server, framework, CMS, JavaScript libraries) and checks each component against known CVE databases. Detects outdated versions of Apache, Nginx, WordPress, jQuery, React, and hundreds of other components.</p>
+
+    <p><strong>webmail-cve-fingerprint</strong> — Specialized scanner for webmail applications (Roundcube, Zimbra, Horde, SquirrelMail). Fingerprints the exact version and checks for known vulnerabilities. Webmail is a high-value target — a single RCE in a mail server can compromise an entire organization's email.</p>
+
+    <p><em>Practical example:</em> The tech-stack-cve-scanner detects jQuery 3.4.1 loaded from a CDN and flags CVE-2020-11022 (XSS via HTML passed to jQuery's DOM manipulation methods). Reports the exact version, CVE ID, CVSS score, and remediation (upgrade to 3.5.0+).</p>
+  </section>
+
+  <section id="a07">
+    <h2>A07: Identification and Authentication Failures (4 Skills) — 🟢 Deep Coverage</h2>
+
+    <p><strong>oauth-client-enum</strong> — Enumerates OAuth client IDs and tests for information disclosure through OAuth error messages. Finds: valid vs invalid client ID differentiation, redirect URI validation bypass, and authorization code reuse.</p>
+
+    <p><strong>oauth-security-analysis</strong> — Comprehensive OAuth flow analysis: tests for PKCE enforcement, state parameter validation, token leakage via Referer headers, and implicit flow usage (deprecated in OAuth 2.1).</p>
+
+    <p><strong>session-security-tester</strong> — Tests session management: cookie flags (HttpOnly, Secure, SameSite), session fixation (token rotation after login), idle/absolute timeouts, and logout invalidation (server-side session destruction).</p>
+
+    <p><strong>open_redirect_hunter</strong> — Finds open redirect vulnerabilities in login flows, OAuth callbacks, and post-authentication redirects. Open redirects in auth flows enable phishing attacks that appear to originate from the legitimate application.</p>
+
+    <p><em>Practical example:</em> The session-security-tester logs in, notes the session token, logs out, and replays the old token. If the server still accepts it, the logout doesn't invalidate server-side sessions — a finding that enables session replay attacks.</p>
+
+    <p>Related articles: <a href="/articles/session-security-testing-cookie-flags-token-rotation-2026/">Session Security Testing</a>, <a href="/articles/jwt-security-vulnerabilities-testing-2026/">JWT Security Vulnerabilities</a>, <a href="/articles/open-redirect-vulnerabilities-testing-guide-2026/">Open Redirect Vulnerabilities</a>.</p>
+  </section>
+
+  <section id="a08">
+    <h2>A08: Software and Data Integrity Failures (1 Skill) — 🟡 Basic Coverage</h2>
+
+    <p><strong>sri-checker</strong> — Verifies Subresource Integrity (SRI) attributes on external script and stylesheet references. SRI ensures that resources loaded from CDNs haven't been tampered with — if a CDN is compromised, the browser will refuse to execute scripts that don't match the expected hash.</p>
+
+    <p><em>Practical example:</em> Finds <code>&lt;script src="https://cdn.example.com/lib.js"&gt;</code> without an <code>integrity</code> attribute. If the CDN is compromised, the attacker's modified script will execute in every user's browser. Reports the missing SRI and provides the correct hash to add.</p>
+
+    <p><em>Gap:</em> A08 also covers CI/CD pipeline integrity, unsigned software updates, and deserialization vulnerabilities. SRI checking covers the client-side integrity aspect but not the broader supply chain and deserialization attack surface.</p>
+  </section>
+
+  <section id="a09">
+    <h2>A09: Security Logging and Monitoring Failures (1 Skill) — 🟡 Basic Coverage</h2>
+
+    <p><strong>logging-monitor-checker</strong> — Tests whether the application logs security-relevant events: failed login attempts, access control failures, input validation failures, and server-side errors. Also checks for log injection vulnerabilities (user input appearing unescaped in logs).</p>
+
+    <p><em>Practical example:</em> Sends 10 failed login attempts and checks if the application's response behavior changes (rate limiting, account lockout, CAPTCHA). If 10 failed attempts produce no defensive response, the application likely isn't monitoring authentication failures.</p>
+
+    <p><em>Gap:</em> A09 is inherently difficult to test from the outside. The skill can detect the absence of defensive responses to suspicious activity, but it can't verify that logs are being collected, stored securely, or monitored by a SIEM. Full A09 coverage requires access to the logging infrastructure.</p>
+  </section>
+
+  <section id="a10">
+    <h2>A10: Server-Side Request Forgery (1 Skill) — 🟡 Basic Coverage</h2>
+
+    <p><strong>ssrf-probe</strong> — Tests for SSRF by injecting internal URLs into parameters that trigger server-side requests: URL fetchers, webhook configurations, file import features, and PDF generators. Tests for access to cloud metadata endpoints (AWS 169.254.169.254, GCP, Azure), internal network scanning, and protocol smuggling.</p>
+
+    <p><em>Practical example:</em> Injects <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/</code> into a URL parameter and detects that the response contains AWS IAM credentials — a critical SSRF that exposes cloud infrastructure credentials.</p>
+
+    <p>For the full SSRF guide: <a href="/articles/ssrf-server-side-request-forgery-what-scanners-should-detect-2026/">Server-Side Request Forgery in 2026: What Your Scanner Should Detect</a>.</p>
+
+    <p><em>Note:</em> ssrf-probe is an active injection skill that sends requests to internal endpoints. It requires explicit approval before running.</p>
+  </section>
+
+  <section id="gaps">
+    <h2>Where Coverage Is Thin</h2>
+
+    <p>Full OWASP coverage doesn't mean full security coverage. Here's where SecurityClaw's automated scanning has known limitations:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Category</th>
+          <th style="padding:10px; text-align:left;">What's Covered</th>
+          <th style="padding:10px; text-align:left;">What's Not Covered</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">A02</td>
+          <td style="padding:10px;">TLS configuration</td>
+          <td style="padding:10px;">Application-layer crypto (password hashing, key management)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A03</td>
+          <td style="padding:10px;">Reflected XSS, error/boolean SQLi</td>
+          <td style="padding:10px;">Stored XSS, DOM XSS, command injection, LDAP injection</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A04</td>
+          <td style="padding:10px;">Security headers</td>
+          <td style="padding:10px;">Design-level flaws (threat modeling, abuse cases)</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A08</td>
+          <td style="padding:10px;">SRI on external resources</td>
+          <td style="padding:10px;">CI/CD integrity, deserialization, supply chain</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">A09</td>
+          <td style="padding:10px;">Absence of defensive responses</td>
+          <td style="padding:10px;">Log collection, SIEM integration, alert configuration</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The pattern: SecurityClaw excels at black-box testing — sending requests and analyzing responses. It's weaker on issues that require source code access (crypto implementation), multi-step interaction (stored XSS), or infrastructure visibility (logging configuration). This is a fundamental limitation of automated scanning, not specific to SecurityClaw.</p>
+  </section>
+
+  <section id="approval">
+    <h2>Skills Requiring Approval</h2>
+
+    <p>Some SecurityClaw skills send potentially malicious payloads to the target. These require explicit approval before running:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:1.5rem 0;">
+      <thead>
+        <tr style="background:#2c3e50; color:white;">
+          <th style="padding:10px; text-align:left;">Skill</th>
+          <th style="padding:10px; text-align:left;">Why Approval Required</th>
+          <th style="padding:10px; text-align:center;">OWASP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px;">xss-probe</td>
+          <td style="padding:10px;">Injects script payloads into parameters</td>
+          <td style="padding:10px; text-align:center;">A03</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">sqli-probe</td>
+          <td style="padding:10px;">Injects SQL syntax into parameters</td>
+          <td style="padding:10px; text-align:center;">A03</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;">ssrf-probe</td>
+          <td style="padding:10px;">Sends requests to internal/cloud metadata endpoints</td>
+          <td style="padding:10px; text-align:center;">A10</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>All other skills are passive or semi-passive — they analyze responses to normal requests without injecting malicious payloads. These can run without approval in most scanning policies.</p>
+  </section>
+
+  <section id="whats-next">
+    <h2>What's Next</h2>
+
+    <p>SecurityClaw has achieved breadth — all 10 OWASP categories covered. The next phase is depth:</p>
+
+    <ul>
+      <li><strong>A03 expansion:</strong> Stored XSS detection (requires multi-step testing with state), command injection probes, and template injection detection.</li>
+      <li><strong>A02 expansion:</strong> Certificate transparency log monitoring, weak password hashing detection (via timing analysis), and JWT-specific crypto checks.</li>
+      <li><strong>A05 expansion:</strong> Cloud misconfiguration scanning (S3 bucket policies, Azure blob access, GCP IAM), Kubernetes RBAC analysis, and serverless function permission auditing.</li>
+      <li><strong>Campaign runner integration:</strong> The 4 newest skills (sri-checker, session-security-tester, security-header-checker, logging-monitor-checker) need to be wired into the automated campaign runner for hands-off scanning.</li>
+    </ul>
+
+    <p>The goal isn't to replace manual penetration testing — it's to automate the repeatable checks so human testers can focus on the creative, context-dependent work that machines can't do. SecurityClaw handles the checklist; humans handle the thinking.</p>
+  </section>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>

