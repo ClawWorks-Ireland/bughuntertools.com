@@ -37,11 +37,11 @@ function formatDate(date: Date): string {
 
       <nav class="category-filter" aria-label="Filter by category">
         <span class="filter-label">Filter:</span>
-        <a href="/articles/" class="filter-btn active">All ({articles.length})</a>
+        <a href="/articles/" class="filter-btn" data-cat="all">All ({articles.length})</a>
         {Object.entries(categoryMeta).map(([cat, meta]) => {
           const count = articles.filter(a => a.data.category === cat).length;
           return count > 0 ? (
-            <a href={`/articles/?cat=${cat}`} class="filter-btn">
+            <a href={`/articles/?cat=${cat}`} class="filter-btn" data-cat={cat}>
               {meta.icon} {meta.label} ({count})
             </a>
           ) : null;
@@ -49,11 +49,11 @@ function formatDate(date: Date): string {
       </nav>
     </header>
 
-    <ul class="article-list" role="list">
+    <ul class="article-list" role="list" id="article-list">
       {articles.map((article) => {
         const meta = categoryMeta[article.data.category] ?? { label: article.data.category, icon: '📄', color: '#666' };
         return (
-          <li class="article-card">
+          <li class="article-card" data-category={article.data.category}>
             <div class="article-card-meta">
               <span class="category-badge" style={`background: ${meta.color}`}>
                 {meta.icon} {meta.label}
@@ -77,6 +77,49 @@ function formatDate(date: Date): string {
       })}
     </ul>
   </div>
+<script>
+  (function () {
+    function getActiveCat() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('cat') || 'all';
+    }
+
+    function applyFilter(cat) {
+      const cards = document.querySelectorAll('#article-list .article-card');
+      cards.forEach(function (card) {
+        if (cat === 'all' || card.dataset.category === cat) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      document.querySelectorAll('.filter-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+      });
+    }
+
+    // Apply on page load
+    applyFilter(getActiveCat());
+
+    // Intercept filter clicks — update URL and filter without navigation
+    document.querySelectorAll('.filter-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const cat = btn.dataset.cat || 'all';
+        const url = cat === 'all' ? '/articles/' : '/articles/?cat=' + cat;
+        window.history.pushState({}, '', url);
+        applyFilter(cat);
+      });
+    });
+
+    // Handle back/forward
+    window.addEventListener('popstate', function () {
+      applyFilter(getActiveCat());
+    });
+  })();
+</script>
+
 </BaseLayout>
 
 <style>
