@@ -22,7 +22,7 @@ SecurityClaw's previous four bol.com campaigns (002–005) all hit this wall. Ov
 
 ## The Solution: A Residential Kali Container
 
-The fix was Peng's `securityclaw-kali` Docker container, running SecurityClaw from a residential network rather than a cloud instance. The container runs on AirDelmar's home infrastructure with egress through a Sky UK broadband connection in Dublin, Ireland — IP `51.186.6.232`, AS5607.
+The fix was Peng's `securityclaw-kali` Docker container, running SecurityClaw from a residential network rather than a cloud instance. The container runs on AirDelmar's home infrastructure with egress through a Sky UK broadband connection in Dublin, Ireland — AS5607, residential, Dublin IE.
 
 From a WAF's perspective, that IP looks like a home user's browser, not an AWS scanner. Akamai doesn't block it.
 
@@ -31,7 +31,7 @@ The acceptance test suite confirmed the setup before any real campaign ran:
 - **T-1 SSH**: Connected ✅
 - **T-2 Python**: 3.13.12 at `/opt/venv/bin/python3` ✅
 - **T-3 AWS identity**: Account `172337538645` (delmar) confirmed ✅
-- **T-10 Egress IP**: `51.186.6.232` — AS5607 Sky UK Limited, Dublin IE — residential, not cloud/VPN ✅
+- **T-10 Egress IP**: AS5607 Sky UK Limited, Dublin IE — residential, not cloud/VPN ✅
 - **T-5 Dry-run campaign**: 14 skills, 10 findings, exit 0 ✅
 
 All infrastructure checks passed. The container has AWS credentials for result storage (findings go to S3) but its outbound HTTP traffic routes through the residential broadband connection.
