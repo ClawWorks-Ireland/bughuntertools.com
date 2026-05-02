@@ -37,11 +37,11 @@ function formatDate(date: Date): string {
 
       <nav class="category-filter" aria-label="Filter by category">
         <span class="filter-label">Filter:</span>
-        <a href="/articles/" class="filter-btn active">All ({articles.length})</a>
+        <a href="/articles/" class="filter-btn" data-cat="all">All ({articles.length})</a>
         {Object.entries(categoryMeta).map(([cat, meta]) => {
           const count = articles.filter(a => a.data.category === cat).length;
           return count > 0 ? (
-            <a href={`/articles/?cat=${cat}`} class="filter-btn">
+            <a href={`/articles/?cat=${cat}`} class="filter-btn" data-cat={cat}>
               {meta.icon} {meta.label} ({count})
             </a>
           ) : null;
@@ -49,11 +49,11 @@ function formatDate(date: Date): string {
       </nav>
     </header>
 
-    <ul class="article-list" role="list">
+    <ul class="article-list" role="list" id="article-list">
       {articles.map((article) => {
         const meta = categoryMeta[article.data.category] ?? { label: article.data.category, icon: '📄', color: '#666' };
         return (
-          <li class="article-card">
+          <li class="article-card" data-category={article.data.category}>
             <div class="article-card-meta">
               <span class="category-badge" style={`background: ${meta.color}`}>
                 {meta.icon} {meta.label}
@@ -77,6 +77,11 @@ function formatDate(date: Date): string {
       })}
     </ul>
   </div>
+<script>
+  import { initFilter } from '../../scripts/articleFilter.js';
+  initFilter();
+</script>
+
 </BaseLayout>
 
 <style>
