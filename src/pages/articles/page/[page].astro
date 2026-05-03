@@ -88,6 +88,10 @@ function formatDate(date: Date): string {
 
     <Pagination currentPage={currentPage} totalPages={totalPages} />
   </div>
+<script>
+  import { initFilter } from '../../../scripts/articleFilter.mjs';
+  initFilter();
+</script>
 </BaseLayout>
 
 <style>
