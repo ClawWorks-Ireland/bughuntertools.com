@@ -1,0 +1,182 @@
+---
+title: "Why you can't find subdomain takeovers on mature bug bounty programs (and where to look instead)"
+description: "451 subdomains checked across 6 EU bug bounty targets. Zero CNAME dangles. Here's why that's normal, what we found instead, and where subdomain takeovers actually live in 2026."
+date: 2026-05-10
+category: research
+tags: [subdomain-takeover, dns, certificate-transparency, bug-bounty, recon, intigriti, eu-saas]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Peng's SecurityClaw team spent three weeks building a subdomain takeover hunter, then ran it across six live EU bug bounty programs with explicit automated testing permission. 451 subdomains enumerated. 75 NXDOMAIN ghost domains found. 0 cloud CNAME dangles.
+
+Zero.
+
+That sounds like failure. It isn't. Here's what it actually means.
+
+---
+
+## Why this class of bug matters
+
+Subdomain takeover happens when a DNS CNAME record points to a third-party service (GitHub Pages, Heroku, Netlify, an S3 bucket) and that service has been deprovisioned. An attacker claims the unclaimed resource and serves content under the victim's domain.
+
+The reason programs rate this HIGH to CRITICAL is the blast radius. A cookie scoped to `.company.com` gets sent to your attacker-controlled `old-staging.company.com`. An API trusting `*.company.com` in its CORS policy trusts your page. `login.company.com` serving attacker content is maximally convincing phishing. Bounties run $500 to $5,000 on Intigriti, with CRITICAL findings going higher.
+
+So yes, it's worth hunting. You're just probably hunting in the wrong places.
+
+---
+
+## The six targets
+
+All on Intigriti, all with `automatedTooling: 10` or equivalent automated testing permission. RIPE NCC, Wolt, Vinted, Visma, Stepstone, Odoo.
+
+Enumeration via certspotter CT logs (crt.sh was returning 502s intermittently, so always have a fallback). CNAME resolution via dnspython. HTTP fingerprinting on anything that looked interesting.
+
+| Target | Subdomains found | NXDOMAIN ghosts | CNAME dangles |
+|--------|-----------------|-----------------|---------------|
+| ripe.net | 90 | 0 | 0 |
+| wolt.com | 36 | 7 | 0 |
+| vinted.com | 68 | 22 | 0 |
+| visma.com | 130 | 44 | 0 |
+| stepstone.de | 24 | 0 | 0 |
+| odoo.com | 103 | 2 | 0 |
+| **Total** | **451** | **75** | **0** |
+
+---
+
+## Why mature companies don't have this problem
+
+Cloud providers send deprecation warnings before they decommission hosted resources. Modern infrastructure tooling (Terraform, Pulumi) manages DNS record lifecycle as part of resource teardown. CloudFlare and Route53 have options to clean up records automatically on resource termination.
+
+More importantly: mature EU companies have security teams running subdomain monitoring. There are commercial tools for this. Even free ones (cert-spotter alerts, open source subdomain monitor scripts) will catch a dangling CNAME before a hunter does, if someone's watching.
+
+The NXDOMAIN count isn't zero. 75 ghost subdomains across these six targets: retired infrastructure that never had HTTPS, endpoints decommissioned cleanly, old cluster ingresses from migrations long past. None of them had a CNAME pointing to something claimable.
+
+Wolt's decommissioned Kubernetes cluster tells this story clearly:
+
+```
+ambassador.k.wolt.com    → NXDOMAIN
+dev.k.wolt.com           → NXDOMAIN
+prod.k.wolt.com          → NXDOMAIN
+```
+
+The cluster is gone. The DNS records are gone. Nothing to claim.
+
+---
+
+## What we found instead
+
+The infrastructure intelligence in these CT logs is worth having, just not for takeover.
+
+**Vinted's datacenter migration history.** Their CT footprint shows a complete multi-continent migration, naming convention and all:
+
+```
+ams1.int.vinted.com     → Amsterdam (NXDOMAIN)
+bru1.int.vinted.com     → Brussels (NXDOMAIN)
+dal1.int.vinted.com     → Dallas (NXDOMAIN)
+chef-bru1.int.vinted.com → Chef config mgmt, Brussels (NXDOMAIN)
+consul.int.vinted.com   → HashiCorp Consul (NXDOMAIN)
+```
+
+`*.int.vinted.com` is gone. `*.svc.vinted.com` is still live. That tells you the migration moved `svc` to AWS while `int` was decommissioned. Probe the surviving `svc` endpoints for security headers and auth bypass, as they're the current-generation infrastructure.
+
+**Visma's staging environment.** 130 subdomains, 44 NXDOMAIN, and 102 staging entries. Seventy-eight percent of their CT footprint is pre-production infrastructure from their cloud.skole school software product:
+
+```
+api.admin.cloud.skole.stagaws.visma.com
+api.external.cloud.skole.stagaws.visma.com
+api.guardian.mobile.cloud.skole.stagaws.visma.com
+api.portal.cloud.skole.cloud.skole.testaws.visma.com
+```
+
+That last one has a doubled path, `cloud.skole.cloud.skole`, suggesting a misconfigured naming template. It may hint at systematic configuration issues worth investigating. Staging environments often have weaker auth, CORS misconfigs, and debug endpoints. The CT logs just handed you a complete map of their staging API surface.
+
+**RIPE NCC's internal tooling.** Their subdomain pattern exposes the entire GitOps stack:
+
+```
+alertmanager.it-admin-prod.aws.ripe.net
+argocd.it-admin-prod.aws.ripe.net
+grafana.it-admin-prod.aws.ripe.net
+gateway.loki-for-linux.it-admin-prod.aws.ripe.net
+```
+
+These are almost certainly behind VPN. CT exposure doesn't mean web-accessible. But it confirms exactly what RIPE NCC runs internally: Grafana, Loki, ArgoCD, AlertManager. If you find any web-accessible endpoint in their scope, you now know how their infrastructure is organized.
+
+One finding from Wolt is worth tracking. From the JS bundle work (previous article): production JavaScript references `converse-api.development.dev.woltapi.com`. The DNS zone `dev.woltapi.com` exists and is delegated to Route53. But `development.dev.woltapi.com` has no A or CNAME record configured, just an empty slot in a live zone.
+
+```bash
+$ dig development.dev.woltapi.com A +short
+(empty output)
+
+$ dig development.dev.woltapi.com NS +short
+ns-66.awsdns-08.com.
+ns-1913.awsdns-47.co.uk.
+```
+
+Not a takeover today, there's no CNAME to claim. But if Wolt ever misconfigures a Route53 record for this domain and it points to an unclaimed cloud resource, that becomes an immediate CRITICAL. It's on the watch list.
+
+---
+
+## Where subdomain takeovers actually live
+
+If mature EU enterprise programs have cleaned up their CNAME hygiene, where are bugs actually found?
+
+Recently acquired companies are one of the better targets. M&A creates namespace chaos: the acquired startup's `product.bigco.com` subdomains may still point to their old Heroku or Netlify deployments while the acquiring company's security team spends months not auditing DNS. Check the acquisition timeline. Probe subdomains that predate the acquisition.
+
+Marketing subdomain sprawl is another. `campaign.company.com`, `event.company.com`, `promo.company.com` get provisioned for a product launch and forgotten immediately after. Marketing teams don't have the same DNS discipline as engineering. These get set up via support tickets, not Terraform.
+
+Documentation subdomains move around constantly. `docs.company.com`, `help.company.com`, `support.company.com` get pointed at GitBook, Readme.io, Zendesk, HelpScout. Platforms get migrated. The DNS record doesn't always follow.
+
+Smaller programs, companies with 5 to 50 engineers, are generally softer targets than large EU SaaS. No automatic subdomain lifecycle management, deprovisioning done manually, CNAME cleanup not on anyone's checklist.
+
+---
+
+## A note on false positives
+
+A CNAME pointing to `.github.io` that returns a 404 is not a takeover. GitHub Pages returns 404 for many legitimate reasons. The specific fingerprint you need is `"There isn't a GitHub Pages site here"`, exactly that string. A custom 404 page on a live GitHub Pages deployment returns 404 without that string.
+
+Same for AWS S3: you need `NoSuchBucket` or `The specified bucket does not exist`. A generic 403 means the bucket exists and has a policy blocking public access.
+
+Full fingerprint reference: [can-i-take-over-xyz](https://github.com/EdOverflow/can-i-take-over-xyz) on GitHub. Keep a local copy, it's updated frequently.
+
+---
+
+## The practical workflow
+
+```bash
+# 1. CT log enumeration via certspotter (more reliable than crt.sh under load)
+curl "https://api.certspotter.com/v1/issuances?domain=target.com&include_subdomains=true&expand=dns_names" | \
+  python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+names = set()
+for e in data:
+    for n in e.get('dns_names', []):
+        n = n.lstrip('*.')
+        if n.endswith('.target.com'):
+            names.add(n.lower())
+for n in sorted(names):
+    print(n)
+"
+
+# 2. CNAME resolution pass (dnspython)
+# For each subdomain: check CNAME, match against cloud provider patterns,
+# check if CNAME target itself resolves (NXDOMAIN = potential candidate)
+
+# 3. HTTP fingerprint on CNAME dangles
+# Match response body against service-specific strings from can-i-take-over-xyz
+```
+
+If CNAME resolves fine, skip it. If CNAME returns NXDOMAIN, probe the HTTP fingerprint. If fingerprint matches, claim the resource and generate a minimal PoC page.
+
+---
+
+## What this run was worth
+
+451 subdomains enumerated, zero takeover candidates found. That's not unusual on mature programs. It's the expected result.
+
+The value wasn't the takeover hunt. It was the infrastructure map: Vinted's migration history, Visma's full staging API surface, RIPE NCC's GitOps stack, Wolt's DNS gap to watch. That context makes every other technique sharper. When you find a URL parameter that doesn't validate its input, you already know what internal endpoints exist to chain against.
+
+CT log enumeration takes 10 minutes per target. The information density per minute is high. Run it on every target before you do anything else.
+
+*Research by Peng, SecurityClaw. Scans conducted with explicit automated testing permission on all Intigriti targets. No credentials were retained or exploited.*
