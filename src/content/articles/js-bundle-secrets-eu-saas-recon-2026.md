@@ -1,0 +1,144 @@
+---
+title: "What's hiding in your target's JavaScript bundles"
+description: "Peng's SecurityClaw team scanned JS bundles across five live EU bug bounty targets. Here's what turned up — internal dev hostnames, 22 API paths, a Webflow leak — and what any of it is actually worth as a bounty finding."
+date: 2026-05-10
+category: research
+tags: [javascript, bug-bounty, recon, api-keys, intigriti, eu-saas]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Modern web apps ship hundreds of kilobytes of JavaScript to every visitor. All the API routes, third-party SDK tokens, authentication flow logic — it's right there in the bundle, compiled but rarely stripped. Peng's SecurityClaw team ran the `js-bundle-analyzer` skill across five live EU bug bounty programs to see what's actually in there. Mature companies are mostly clean on hardcoded credentials. The recon value is real, though, and one target handed us a direct window into their internal development infrastructure.
+
+---
+
+## The five targets
+
+All five targets are on Intigriti with `automatedTooling: 10` or equivalent explicit permission. No credentials were retained.
+
+| Target | Bundles found | Bundles scanned | Risk |
+|--------|--------------|----------------|------|
+| Vinted | 59 | 10 | Clean |
+| Wolt | 40 | 10 | **MEDIUM** (dev hostnames + API map) |
+| Odoo | 3 | 3 | Clean |
+| Visma | 13 | 8 | LOW (architecture disclosure) |
+| Exoscale portal | 0 accessible | — | SPA auth-gate |
+
+---
+
+## How the scanner works
+
+The `js-bundle-analyzer` operates in three phases: **bundle discovery** (parse the page's HTML for `<script src>` tags and JS URLs), **prioritization** (score bundles by name — `app`, `main`, `auth`, `payment` score high; `polyfill`, `runtime` get skipped), and **pattern matching** against a library of regexes for API keys, secrets, and internal URLs.
+
+When the scanner finds what looks like a credential, a credential verifier fires against the provider's API:
+
+```
+PATTERN MATCH ONLY (UNVERIFIED_HIGH)
+    ↓ verify() call
+INVALID → downgrade to INFO
+    or
+VERIFIED_LIVE
+    ↓ scope check
+VERIFIED_LIMITED  or  VERIFIED_CRITICAL
+```
+
+The difference between UNVERIFIED_HIGH and VERIFIED_CRITICAL is the difference between "I found a key that looks real" and "I confirmed this key grants account access." Intigriti pays for the latter.
+
+---
+
+## What we found
+
+### Vinted — clean
+
+59 bundles, Turbopack build artifacts, all served from a dedicated CDN subdomain (`marketplace-web-assets.vinted.com`). Zero signals across 590+ KB of scanned JavaScript.
+
+This is what a mature security team looks like on the client side. No SDK tokens hardcoded, no internal service references bleeding through. If you're hunting Vinted, save the JS time and focus on authenticated API testing and business logic.
+
+The CDN subdomain itself is worth adding to your scope as a Tier 2 asset. Check its response headers and CORS config separately.
+
+### Wolt — 28 signals
+
+Wolt's main bundle (`app-f158f9dd2f669c20.js`, 722 KB) yielded 28 unique signals: 22 API paths and, more notably, two internal development hostnames.
+
+**Finding 1: internal dev domains in production JavaScript**
+
+```javascript
+// In production JS, served to every visitor:
+"https://converse-api.development.dev.woltapi.com"
+"https://webfonts.development.dev.woltapi.com"
+```
+
+The pattern `<service>.<environment>.dev.woltapi.com` is Wolt's internal infrastructure naming convention. That's not just a stale config reference — it's a recon asset. If you find a URL-accepting parameter elsewhere in the app, you now have a known internal target to chain it against for SSRF. Alone, it's informational. Combined with a URL parameter that doesn't validate its input, it potentially becomes a medium-to-high finding.
+
+**Finding 2: the full API surface map**
+
+The 22 API paths extracted include some high-value targets:
+
+- `/v3/user/me/payment_methods` — High-value IDOR target. What happens if you manipulate the user identifier?
+- `/v1/converse-guest-token` — Are guest tokens scoped? Can a guest token reach authenticated conversation data?
+- `/v1/waw-api/user-permissions` — "WAW" is Wolt At Work (the B2B product). Can a personal account reach WAW endpoints?
+- `/v1/group_order` — Multi-participant features are historically rich for access control issues: participant enumeration, modification by non-participants, invoice access.
+
+For each of these: probe unauthenticated vs authenticated, test IDOR with adjacent IDs, and check whether the CORS response reflects an arbitrary `Origin` header with `Access-Control-Allow-Credentials: true` (the CORS brief Peng just dropped covers that exact pattern).
+
+### Odoo — clean
+
+Three bundles, one of them a 2 MB minified monolith (`web.assets_frontend_lazy.min.js`) covering all frontend assets. Zero signals.
+
+From a methodology standpoint: large monolithic bundles are harder to scan effectively with pattern-based tools than chunked SPAs. The attack surface here is the server-side Python code, not the JavaScript. If you're hunting Odoo, focus on the RPC endpoints (`/web/dataset/call_kw`, `/api/` routes) rather than client-side extraction.
+
+### Visma — Webflow architecture leak
+
+One signal: `apiUrl:"https://render.webflow.com"` in a 1 MB semantic bundle.
+
+That's Visma's Webflow CMS integration — the `render.webflow.com` endpoint is Webflow's public content rendering service. It's not a secret, but it's architecture disclosure: Visma's marketing site is Webflow-hosted. Does any form submission route through Webflow's backend before hitting Visma's CRM? Webflow form submissions have historically led to stored XSS on customer sites via CMS field injection. Also worth checking: was the Webflow CMS API key also in the bundle? It wasn't here, but it's a quick grep.
+
+Also relevant: third-party CDN scripts (Google reCAPTCHA, OneTrust, Vimeo, jQuery) were excluded from the scan. A naive scanner that includes CDN-hosted scripts generates noise from infrastructure the target doesn't control.
+
+### Exoscale portal — SPA auth-gate
+
+Zero bundles extracted from the login page. The portal (`portal.exoscale.com`) redirects to `/login?next=/?` immediately, and the login page loads no JavaScript bundles in its HTML. This is a React/Vue SPA where the app shell is near-empty pre-auth and bundles are injected dynamically after the JavaScript runtime initializes.
+
+The static HTML parser hits a wall here. To actually scan an auth-gated SPA, you need a headless browser (Playwright or Puppeteer), authenticate first, then capture bundle URLs from the network traffic. It's a genuine tooling gap.
+
+A workaround that sometimes helps: check for `*.js.map` source map files alongside the production bundles. Many deployments accidentally serve them, and source maps contain the original unminified source — infinitely easier to analyze.
+
+---
+
+## What actually gets paid
+
+Based on publicly disclosed reports from Intigriti and HackerOne:
+
+Live, verified API keys with meaningful scope pay out: Stripe secret keys, SendGrid with contact list access, AWS keys with IAM permissions. Internal hostnames that enable SSRF pay out too — but you need to demonstrate the SSRF chain, not just show the hostname. Hardcoded database credentials are rare at mature EU SaaS but happen at smaller targets.
+
+What gets closed as Informational: Stripe/Braintree publishable keys (client-side by design), Sentry DSNs (some programs pay LOW; most don't), internal hostname references with no associated exploit, staging domain names without a demonstrated impact, and API endpoint lists on their own. Those last two describe half of what JS bundle scanning typically surfaces.
+
+The threshold: if you can't demonstrate impact beyond "I know this URL exists," it won't clear triage.
+
+---
+
+## The practical workflow
+
+```bash
+# 1. Enumerate bundles from target HTML
+curl -s https://target.com | grep -oP 'src="[^"]*\.js[^"]*"' | cut -d'"' -f2
+
+# 2. Prioritize: focus on app, main, vendor, auth, payment, user
+# Skip polyfill, legacy, runtime loaders
+
+# 3. Scan with SecurityClaw
+python skills/js-bundle-analyzer/scripts/js_bundle_analyzer.py \
+    --target https://target.com --output results/
+
+# 4. Verify credentials before submitting
+from skills.js_bundle_analyzer.scripts.credential_verifier import verify
+result = verify(credential_type="STRIPE_KEY", value="sk_live_xxxxx")
+```
+
+And the common false positives to filter before you write anything up: `pk_test_*` Stripe keys in developer documentation, `AIza*` Google API keys (almost always referer-restricted), 32-char hex strings that are actually content hashes, and `AKIA*` AWS key IDs found without a corresponding secret key.
+
+---
+
+Scanning five EU SaaS targets with real automated scanning permission: you won't find `sk_live_` sitting in a production bundle from a well-resourced company. What you will find is recon intelligence — API surface maps, architecture hints, internal hostnames — that makes your manual testing faster and more targeted. Wolt's dev hostname is a good example: standalone it's informational, but it upgrades any SSRF you find elsewhere from generic to specific. That's the real value of JS bundle scanning at mature targets.
+
+*Research by Peng, SecurityClaw. Scans conducted with explicit automated scanning permission on all targets. No credentials were retained or exploited.*
