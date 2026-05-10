@@ -1,0 +1,155 @@
+---
+title: "The CORS + OAuth compound chain: how misconfigured origins become account takeovers"
+description: "A CORS wildcard and an OAuth endpoint in the same scope often means a chained account takeover. Here's how SecurityClaw mapped the full attack path on Wolt."
+date: 2026-05-10
+category: research
+tags: [cors, oauth, bug-bounty, account-takeover, eu-bug-bounty, intigriti]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+A CORS misconfiguration on its own scores maybe a P4. An OAuth endpoint with lax `redirect_uri` handling scores a P3. Find both on the same target, in the same scope, where they interact — that's a P1.
+
+This is the third article in SecurityClaw's EU bug bounty series. The [CORS brief](https://bughuntertools.com/articles/cors-misconfiguration-eu-bug-bounty-2026/) documented five Intigriti targets, including a wildcard CORS misconfiguration on Wolt with `Access-Control-Allow-Credentials: true`. This OAuth brief rounds out what that CORS finding actually enables.
+
+---
+
+## What CORS wildcards actually expose
+
+Quick recap. A server that responds with `Access-Control-Allow-Origin: *` allows any web page to read its responses. That sounds bad but is mostly harmless, because `*` and `Access-Control-Allow-Credentials: true` cannot coexist — browsers reject that combination. No credentials, no session, no damage.
+
+Where it gets dangerous: **wildcard subdomain CORS with credentials allowed**.
+
+```
+Origin: https://evil.wolt.com
+→ Access-Control-Allow-Origin: https://evil.wolt.com
+→ Access-Control-Allow-Credentials: true
+```
+
+If the server reflects any `*.wolt.com` origin and sets `ACAC: true`, any attacker who controls a `*.wolt.com` subdomain can make credentialed cross-origin requests. They can read authenticated API responses as if they were the victim.
+
+Wolt had exactly this configuration (SecurityClaw TASK-141). The remaining question was: where does an attacker get a `*.wolt.com` subdomain?
+
+---
+
+## Route53 zone takeover: the missing piece
+
+Subdomain takeovers via dangling DNS records (CNAME to deprovisioned cloud resource) are well understood. Less commonly documented is the **NS zone takeover** variant: a subdomain that has its own NS records pointing at a Route53 hosted zone that no longer exists. If that zone ID is unregistered, anyone can register it, set up records, and serve content from `sub.target.com`.
+
+SecurityClaw's subdomain takeover work on the same Wolt scope (TASK-141, documented in the [prior article](https://bughuntertools.com/articles/subdomain-takeover-eu-bounty-targets-2026/)) found NS-delegated subdomains on Wolt pointing at unregistered Route53 zones. An attacker registers the zone, points an A record at their server, and they now own a legitimate `*.wolt.com` subdomain — no phishing, no TLS warning, valid certificate available via Let's Encrypt.
+
+That completes the first half of the chain.
+
+---
+
+## The OAuth layer
+
+Wolt's frontend is a Next.js SPA. Their `/oauth/authorize` path routes to a 404 — Wolt uses a third-party auth provider, not a first-party OAuth server. But the login endpoint at `/login?next=` does something relevant: it preserves query parameters through the SPA path normalization redirect.
+
+```
+GET /login?next=https://evil.wolt.com/harvest
+→ 301 /en/login?next=https://evil.wolt.com/harvest
+```
+
+The `next=` parameter survives into the login SPA. Whether the SPA honors it post-authentication — redirecting the freshly-logged-in user to the `next` URL — is something static HTTP probing cannot confirm. It requires manual testing after a successful login. But the parameter is there, it's forwarded, and `evil.wolt.com` is a valid-looking Wolt subdomain.
+
+---
+
+## The full chain
+
+Put it together:
+
+```
+1. Attacker registers a dangling Route53 zone for a *.wolt.com subdomain
+   → e.g., old-internal.wolt.com now points at attacker's server
+
+2. Attacker hosts a page at old-internal.wolt.com that:
+   (a) Makes a credentialed XHR to wolt.com/api/v1/session (CORS bypass)
+   (b) Reads the session data / auth token from the response
+
+3. Attacker sends victim a login link:
+   wolt.com/login?next=https://old-internal.wolt.com/harvest
+
+4. Victim logs in (normal Wolt login, no visible phishing)
+   → SPA redirects to old-internal.wolt.com post-auth
+
+5. Attacker's page fires:
+   fetch("https://wolt.com/api/v1/session", { credentials: "include" })
+   → Response includes victim's session data
+   → Exfiltrate to attacker's server
+
+Outcome: session hijack of any Wolt user who clicks the login link
+```
+
+The login link looks completely legitimate — it starts with `wolt.com`, uses HTTPS, and shows the real Wolt login page. The victim sees nothing unusual.
+
+Severity: **HIGH**. Account takeover of arbitrary users via a single link, no interaction beyond normal login.
+
+---
+
+## Why chained findings score higher
+
+Bug bounty programs score individual findings on their own merit. A CORS misconfiguration that needs a subdomain takeover AND an OAuth redirect to work in practice is not just "CORS + subdomain + OAuth." The chain is scored on its *outcome* — account takeover — not on the sum of its component parts.
+
+From a triage perspective, chained findings are also harder to dismiss. A standalone CORS report on a non-sensitive endpoint gets triaged as P4 with a note about limited impact. The same CORS finding attached to a full account takeover chain with a working PoC gets triaged as P1 immediately. The program can see the damage path end-to-end.
+
+This matters for how you write reports too. Don't file each piece separately unless you can't link them. A single report that demonstrates the complete chain, with screenshots or a video PoC, is the correct submission.
+
+---
+
+## How to look for these combinations in scope
+
+When you find a CORS wildcard + credentials configuration, start by mapping what you can do from a subdomain you control. Check the subdomain takeover surface: dangling CNAMEs, NS delegation to unregistered zones. Run `subjack` or `nuclei` CNAME takeover templates, or review NS records manually.
+
+Next, check whether the target has OAuth or SSO. Look for `/oauth/authorize`, `/.well-known/openid-configuration`, or redirects to external auth providers. If they use Auth0, Keycloak, or Cognito, the `redirect_uri` is often configurable per client. Also check whether the login flow has a `?next=` or `?redirect=` parameter.
+
+If you find one, test post-auth behavior manually — automated scanners cannot confirm whether a `?next=` parameter is honored after a successful login. Create a test account, set the parameter to something you control, log in, and watch where you land.
+
+Finally, once you have a subdomain the server trusts as an origin, test which API endpoints are accessible with credentials. Look for session tokens, user data, or anything that establishes account ownership.
+
+Three disconnected medium findings. One high-severity chain.
+
+---
+
+## The false positive problem (and why it matters here)
+
+One thing that comes up consistently in OAuth + open redirect work: automated scanners generate a lot of noise that makes real chains harder to see.
+
+SecurityClaw's scanner flagged Wolt as having five "open redirects" because `evil.com` appeared in `Location:` headers. Every one of them was a false positive — the redirect target was still `wolt.com`, with the payload as a query parameter value, not as the actual redirect destination.
+
+The real risk on Wolt wasn't a direct open redirect. It was the `?next=` parameter surviving into the SPA, combined with CORS, combined with subdomain takeover. A researcher who files the false positive open redirect reports first will likely get them marked invalid — and miss the actual chain entirely.
+
+Correct detection logic for open redirects:
+
+```python
+from urllib.parse import urlparse
+
+def is_real_open_redirect(response, payload_host):
+    loc = response.headers.get("Location", "")
+    parsed = urlparse(loc)
+    # Only flag if the Location host is actually external
+    return parsed.hostname and payload_host in parsed.hostname
+```
+
+If your scanner checks for `evil.com` anywhere in the Location header, it's going to generate noise. Fix the detection logic before you start filing reports.
+
+---
+
+## Scope of this research
+
+SecurityClaw tested six Intigriti EU programs (Vinted, Wolt, Odoo, RIPE NCC, Visma, Stepstone) using `User-Agent: SecurityClaw-Researcher/1.0 (Intigriti Bug Bounty)` per each program's rules of engagement. About 350 HTTP probes across OAuth paths and redirect test cases, run 2026-05-10.
+
+The Wolt chain here is a hypothetical exploitation path built from confirmed findings: CORS misconfiguration, NS zone takeover candidates, and `?next=` parameter forwarding. Full exploitation requires manual verification of post-auth redirect behavior — that step wasn't confirmed.
+
+---
+
+## The EU bug bounty series
+
+This article is part of a four-part series from SecurityClaw's EU Intigriti research:
+
+1. [CORS misconfiguration](https://bughuntertools.com/articles/cors-misconfiguration-eu-bug-bounty-2026/) — RIPE NCC HIGH finding, Wolt wildcard configuration
+2. [JS bundle secrets](https://bughuntertools.com/articles/js-bundle-secrets-eu-saas-recon-2026/) — what ships in production JavaScript bundles
+3. [Subdomain takeover](https://bughuntertools.com/articles/subdomain-takeover-eu-bounty-targets-2026/) — NS zone takeovers, dangling CNAMEs
+4. **CORS + OAuth chain** (this article)
+
+*Research by Peng, Senior Security Engineer at ClawWorks. Testing conducted via Intigriti bug bounty programs under responsible disclosure guidelines.*
