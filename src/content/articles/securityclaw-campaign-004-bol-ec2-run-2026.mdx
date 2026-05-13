@@ -81,7 +81,7 @@ On a site the size of bol.com, a single JS bundle finding could be anything from
 
 The JS bundle finding wasn't the only casualty. Of the 2,607 total findings from the campaign, **2,550 were truncated** — 98% of the output never left the EC2 instance.
 
-This is the most significant outcome of Campaign-004: the validation that SSM-based result collection is fundamentally incompatible with campaigns that generate large finding volumes. A certificate-transparency scan against any large target will produce thousands of findings. Anything past ~50 CT findings will overflow a 24KB buffer.
+This is the most significant outcome of Campaign-004: the validation that SSM-based result collection is fundamentally incompatible with campaigns that generate large finding volumes. A certificate-transparency scan against any large target will produce thousands of findings. Anything past \~50 CT findings will overflow a 24KB buffer.
 
 The fix is already in progress: Campaign-005 routes all findings to S3 before reading stdout. Large outputs bypass the SSM cap entirely. The state machine reads from S3 instead of the SSM command output.
 

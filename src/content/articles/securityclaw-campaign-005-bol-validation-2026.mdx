@@ -34,7 +34,7 @@ These findings are informational at P3 severity. They're not exploitable in the 
 
 Campaign-005 was explicitly designed to confirm three prior fixes:
 
-**S3 results pipeline (PR #910):** The previous campaign lost ~2,550 findings to SSM stdout truncation. The fix reroutes results to S3 — large outputs go directly to bucket storage, bypassing the 24KB SSM cap entirely. Campaign-005 returned 978,146 bytes of findings with no truncation. Fix confirmed.
+**S3 results pipeline (PR #910):** The previous campaign lost \~2,550 findings to SSM stdout truncation. The fix reroutes results to S3 — large outputs go directly to bucket storage, bypassing the 24KB SSM cap entirely. Campaign-005 returned 978,146 bytes of findings with no truncation. Fix confirmed.
 
 **Context-optional skills (PR #911):** 16 of 16 skills ran successfully with zero context-related failures. The fix decoupled skills from a required context parameter that was causing silent failure when context wasn't provided. Fix confirmed across the full skill set.
 

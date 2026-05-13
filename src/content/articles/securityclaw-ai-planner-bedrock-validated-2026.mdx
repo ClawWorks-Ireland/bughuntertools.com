@@ -45,7 +45,7 @@ category: research
       phase ordering, and parameter choices.
     </p>
     <p>
-      The new entry point is <code>scripts/generate_plan_bedrock.py</code>: a callable script that
+      The new entry point is <code>scripts/generate\_plan\_bedrock.py</code>: a callable script that
       sends the prompt, parses Bedrock's response, and saves both the raw output and the
       CampaignDirector-validated plan as JSON files. From there, the existing execution pipeline
       takes over unchanged.
@@ -56,8 +56,8 @@ category: research
     <h2>The Test: What the Model Was Given vs What It Produced</h2>
     <p>
       The validation run used <code>example.com</code> as the target, with a bug bounty scope of
-      <code>example.com,*.example.com</code> and a budget of 15 skills. The prompt template
-      (from <code>PLAN_TEMPLATE.md</code>) provides Claude with the full skill catalogue, phase
+      <code>example.com,\*.example.com</code> and a budget of 15 skills. The prompt template
+      (from <code>PLAN\_TEMPLATE.md</code>) provides Claude with the full skill catalogue, phase
       structure guidelines, and common mistake warnings.
     </p>
     <p>

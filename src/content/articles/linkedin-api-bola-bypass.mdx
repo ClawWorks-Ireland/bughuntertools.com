@@ -96,7 +96,7 @@ category: security-news
                     <li><strong>IDs:</strong> /api/posts/12345, /api/users/67890</li>
                     <li><strong>UUIDs:</strong> /api/comments/a1b2c3d4-e5f6-...</li>
                     <li><strong>Usernames/emails:</strong> /api/profile/john.doe</li>
-                    <li><strong>GraphQL queries:</strong> { post(id: "12345") { content } }</li>
+                    <li><strong>GraphQL queries:</strong> <code>&#123; post(id: "12345") &#123; content &#125; &#125;</code></li>
                 </ul>
                 
                 <h3>Step 3: Test Authorization</h3>
@@ -122,7 +122,7 @@ category: security-news
                 <p>LinkedIn's premium feature bypass was in GraphQL. Test these:</p>
                 
                 <ul>
-                    <li><strong>Query for restricted fields:</strong> { user { premiumFeature } }</li>
+                    <li><strong>Query for restricted fields:</strong> <code>&#123; user &#123; premiumFeature &#125; &#125;</code></li>
                     <li><strong>Bypass frontend filters:</strong> Query API directly (skip UI)</li>
                     <li><strong>Batch queries:</strong> Request multiple objects in one query</li>
                     <li><strong>Introspection:</strong> Discover hidden fields via __schema query</li>

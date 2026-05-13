@@ -240,7 +240,8 @@ category: tools
                     </ul>
                     
                     <h4>Typical Workflow:</h4>
-                    <pre><code># Find subdomains
+                    ```
+# Find subdomains
 subfinder -d target.com -o subdomains.txt
 
 # Probe for live hosts
@@ -250,7 +251,8 @@ cat subdomains.txt | httpx -o live-hosts.txt
 cat live-hosts.txt | katana -o endpoints.txt
 
 # Scan for vulnerabilities
-cat endpoints.txt | nuclei -t cves/</code></pre>
+cat endpoints.txt | nuclei -t cves/
+```
                     
                     <div class="cta">
                         <a href="https://github.com/projectdiscovery" class="button" rel="nofollow">Explore ProjectDiscovery Suite →</a>
@@ -275,14 +277,16 @@ cat endpoints.txt | nuclei -t cves/</code></pre>
                     </ul>
                     
                     <h4>Powerful Search Queries:</h4>
-                    <pre><code># Find org's assets
+                    ```
+# Find org's assets
 org:"Target Company"
 
 # Exposed admin panels
 title:"Admin Panel" org:"Target"
 
 # Vulnerable services
-product:"Apache" version:"2.4.49"</code></pre>
+product:"Apache" version:"2.4.49"
+```
                     
                     <div class="cta">
                         <a href="https://www.shodan.io/store/member" class="button" rel="nofollow" target="_blank">Get Shodan Membership →</a>
@@ -482,7 +486,7 @@ product:"Apache" version:"2.4.49"</code></pre>
                     <h3>📚 The Web Application Hacker's Handbook (2nd Edition)</h3>
                     <div class="rating">⭐⭐⭐⭐⭐ (5/5)</div>
                     
-                    <p><strong>Authors:</strong> Dafydd Stuttard, Marcus Pinto | <strong>Price:</strong> ~$45</p>
+                    <p><strong>Authors:</strong> Dafydd Stuttard, Marcus Pinto | <strong>Price:</strong> \~$45</p>
                     
                     <p>The absolute bible of web application security. This 900-page masterpiece covers everything from reconnaissance to exploitation. If you only buy one security book, make it this one.</p>
                     
@@ -506,7 +510,7 @@ product:"Apache" version:"2.4.49"</code></pre>
                     <h3>📚 Black Hat Python, 2nd Edition</h3>
                     <div class="rating">⭐⭐⭐⭐⭐ (5/5)</div>
                     
-                    <p><strong>Author:</strong> Justin Seitz, Tim Arnold | <strong>Price:</strong> ~$35</p>
+                    <p><strong>Author:</strong> Justin Seitz, Tim Arnold | <strong>Price:</strong> \~$35</p>
                     
                     <p>Learn to build your own security tools using Python. This book teaches you how to automate attacks, create custom exploits, and develop reconnaissance tools.</p>
                     
@@ -530,7 +534,7 @@ product:"Apache" version:"2.4.49"</code></pre>
                     <h3>📚 CompTIA Security+ Study Guide (SY0-701)</h3>
                     <div class="rating">⭐⭐⭐⭐ (4/5)</div>
                     
-                    <p><strong>Price:</strong> ~$50</p>
+                    <p><strong>Price:</strong> \~$50</p>
                     
                     <p>While not bug bounty-specific, Security+ provides essential foundation knowledge. Many employers require this certification, and it covers topics every security professional should know.</p>
                     
@@ -554,7 +558,7 @@ product:"Apache" version:"2.4.49"</code></pre>
                     <h3>📚 Metasploit: The Penetration Tester's Guide</h3>
                     <div class="rating">⭐⭐⭐⭐ (4/5)</div>
                     
-                    <p><strong>Price:</strong> ~$40</p>
+                    <p><strong>Price:</strong> \~$40</p>
                     
                     <p>The official guide to Metasploit Framework. Essential if you're doing exploitation work or validating RCE vulnerabilities in bug bounty programs.</p>
                     
@@ -655,7 +659,5 @@ product:"Apache" version:"2.4.49"</code></pre>
         <h3>Do I need different tools for web apps vs mobile apps vs APIs?</h3>
         <p>Core overlap is 60-70%. Web apps: Burp Suite, Nuclei, browser DevTools. APIs: Add Postman/Insomnia, GraphQL-specific tools (GraphQL Voyager, Altair). Mobile apps: Add Frida, Objection, MobSF, Android Studio/Xcode. Cloud: Add Scout Suite, CloudFox, Prowler. Most hunters specialize in 1-2 categories and master those tools deeply rather than spreading across all categories. Recommendation: Start web apps (easiest entry, most bounties), then expand to APIs (natural progression), then mobile/cloud (advanced). Tooling investment follows specialization, not breadth.</p>
     </div>
-</section>            <section id="conclusion">
-        </article>
-
-        <section id="conclusion">
+</section>
+    </article>
