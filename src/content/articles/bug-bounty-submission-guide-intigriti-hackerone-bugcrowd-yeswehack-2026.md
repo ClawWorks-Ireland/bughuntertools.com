@@ -109,7 +109,8 @@ HackerOne uses CWE (Common Weakness Enumeration) for classification. The ones yo
 - XSS: **CWE-79**
 - IDOR: **CWE-639**
 - SSRF: **CWE-918**
-- Subdomain takeover: **CWE-115**
+
+For subdomain takeover, there is no single canonical CWE in HackerOne's current weakness taxonomy. HackerOne programs handle this inconsistently — some triagers accept CWE-284 (Improper Access Control) or CWE-16 (Configuration), others leave the weakness field free-text. Do not copy a CWE from an unrelated report category for this finding type. Use HackerOne's weakness search field and pick the closest match the program's triagers recognise, or leave it unset if the form allows it and explain the vulnerability class in the description.
 
 ---
 
