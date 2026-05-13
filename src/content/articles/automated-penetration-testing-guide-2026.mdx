@@ -43,19 +43,19 @@ category: research
 
         <ol>
             <li>
-                <p><strong>Manual Penetration Testing (1990s–present)</strong><br>
+                <p><strong>Manual Penetration Testing (1990s–present)</strong><br />
                 A skilled human practitioner applies their knowledge, tooling, and judgment to simulate a real attack. Full control, full reasoning capacity, able to identify novel vulnerabilities, logic flaws, and zero-days that no database contains. This remains the gold standard for complex, high-stakes engagements — and it isn't going away.</p>
             </li>
             <li>
-                <p><strong>Framework-Assisted Pentesting (2000s–present)</strong><br>
+                <p><strong>Framework-Assisted Pentesting (2000s–present)</strong><br />
                 Tools like Metasploit, Burp Suite, and Kali Linux accelerate what a human pentester can do. Exploitation modules, payload libraries, and integrated toolchains reduce manual effort significantly. But the human is still required to orchestrate everything — deciding what to run, when, and what to do with the output.</p>
             </li>
             <li>
-                <p><strong>Automated Vulnerability Scanning (2015–present)</strong><br>
+                <p><strong>Automated Vulnerability Scanning (2015–present)</strong><br />
                 Platforms like Nessus, Qualys, and Nuclei automate the <em>identification</em> of known vulnerabilities at scale — thousands of hosts, continuous monitoring, CVE-to-host mapping. Essential infrastructure for any security team. But this is still not penetration testing: there's no exploitation, no finding chaining, no attack path analysis.</p>
             </li>
             <li>
-                <p><strong>AI-Orchestrated Autonomous Pentesting (2023–present)</strong><br>
+                <p><strong>AI-Orchestrated Autonomous Pentesting (2023–present)</strong><br />
                 AI agents coordinate multiple specialised tools across the full kill chain — making decisions, adapting to what they find, chaining vulnerabilities across different systems and attack surfaces. No human directing each step. This is the category this guide is about.</p>
             </li>
         </ol>
@@ -214,23 +214,23 @@ category: research
 
         <ol>
             <li>
-                <p><strong>Define scope before running anything</strong><br>
+                <p><strong>Define scope before running anything</strong><br />
                 Document which IP ranges, domains, and systems are in-scope, and which are explicitly excluded. For production environments, start with a written scope agreement even if the platform is entirely internal.</p>
             </li>
             <li>
-                <p><strong>Start with a known environment</strong><br>
+                <p><strong>Start with a known environment</strong><br />
                 Run your first campaign against a staging environment, a dedicated test lab, or a deliberately vulnerable target (Metasploitable, HackTheBox, TryHackMe). This calibrates your expectations and validates the platform's output against known findings.</p>
             </li>
             <li>
-                <p><strong>Establish a baseline</strong><br>
+                <p><strong>Establish a baseline</strong><br />
                 Your first production campaign creates a snapshot of current state. Every subsequent campaign compares against that baseline — this is how you find regressions introduced by new deployments.</p>
             </li>
             <li>
-                <p><strong>Integrate findings into your remediation workflow</strong><br>
+                <p><strong>Integrate findings into your remediation workflow</strong><br />
                 Automated pentesting only creates value if the findings get acted on. Connect the platform to your ticketing system. Assign owners to critical findings. Set SLAs.</p>
             </li>
             <li>
-                <p><strong>Pair it with your existing toolchain</strong><br>
+                <p><strong>Pair it with your existing toolchain</strong><br />
                 Automated pentesting supplements your vulnerability scanner, DAST tool, and annual human-led pentest — it doesn't replace them. The right architecture: continuous scanning for known CVEs, DAST in CI/CD for web app coverage, automated pentesting for full-kill-chain coverage between annual engagements.</p>
             </li>
         </ol>
