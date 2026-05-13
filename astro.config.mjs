@@ -8,13 +8,6 @@ export default defineConfig({
     mdx(),
     sitemap(),
   ],
-  markdown: {
-    // Articles use raw HTML inside .md files (article wrappers, sections, divs).
-    // This flag tells remark-rehype to pass raw HTML nodes through instead of
-    // escaping them as text. Without this, all <div>, <section>, <h1> etc. in
-    // article markdown files render as literal tag text on the page.
-    allowDangerousHtml: true,
-  },
   build: {
     // Keep trailing slashes consistent
   },

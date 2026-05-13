@@ -8,7 +8,7 @@ category: security-news
 <article>
   <header>
     <h1>Firefox SpiderMonkey WebAssembly GC RCE: One Typo, Full Renderer Compromise</h1>
-    <p class="article-meta">Published: February 23, 2026 | Severity: High | CVSS Score: ~8.8 | Affected: Firefox (all platforms)</p>
+    <p class="article-meta">Published: February 23, 2026 | Severity: High | CVSS Score: \~8.8 | Affected: Firefox (all platforms)</p>
   </header>
 
   <section class="executive-summary">
@@ -33,7 +33,7 @@ category: security-news
       <li><strong>Integrity (I:H):</strong> High — arbitrary code execution in renderer process</li>
       <li><strong>Availability (A:H):</strong> High — browser tab/process crashable or fully controlled</li>
     </ul>
-    <p>The "High" complexity rating is the only thing keeping this from Critical — but as the researcher demonstrates, the Ion JIT optimization path is predictably triggered by looping a warm-up function ~1000 times, and GC movement is trivially invoked via explicit <code>minorgc()</code> calls in test harnesses. A real exploit would embed this warm-up in the Wasm module itself.</p>
+    <p>The "High" complexity rating is the only thing keeping this from Critical — but as the researcher demonstrates, the Ion JIT optimization path is predictably triggered by looping a warm-up function \~1000 times, and GC movement is trivially invoked via explicit <code>minorgc()</code> calls in test harnesses. A real exploit would embed this warm-up in the Wasm module itself.</p>
   </section>
 
   <section class="technical-details">
@@ -42,24 +42,30 @@ category: security-news
     <h3>The Guilty Commit</h3>
     <p>Everything traces back to a single refactoring commit — <code>fcc2f20e35ec</code> — which modified the handling of WebAssembly GC array metadata in <code>js/src/wasm/WasmGcObject.cpp</code>. The commit was supposed to store a tagged forwarding pointer (with the LSB set to 1) when the GC moves an Out-of-Line (OOL) Wasm array. The code was written like this:</p>
 
-    <pre><code>oolHeaderOld->word = uintptr_t(oolHeaderNew) &amp; 1;</code></pre>
+    ```
+oolHeaderOld->word = uintptr_t(oolHeaderNew) & 1;
+```
 
     <p>It should have been:</p>
 
-    <pre><code>oolHeaderOld->word = uintptr_t(oolHeaderNew) | 1;</code></pre>
+    ```
+oolHeaderOld->word = uintptr_t(oolHeaderNew) | 1;
+```
 
-    <p>The difference is a single character: <code>&amp;</code> (AND) instead of <code>|</code> (OR). The intent of the original code, as the accompanying comment explicitly states, was to set bit 0 of the forwarding pointer — the classic "tagged pointer" trick to distinguish a forwarding address from a real header value. Using <code>| 1</code> achieves this by setting the LSB. Using <code>&amp; 1</code> does the opposite: since all heap pointers are at minimum 8-byte aligned, <code>uintptr_t(oolHeaderNew) &amp; 1</code> is <strong>always 0</strong>. The code faithfully writes a zero word into the old buffer header instead of a tagged forwarding pointer.</p>
+    <p>The difference is a single character: <code>&amp;</code> (AND) instead of <code>|</code> (OR). The intent of the original code, as the accompanying comment explicitly states, was to set bit 0 of the forwarding pointer — the classic "tagged pointer" trick to distinguish a forwarding address from a real header value. Using <code>| 1</code> achieves this by setting the LSB. Using <code>&amp; 1</code> does the opposite: since all heap pointers are at minimum 8-byte aligned, <code>uintptr\_t(oolHeaderNew) &amp; 1</code> is <strong>always 0</strong>. The code faithfully writes a zero word into the old buffer header instead of a tagged forwarding pointer.</p>
 
     <h3>SpiderMonkey's OOL vs. Inline Array Architecture</h3>
-    <p>To understand why this matters, it helps to understand how SpiderMonkey stores WebAssembly GC arrays. Firefox's SpiderMonkey implements the Wasm GC proposal, which supports garbage-collected array types. For small arrays (zero to ~32 bytes), element data is stored <em>inline</em> (IL) immediately after the <code>WasmArrayObject</code> header — no separate allocation needed. For larger arrays, SpiderMonkey allocates a separate <em>out-of-line</em> (OOL) block managed by <code>js::gc::BufferAllocator</code>.</p>
+    <p>To understand why this matters, it helps to understand how SpiderMonkey stores WebAssembly GC arrays. Firefox's SpiderMonkey implements the Wasm GC proposal, which supports garbage-collected array types. For small arrays (zero to \~32 bytes), element data is stored <em>inline</em> (IL) immediately after the <code>WasmArrayObject</code> header — no separate allocation needed. For larger arrays, SpiderMonkey allocates a separate <em>out-of-line</em> (OOL) block managed by <code>js::gc::BufferAllocator</code>.</p>
 
     <p>Critically, SpiderMonkey distinguishes between these two layouts at runtime by examining the LSB of the header word:</p>
-    <pre><code>static inline bool isDataInline(uint8_t* data) {
+    ```
+static inline bool isDataInline(uint8_t* data) {
   const OOLDataHeader* header = (OOLDataHeader*)data;
   header--;
   uintptr_t headerWord = header->word;
-  return (headerWord &amp; 1) == 0;  // LSB=0 means Inline; LSB=1 means OOL forwarding pointer
-}</code></pre>
+  return (headerWord & 1) == 0;  // LSB=0 means Inline; LSB=1 means OOL forwarding pointer
+}
+```
 
     <p>With the typo in place, when the GC moves an OOL array, it writes <code>0</code> into the old buffer's header. The old buffer now passes <code>isDataInline()</code> — LSB is 0 — so SpiderMonkey believes the old OOL block is an inline array. This is a <strong>type confusion</strong>: the engine reads array elements from an address derived from inline layout arithmetic, but the memory region belongs to a completely different allocation. The result is controlled out-of-bounds read/write, which is the foundation of a reliable exploitable primitive.</p>
 
@@ -108,7 +114,7 @@ category: security-news
 
     <h3>Browser-Level Signals</h3>
     <ul>
-      <li>Unexpected Firefox renderer process crashes (look for <code>WasmGcObject</code>, <code>WasmArrayObject</code>, <code>obj_moved</code> in crash stack traces)</li>
+      <li>Unexpected Firefox renderer process crashes (look for <code>WasmGcObject</code>, <code>WasmArrayObject</code>, <code>obj\_moved</code> in crash stack traces)</li>
       <li>Firefox content process spawning unexpected child processes (shell, Python, netcat)</li>
       <li>Unusual network connections originating from the Firefox renderer process (not the main process)</li>
       <li>Firefox crash reporter telemetry spikes in enterprise environments</li>
@@ -142,7 +148,8 @@ category: security-news
       <li><strong>Enterprise:</strong> Push the latest Firefox ESR via MDM (Intune, JAMF, SCCM) immediately</li>
       <li><strong>Android:</strong> Update via Google Play Store or the official Mozilla APK</li>
     </ul>
-    <pre><code># Verify current Firefox version
+    ```
+# Verify current Firefox version
 firefox --version
 
 # Enterprise: Deploy latest ESR via winget (Windows)
@@ -150,7 +157,8 @@ winget upgrade Mozilla.Firefox.ESR
 
 # Linux
 sudo apt update && sudo apt upgrade firefox  # Debian/Ubuntu
-sudo dnf update firefox                       # Fedora/RHEL</code></pre>
+sudo dnf update firefox                       # Fedora/RHEL
+```
 
     <h3>2. Short-Term Mitigation (if patching is delayed)</h3>
     <p>If immediate patching is not possible in a managed environment:</p>
@@ -189,7 +197,7 @@ sudo dnf update firefox                       # Fedora/RHEL</code></pre>
   <section class="timeline">
     <h2>Disclosure Timeline</h2>
     <ul>
-      <li><strong>~February 2026:</strong> Vulnerability discovered during Firefox source code review for CTF challenge preparation (TRX CTF 2026)</li>
+      <li><strong>\~February 2026:</strong> Vulnerability discovered during Firefox source code review for CTF challenge preparation (TRX CTF 2026)</li>
       <li><strong>February 2026:</strong> Reported to Mozilla Security team via responsible disclosure</li>
       <li><strong>February 21–22, 2026:</strong> Full technical writeup published at kqx.io following disclosure coordination with Mozilla</li>
       <li><strong>February 23, 2026:</strong> Story goes viral on r/netsec (130+ upvotes, 96% ratio); Mozilla patch expected imminently</li>
