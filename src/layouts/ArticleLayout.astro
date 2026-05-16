@@ -3,7 +3,7 @@
  * ArticleLayout.astro
  * Shared layout for all bughuntertools.com articles sourced from Content Collections.
  * Wraps BaseLayout with article-specific head metadata, OG tags, canonical URL,
- * breadcrumb, affiliate disclosure header, and a <slot /> for the article body.
+ * breadcrumb, and a <slot /> for the article body.
  *
  * Usage (from a [slug].astro page):
  *   import ArticleLayout from '../../layouts/ArticleLayout.astro';
@@ -95,14 +95,6 @@ const categoryLabel = categoryLabels[category] ?? category;
       )}
     </header>
 
-    <!-- Affiliate disclosure -->
-    <div class="affiliate-disclosure">
-      <p>
-        <strong>📢 Affiliate Disclosure:</strong> This site contains affiliate links to Amazon.
-        We earn a commission when you purchase through our links at no additional cost to you.
-      </p>
-    </div>
-
     <!-- Article body -->
     <div class="article-body">
       <slot />
@@ -169,20 +161,6 @@ const categoryLabel = categoryLabels[category] ?? category;
     padding: 0.2rem 0.6rem;
     border-radius: 4px;
     font-size: 0.8rem;
-  }
-
-  .affiliate-disclosure {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-  }
-
-  .affiliate-disclosure p {
-    margin: 0;
-    color: #856404;
   }
 
   .article-body {
