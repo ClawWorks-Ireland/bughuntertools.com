@@ -1,0 +1,196 @@
+---
+title: "Best tools for bug bounty hunters in 2026"
+description: "The tools security researchers actually use for recon, scanning, exploitation, and reporting. No filler — just what works on live programs in 2026."
+date: 2026-05-31
+category: bug-bounty
+tags: [tools, bug-bounty, burp-suite, recon, 2026]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+This list comes from SecurityClaw's active campaign data — not "tools someone mentioned on a Discord server three years ago." Every tool here has been used on live Intigriti or YesWeHack programs in 2026. A few have been used to find actual P1s.
+
+The categories below cover intercepting proxy, recon, scanning/fuzzing, exploitation, and learning platforms. Each section covers what the tool does, who it's for, and where it fits in an actual workflow.
+
+---
+
+## Intercepting proxy
+
+### Burp Suite Pro — the one you actually need
+
+There's no real debate here. Burp Suite Pro is the standard. The Community Edition gets you the basics (intercept, repeater, decoder), but for bug bounty you need Pro: active scanner, Collaborator for OOB detection, Intruder without throttling, and the full extension API.
+
+The scanner alone makes it worthwhile. Passive scan while you browse catches things that manual testing misses. Collaborator catches SSRF and blind injection that wouldn't otherwise surface. Extensions like Param Miner (hidden parameters), Turbo Intruder (high-speed fuzzing), and JS Miner (secrets in JavaScript) turn it into a serious recon tool, not just a proxy.
+
+At £449/year, it's the single highest-ROI purchase for anyone doing bug bounty seriously. The free tier exists, but you'll hit the throttling ceiling on Intruder within your first campaign.
+
+**[Get Burp Suite Pro →](https://portswigger.net/burp/pro)**
+
+---
+
+## Recon
+
+### Subfinder + httpx
+
+Subfinder handles passive subdomain enumeration (certificate transparency logs, DNS brute force, API sources). httpx probes what's alive, grabs status codes, headers, and response bodies in bulk.
+
+The combination is fast and free. A standard pre-campaign sweep:
+
+```bash
+subfinder -d target.com -silent | httpx -status-code -title -tech-detect -o recon-output.txt
+```
+
+That one command gives you: live subdomains, HTTP status, page title, and tech stack fingerprinting. It takes under a minute on most targets and tells you where to focus.
+
+Both are in the [ProjectDiscovery toolkit](https://github.com/projectdiscovery). Run them through the pdtm tool manager to keep everything updated.
+
+### Shodan
+
+Shodan indexes the entire internet's exposed services — web servers, databases, industrial systems, IoT devices. For bug bounty, the primary use is finding exposed services that shouldn't be: internal management APIs, unprotected admin panels, forgotten staging environments.
+
+For the June 2026 CVE opportunity analysis, Shodan fingerprinting was how we identified exposed GLPI and Logstash instances at targets with active BB programs. The search syntax is worth learning: `http.title:"GLPI" AND ssl.cert.subject.cn:*target.com` narrows it to a specific company's infrastructure.
+
+Free tier has rate limits. The paid API ($49/month or one-time membership) is useful if you're running systematic sweeps.
+
+**[Shodan →](https://www.shodan.io)**
+
+### amass + dnsx
+
+amass does DNS enumeration with active and passive modes. dnsx resolves the results and identifies wildcard DNS patterns (important for scoping — a wildcard `*.target.com` that points to a parking page is different from one pointing to live infrastructure).
+
+```bash
+amass enum -passive -d target.com | dnsx -silent -a -resp
+```
+
+Use amass when subfinder's passive results look thin or when a target has complex DNS infrastructure.
+
+---
+
+## Scanning and fuzzing
+
+### ffuf
+
+ffuf is the best directory and parameter fuzzer available. SecLists gives you the wordlists; ffuf does the work:
+
+```bash
+# Directory bruteforce
+ffuf -u https://target.com/FUZZ -w ~/wordlists/SecLists/Discovery/Web-Content/raft-large-directories.txt -fc 404
+
+# Subdomain bruteforce
+ffuf -u https://FUZZ.target.com -w ~/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -fs 0
+```
+
+The `-fc` and `-fs` flags filter by status code and response size — without these, output is unmanageable. Start conservative (filter 404, filter the baseline response size) and loosen as needed.
+
+### nuclei
+
+nuclei runs community-built detection templates against targets. The templates cover CVE detection, misconfiguration checks, exposed panels, and default credential checks. It's not a replacement for manual testing, but it catches low-hanging fruit quickly.
+
+```bash
+nuclei -u https://target.com -t cves/ -t misconfiguration/ -o nuclei-output.txt
+```
+
+The CVE templates are updated quickly after disclosure — running `nuclei -update-templates` before a campaign catches the latest additions. For the May 2026 CVE window, Flowise and OpenAM templates landed within days of disclosure.
+
+---
+
+## Exploitation
+
+### sqlmap
+
+sqlmap handles SQL injection detection and exploitation. It's not a substitute for manual injection testing — automated tools miss time-based blind injection on heavily rate-limited endpoints, and they can't reason about application context. But for confirming a suspected injection and extracting data for a PoC, it's faster than doing it by hand.
+
+```bash
+# Basic test with delay detection
+sqlmap -u "https://target.com/search?q=test" --level=3 --risk=2 --batch
+
+# Time-blind injection specifically
+sqlmap -u "https://target.com/search?q=test" --technique=T --batch --dbs
+```
+
+Always check the program's RoE before running sqlmap on a production target. Some programs explicitly disallow automated scanners on specific endpoints.
+
+### ysoserial + ysoserial.net
+
+Java and .NET deserialization exploitation. Both generate payload chains that trigger code execution through the gadget chains present in common libraries (Commons Collections, Spring, etc.).
+
+- **ysoserial** for Java targets (Logstash, Jenkins, OpenAM, WebSphere)
+- **ysoserial.net** for .NET targets (Telerik, ASP.NET ViewState deserialization)
+
+For the Telerik CVE-2026-6023 in the June analysis, ysoserial.net is the standard tool for generating the deserialization payload.
+
+Use these in combination with [Burp Collaborator](https://portswigger.net/burp/documentation/collaborator) for out-of-band confirmation — send the payload, watch Collaborator for DNS/HTTP callbacks.
+
+---
+
+## Learning platforms
+
+Bug bounty is a skill you build. The learning platforms that are worth your time:
+
+### Hack The Box
+
+HTB is the best lab environment for realistic exploitation practice. The machines cover the same vulnerability classes that appear in real bug bounty programs: misconfigured web applications, SQL injection, deserialization, SSRF, command injection. The Active Directory labs are good if you're working toward enterprise-scope programs.
+
+The free tier gives you access to retired machines (walkthrough spoilers exist, but working through them first is better practice). The VIP tier ($14/month) unlocks active machines and the Pro Labs.
+
+**[Hack The Box →](https://www.hackthebox.com)**
+
+### TryHackMe
+
+TryHackMe takes a more structured approach than HTB — guided learning paths for specific skills rather than standalone machines. Good for filling gaps: the OWASP Top 10 path, the Web Fundamentals path, and the Advanced Exploitation rooms.
+
+The free tier has a reasonable amount of content. The Premium tier ($14/month) removes the machine time limits and unlocks the full catalogue.
+
+**[TryHackMe →](https://tryhackme.com)**
+
+### PortSwigger Web Security Academy
+
+Free. Genuinely high quality. The best resource on web application vulnerability classes available anywhere, written by the same team that built Burp Suite. The labs are realistic and the explanations are technically precise.
+
+If you're starting out or filling in gaps on a specific vulnerability class (SSRF, SSTI, prototype pollution, deserialization), work through the relevant Academy modules before the relevant Burp Labs. It's the most efficient path from "I know this exists" to "I can find this in the wild."
+
+**[PortSwigger Web Security Academy →](https://portswigger.net/web-security)** (free)
+
+---
+
+## Infrastructure
+
+### VPS for callbacks (DigitalOcean)
+
+You need a publicly accessible server for out-of-band (OOB) detection — SSRF callbacks, blind XSS callbacks, blind injection timing checks. Run a simple HTTP listener, Burp Collaborator alternative, or interactsh.
+
+DigitalOcean's basic Droplet ($6/month) is enough. Spin it up per campaign, use it for OOB callbacks, destroy it when you're done.
+
+**[DigitalOcean →](https://www.digitalocean.com/)** — new accounts get $200 in credit for 60 days.
+
+---
+
+## What to skip
+
+A few things that show up on "bug bounty tools" lists that aren't worth your time:
+
+**Metasploit for web bug bounty** — overkill and most programs prohibit it. sqlmap and manual Burp exploitation cover what you need.
+
+**Commercial DAST scanners** — expensive, false-positive heavy, and most programs expect you to do manual work. If the scanner could find it, someone else has already submitted it.
+
+**Shodan alternatives** — Censys and FOFA exist. Shodan covers most use cases at a lower price point unless you have specific needs from the alternatives.
+
+---
+
+## Summary
+
+| Category | Tool | Free? | Notes |
+|----------|------|-------|-------|
+| Proxy | Burp Suite Pro | No (£449/yr) | Non-negotiable for serious work |
+| Recon | subfinder + httpx | Yes | ProjectDiscovery stack |
+| Recon | Shodan | Freemium | Worth the paid tier for systematic work |
+| Fuzzing | ffuf | Yes | Best in class |
+| Scanning | nuclei | Yes | Keep templates updated |
+| SQL injection | sqlmap | Yes | For confirmation + PoC, not discovery |
+| Deserialization | ysoserial / ysoserial.net | Yes | Java / .NET specific |
+| Labs | Hack The Box | Freemium | Best realistic practice |
+| Labs | TryHackMe | Freemium | Good structured learning paths |
+| Labs | Web Security Academy | Free | Best web vuln reference anywhere |
+| VPS | DigitalOcean | No ($6/mo) | OOB callbacks |
+
+The single best investment if you're just starting: Burp Suite Pro + a TryHackMe Premium month to get up to speed on the Web Fundamentals path. Everything else builds on top of that.
