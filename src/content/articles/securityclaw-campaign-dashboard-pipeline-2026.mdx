@@ -1,0 +1,140 @@
+---
+title: "320 findings, 4 submittable: inside a bug bounty campaign dashboard"
+description: "Most coverage is about the clever finding. Nobody covers the unglamorous infrastructure behind running campaigns at scale. Here's how SecurityClaw tracks everything — and what the numbers actually look like."
+date: 2026-06-01
+category: research
+tags: [bug-bounty, automation, securityclaw, intigriti, yeswehack, tools, "2026"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Most bug bounty coverage is about the clever finding. The CORS chain, the subdomain takeover, the exposed API key. What rarely gets covered is the unglamorous infrastructure behind running campaigns at scale: how do you track what you've tested, what you found, what's still submittable, and what's blocked?
+
+After 21 campaigns across Intigriti, YesWeHack, and direct programs, the SecurityClaw team found themselves drowning in campaign directories. Findings scattered across JSON files and markdown reports, no quick way to answer basic questions.
+
+So they built a dashboard.
+
+---
+
+## The pipeline problem
+
+Every SecurityClaw campaign produces a structured output directory:
+
+```
+campaign-results/
+  visma-20260507/
+    campaign_meta.json    # target, timestamp, skill count
+    findings.json         # structured findings with severities
+    TRIAGE_REPORT.md      # human-readable analysis + submission decisions
+    skill_results.json    # per-skill execution results
+```
+
+The pipeline runs through four stages: **Found** (raw automated output), **Triaged** (false positives filtered, submittable findings identified), **Submitted** (report sent to the platform), **Resolved** (triaged by the program, bounty paid or declined).
+
+Different campaigns are at different stages simultaneously. Keeping track of which ones still have submittable findings sitting untouched was the first thing that slipped.
+
+---
+
+## What the dashboard shows
+
+Running `python dashboard/report.py` against the campaign results directory:
+
+```
+🔐 SecurityClaw Campaign Dashboard  2026-05-12 15:26 UTC
+
+  Campaigns:     21  (bug bounty: 15)
+  Raw findings:  320  by severity → H:101 M:121 L:54 I:75
+  Submittable:   4
+  Submitted:     1
+  Blocked:       3
+
+  Campaign                    Target                Platform    Date       Type        Skl  Fnd  Severity      Sub
+  ──────────────────────────  ────────────────────  ──────────  ─────────  ──────────  ───  ───  ────────────  ───
+  wolt-20260510               wolt.com              (manual)    2026-05-10  submission   0    0   H:6 M:4 L:3  📋1
+  visma-20260507              aiassistant.visma…    Intigriti   2026-05-07  bug_bounty  13   21  H:7 M:10 L:2  ⏳2
+  tomorrowland-20260507       cas.tomorrowland.com  Intigriti   2026-05-07  bug_bounty  17   28  H:2 M:15 L:2  ⏳1
+  ...
+
+  Pending submissions:
+    📋  wolt-20260510 — 1 submittable → Intigriti
+    📋  tomorrowland-20260507 — 1 submittable → Intigriti
+    📋  visma-20260507 — 2 submittable → Intigriti
+```
+
+320 raw findings across 21 campaigns. Only 4 submittable. That 1.25% rate is about what you'd expect from automated scanning once triage has run, but seeing the number in a terminal readout makes it more concrete than reading about false positive rates in documentation.
+
+---
+
+## Architecture: zero external dependencies
+
+The dashboard reads directly from the campaign-results directory structure. No database, no web server, no config file required.
+
+```python
+from dashboard.parser import load_all_campaigns
+from pathlib import Path
+
+records = load_all_campaigns(Path("campaign-results"))
+for r in records:
+    print(f"{r.name}: {r.raw_finding_count} findings, {r.submittable_count} submittable")
+```
+
+It pulls from two data sources per campaign:
+
+- `findings.json` — structured findings with severity labels
+- `TRIAGE_REPORT.md` — markdown triage with platform, submittable count, block reasons
+
+The markdown path matters more than it sounds. Not all campaigns produce machine-readable output — research campaigns and manual submissions use markdown only. A dashboard that skips those gives you a misleading picture of where you actually stand.
+
+---
+
+## What "blocked" means in practice
+
+Three of the 21 campaigns are flagged blocked:
+
+| Campaign | Target | Platform | Block reason |
+|----------|--------|----------|-------------|
+| contentsquare | contentsquare.com | YesWeHack | DataDome — 403 with `x-datadome: protected` |
+| outscale | outscale.com | YesWeHack | Akamai IP-level block, no UA bypass possible |
+| telenor-se | telenor.se | YesWeHack | CDN-level block |
+
+Blocked campaigns are useful data, not dead weight. Knowing that DataDome and Akamai block automated scanning from datacenter IPs means the next time you see those services in scope, you plan around them from the start — residential proxies, browser-based tooling, or manual testing. Without the dashboard surfacing them, they'd just sit in a directory and get re-attempted.
+
+---
+
+## The submission rate question
+
+320 raw findings, 4 submittable, 1 submitted. End-to-end that's 0.3%.
+
+The campaigns use automated skills to surface candidates, not to guarantee valid bug reports. Triage filters false positives before human effort or submission fees get spent. The 99.7% that don't make it through are mostly missing security headers (real findings, usually below submission threshold), false positives from redirects and CDN-mangled responses, and informational recon observations — certificate transparency data, tech stack exposure, path enumeration.
+
+The findings that do survive triage tend to be CORS misconfigurations, subdomain takeovers, and hardcoded secrets. These are deterministic: the misconfiguration is either present or it isn't.
+
+The CVSS distribution in the raw findings is H:101, M:121, L:54, I:75. A lot of those High labels are SecurityClaw's own severity assignments from the skill output. Human triage still needs to confirm exploitability in context — a CORS finding drops from High to Informational if the target's program explicitly excludes unauthenticated CORS.
+
+---
+
+## HTML export
+
+For team review or program retrospectives:
+
+```bash
+python dashboard/report.py --html campaign-dashboard.html
+```
+
+The output is a self-contained HTML file — dark-themed, colour-coded by severity, no external dependencies. Useful for sharing context with program managers or writing up a retrospective without needing a live server.
+
+---
+
+## Where this goes next
+
+Current planned additions:
+
+- **Payout tracking** — link submitted findings to bounty amounts once resolved
+- **CVE correlation** — surface campaigns with findings linked to known CVEs (connects to the [June 2026 CVE opportunity analysis](/articles/cve-opportunity-analysis-june-2026))
+- **Platform comparison** — Intigriti vs YesWeHack: where does SecurityClaw find higher-quality submittable findings?
+
+The source is in `SecurityClaw/dashboard/`. If you're building something similar, the structured campaign output format is the part worth copying — the dashboard is just a query layer over consistently organised files.
+
+---
+
+*Peng is Senior Security Engineer at ClawWorks, the team behind SecurityClaw and bughuntertools.com.*
