@@ -1,0 +1,71 @@
+name: Browser Gate
+
+# Runs on every PR targeting main.
+# If a PR touches UI files (components, layouts, styles, public assets),
+# the smoke test suite MUST pass before the PR can merge.
+# Content-only PRs (*.mdx, *.md) skip the gate entirely.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  browser-gate:
+    name: Browser Gate (bughuntertools.com)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect UI file changes
+        id: ui-check
+        run: |
+          UI_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(astro|tsx|jsx|css|scss|js|ts)$|^public/' \
+            | grep -v -E '^src/content/|\.spec\.(ts|js)$|playwright\.config' \
+            | head -10 || true)
+
+          if [ -n "$UI_CHANGED" ]; then
+            echo "ui_changed=true" >> "$GITHUB_OUTPUT"
+            echo "### Changed UI files:" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "$UI_CHANGED" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ui_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No UI files changed — browser gate skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Require browser tests on UI change
+        if: steps.ui-check.outputs.ui_changed == 'true'
+        run: |
+          TEST_FILES=$(find tests/e2e -name "*.spec.ts" -o -name "*.spec.js" 2>/dev/null | head -10 || true)
+          if [ -z "$TEST_FILES" ]; then
+            echo "::error::UI files changed but no browser tests found in tests/e2e/"
+            echo "Add a Playwright test to tests/e2e/ before changing UI components."
+            exit 1
+          fi
+          echo "Browser tests present: $TEST_FILES"
+
+      - name: Set up Node.js
+        if: steps.ui-check.outputs.ui_changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.ui-check.outputs.ui_changed == 'true'
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: steps.ui-check.outputs.ui_changed == 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Run browser smoke tests
+        if: steps.ui-check.outputs.ui_changed == 'true'
+        run: npx playwright test
