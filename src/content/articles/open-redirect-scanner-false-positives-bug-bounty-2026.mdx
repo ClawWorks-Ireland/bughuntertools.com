@@ -1,0 +1,149 @@
+---
+title: "Why your open redirect scanner is lying to you"
+description: "Three false positive patterns that trip automated scanners on EU bug bounty targets, and how to tell a real open redirect from noise."
+date: 2026-06-02
+category: research
+tags: [bug-bounty, open-redirect, false-positives, recon, methodology]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+You run your scanner. It lights up with five open redirect findings. You spend an hour writing a clean report. You submit. The triager marks every single one invalid in under two minutes.
+
+This is one of the most common ways new bug hunters lose credibility on bounty platforms, and it almost always comes down to the same three false positive patterns. Peng's SecurityClaw recon campaigns across EU Intigriti targets turned up all three, which is a good excuse to walk through them in detail.
+
+---
+
+## The core mistake: what "open redirect" actually means
+
+An open redirect is when a web server sends you to a domain it does not control. An attacker tricks a victim into visiting a legitimate-looking URL on the target site, which then bounces them to a phishing page.
+
+For a finding to be valid, the *Location* header must point to an external domain. Not contain an external domain as a query parameter. Not reference it in a fragment. Actually redirect there.
+
+The scanners get this wrong regularly. Here is how.
+
+---
+
+## Pattern 1: the redirect-in-parameter false positive
+
+This is the most common one.
+
+```
+GET /login?next=https://evil.com
+→ 301 Location: /en/login?next=https://evil.com
+```
+
+The string `evil.com` appears in the Location header. The scanner flags it. But the *destination* is `/en/login` on the same domain. The user is redirected to the target's own login page, with the `?next=` parameter preserved for whatever the SPA does after authentication.
+
+That is not an open redirect. Whether the SPA *then* honors that `?next=` parameter after login is a separate question, but you cannot answer it with automated HTTP probing. Static scanners fire on the wrong thing.
+
+The correct check is whether the *hostname* in Location is external:
+
+```python
+from urllib.parse import urlparse
+
+def is_open_redirect(response, target_host):
+    loc = response.headers.get("Location", "")
+    parsed = urlparse(loc)
+    if parsed.hostname and target_host not in parsed.hostname:
+        return True
+    return False
+```
+
+If your scanner is checking `if payload in location_header` without parsing the hostname, it will produce false positives on virtually every SPA login flow.
+
+---
+
+## Pattern 2: the Django APPEND_SLASH redirect
+
+Django has a setting called `APPEND_SLASH = True` enabled by default. When a URL pattern exists for `/login/` but a request comes in for `/login`, Django issues a 301 to add the trailing slash.
+
+```
+GET /login?next=https://evil.com
+→ 301 Location: /login/?next=https://evil.com
+```
+
+The Location header contains `evil.com`. The scanner flags it. The redirect goes to the same domain, same path, one trailing slash added. Not exploitable.
+
+You can recognize this pattern by the fact that the only change between the request path and the Location is a trailing `/`. Same host, same path, parameters preserved. Django does this reflexively before the view function even runs. There is no code to exploit here.
+
+RIPE NCC's Django site did this on every auth path tested. The finding count from naive scanning was impressive. The valid finding count was zero.
+
+---
+
+## Pattern 3: the SPA fragment redirect
+
+React and Next.js applications handle unknown routes client-side. On Wolt, this showed up as:
+
+```
+GET /logout?next=https://evil.com
+→ 301 Location: /en/404#url=%2Flogout%3Fnext%3Dhttps%253A%252F%252Fevil.com
+```
+
+The user ends up on Wolt's own 404 page. The original URL, including the `?next=evil.com` parameter, is encoded into the fragment (`#url=...`) for client-side deep-link handling. The user never leaves wolt.com.
+
+The fragment never goes to the server. The `evil.com` string is buried in a double-encoded hash that the browser reads, not a destination the server sends you to.
+
+Scanners that decode the fragment and search for the payload inside it will flag this as a redirect. It is not.
+
+---
+
+## What a real open redirect looks like
+
+A real open redirect looks like this:
+
+```
+GET /logout?next=https://evil.com
+→ 302 Location: https://evil.com
+```
+
+The hostname in Location is external. No encoding required to see it. The browser follows the redirect and lands somewhere the target does not control.
+
+Or, more subtly, via an open redirect chain:
+
+```
+GET /redirect?url=https://evil.com
+→ 302 Location: https://evil.com
+```
+
+Or a `meta refresh` with an external URL. Or a JavaScript `window.location` assignment in a response body where the path is attacker-controlled.
+
+In each case, the user leaves the target domain as a direct result of the server's response.
+
+---
+
+## Why post-auth redirects require manual testing
+
+The Wolt pattern is worth dwelling on, because it is not a simple false positive.
+
+Wolt's login page accepts a `?next=` parameter. That parameter survives the path-normalization redirect and arrives at the login page's SPA. Whether the SPA reads it and redirects after a successful login cannot be determined by a static HTTP probe. You have to log in and watch what happens.
+
+If the SPA does redirect post-auth, the finding is valid and the severity depends on what is accessible cross-origin. Wolt has a wildcard subdomain CORS misconfiguration with `Access-Control-Allow-Credentials: true` (a separate finding), which would make a confirmed post-auth redirect considerably more serious: it opens a path to session data exfiltration from an attacker-controlled subdomain.
+
+But you need to confirm the post-auth behavior manually before filing anything. A scanner cannot do that for you.
+
+---
+
+## Fast filter for common false positives
+
+When reviewing scanner output, run through this before writing up any redirect finding:
+
+1. Parse the Location header hostname. Is it external? If no, stop.
+2. Is the change just a trailing slash? Django APPEND_SLASH, skip.
+3. Is the external string in the fragment only? SPA routing artifact, skip.
+4. Does the Location contain the payload as a *query parameter value* rather than the *destination*? Redirect-in-parameter FP, skip.
+5. What is the response code? 301/302 with an external hostname, or a JS/meta refresh to an external URL. Anything else, investigate manually.
+
+If the finding survives all five, it is worth the time to write a report.
+
+---
+
+## Getting this right is worth the effort
+
+Invalid submissions damage your reputation on platforms like Intigriti and HackerOne faster than most hunters realize. Triagers see these exact patterns in bulk, and programs can set response rates for hunters that affect whether you get invited to private programs.
+
+The real open redirects that do exist — post-auth redirects confirmed manually, redirect chains involving OAuth state, redirect_uri bypass patterns — are harder to find but worth significantly more. Getting the automated work right means you can spend time on the cases that pay.
+
+---
+
+*Research by Peng, Senior Security Engineer at ClawWorks. Part of the EU bug bounty methodology series.*
