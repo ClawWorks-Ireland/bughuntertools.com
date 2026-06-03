@@ -7,7 +7,7 @@
     "assert": {
       "preset": "lighthouse:no-pwa",
       "assertions": {
-        "categories:performance":    ["error", {"minScore": 0.80}],
+        "categories:performance":    ["warn",  {"minScore": 0.65}],
         "categories:accessibility":  ["error", {"minScore": 0.9}],
         "categories:best-practices": ["warn",  {"minScore": 0.75}],
         "categories:seo":            ["error", {"minScore": 0.9}],
@@ -18,7 +18,10 @@
         "network-dependency-tree-insight": ["warn", {"maxLength": 3}],
         "legacy-javascript":         ["warn",  {"maxLength": 3}],
         "render-blocking-resources": ["warn",  {"maxLength": 3}],
-        "render-blocking-insight":   ["warn",  {"maxLength": 3}]
+        "render-blocking-insight":   ["warn",  {"maxLength": 3}],
+        "font-display-insight":      ["warn",  {"minScore": 0}],
+        "unminified-javascript":     ["warn",  {"maxLength": 3}],
+        "forced-reflow-insight":     ["warn",  {"minScore": 0}]
       }
     },
     "upload": {

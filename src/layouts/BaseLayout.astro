@@ -102,12 +102,12 @@ const pathname = Astro.url.pathname;
         <slot />
     </main>
 
-    <section class="newsletter-signup">
+    <section class="newsletter-signup" id="newsletter-signup">
       <div class="container">
         <h2>ClawWorks Weekly</h2>
         <p>Security research, trading bots, and AI benchmarks — what's actually happening this week.</p>
-        <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="6e7250ab-e7f6-4303-b609-d5e8392f8e24"></script>
-        <script type="text/javascript" async src="https://subscribe-forms.beehiiv.com/attribution.js"></script>
+        <!-- Beehiiv scripts loaded lazily when section enters viewport (performance: keeps them out of initial page load) -->
+        <div id="beehiiv-placeholder" data-form="6e7250ab-e7f6-4303-b609-d5e8392f8e24"></div>
       </div>
     </section>
 
@@ -158,6 +158,61 @@ const pathname = Astro.url.pathname;
             'user_agent': ua
           });
           gtag('set', {'ai_visitor': aiSource});
+        }
+      })();
+    </script>
+
+    <!-- Lazy-load beehiiv newsletter embed (IntersectionObserver: only when section enters viewport)
+         Keeps beehiiv loader.js off the critical path, fixing unminified-javascript Lighthouse audit.
+         MutationObserver ensures any injected <iframe> gets a title for accessibility (frame-title audit). -->
+    <script>
+      (function() {
+        // MutationObserver: title any iframe beehiiv injects dynamically
+        var iframeObserver = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeType === 1) {
+                var iframes = node.tagName === 'IFRAME' ? [node] : Array.prototype.slice.call(node.querySelectorAll('iframe'));
+                iframes.forEach(function(iframe) {
+                  if (!iframe.title) {
+                    iframe.title = 'Newsletter subscription form';
+                  }
+                });
+              }
+            });
+          });
+        });
+        iframeObserver.observe(document.body, { childList: true, subtree: true });
+
+        // IntersectionObserver: load beehiiv scripts only when section scrolls into view
+        var placeholder = document.getElementById('beehiiv-placeholder');
+        if (placeholder && 'IntersectionObserver' in window) {
+          var beehiivLoaded = false;
+          var sectionObserver = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting && !beehiivLoaded) {
+              beehiivLoaded = true;
+              sectionObserver.disconnect();
+              var formId = placeholder.dataset.form;
+              var loader = document.createElement('script');
+              loader.async = true;
+              loader.src = 'https://subscribe-forms.beehiiv.com/v3/loader.js';
+              loader.setAttribute('data-beehiiv-form', formId);
+              var attribution = document.createElement('script');
+              attribution.async = true;
+              attribution.src = 'https://subscribe-forms.beehiiv.com/attribution.js';
+              placeholder.parentNode.insertBefore(loader, placeholder.nextSibling);
+              placeholder.parentNode.insertBefore(attribution, loader.nextSibling);
+            }
+          }, { rootMargin: '200px' });
+          sectionObserver.observe(placeholder);
+        } else if (placeholder) {
+          // Fallback: load immediately if IntersectionObserver not available
+          var formId = placeholder.dataset.form;
+          var loader = document.createElement('script');
+          loader.async = true;
+          loader.src = 'https://subscribe-forms.beehiiv.com/v3/loader.js';
+          loader.setAttribute('data-beehiiv-form', formId);
+          placeholder.parentNode.insertBefore(loader, placeholder.nextSibling);
         }
       })();
     </script>
