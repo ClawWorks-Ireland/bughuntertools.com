@@ -46,17 +46,9 @@ const pathname = Astro.url.pathname;
 
     <link rel="stylesheet" href="/css/style.css">
 
-    <!-- Google AdSense auto-ads: lazy-loaded after DOMContentLoaded to avoid blocking main thread.
-         AdSense auto-ads scans the DOM for placements; deferring it keeps TBT low for Lighthouse. -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var adScript = document.createElement('script');
-        adScript.async = true;
-        adScript.crossOrigin = 'anonymous';
-        adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401';
-        document.head.appendChild(adScript);
-      });
-    </script>
+    <!-- Google AdSense auto-ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9373816755142401"
+     crossorigin="anonymous"></script>
 
     <!-- Preconnect to GA domains for faster loading -->
     <link rel="preconnect" href="https://www.googletagmanager.com">
