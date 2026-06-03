@@ -20,7 +20,8 @@
         "render-blocking-resources": ["warn",  {"maxLength": 3}],
         "render-blocking-insight":   ["warn",  {"maxLength": 3}],
         "font-display-insight":      ["warn",  {"minScore": 0}],
-        "unminified-javascript":     ["warn",  {"maxLength": 3}]
+        "unminified-javascript":     ["warn",  {"maxLength": 3}],
+        "forced-reflow-insight":     ["warn",  {"minScore": 0}]
       }
     },
     "upload": {
