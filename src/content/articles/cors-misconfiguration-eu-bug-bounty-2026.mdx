@@ -35,7 +35,7 @@ Severity classification is:
 | `null` origin accepted | MEDIUM — sandboxed iframe bypass |
 | No CORS issues | LOW — no finding |
 
-The CRITICAL scenario (`ACAO: *` combined with `Access-Control-Allow-Credentials: true`) is worth understanding even if it is rare. RFC 7034 means browsers will not include cookies when `ACAO: *` is set — the spec does not allow credentialed wildcard requests — but some older CDN configs and custom middleware can accidentally set both headers together. Check for it even when it seems impossible.
+The CRITICAL scenario (`ACAO: *` combined with `Access-Control-Allow-Credentials: true`) is worth understanding even if it is rare. The Fetch Standard means browsers will not include cookies when `ACAO: *` is set — credentialed cross-origin requests require an explicit origin in `ACAO`, not a wildcard — but some older CDN configs and custom middleware can accidentally set both headers together. Check for it even when it seems impossible.
 
 ---
 
