@@ -1,0 +1,186 @@
+---
+title: "CORS misconfiguration hunting on EU bug bounty targets: one real finding out of five"
+description: "SecurityClaw scanned five EU Intigriti targets for CORS misconfigurations. Four were clean. One — RIPE NCC — had a genuine HIGH: wildcard ACAO with full write methods. Here is what that looks like, how the scanner found it, and how to tell it from a false positive."
+date: 2026-06-12
+category: research
+tags: [bug-bounty, cors, misconfiguration, recon, eu-targets, intigriti]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Run a CORS scanner against five EU bug bounty targets today and you will probably find noise plus one real thing — if you are lucky. That is roughly what happened when Peng ran SecurityClaw's `apigw-cors-tester` against vinted.com, wolt.com, odoo.com, ripe.net, and visma.com.
+
+Four were clean. One had a genuine HIGH-severity CORS wildcard on the main domain with full method exposure. Here is what the scanner found, what the actual evidence looked like, and the false positive patterns that eat most of people's time in this class of bug.
+
+---
+
+## What the scanner does
+
+`apigw-cors-tester` sends six distinct probes to each target:
+
+1. **OPTIONS preflight with attacker origin** — checks if the server reflects a foreign origin in `Access-Control-Allow-Origin`
+2. **GET with attacker origin** — the real test; if ACAO is wildcard or reflects the origin, cross-origin reads are possible
+3. **GET with `Origin: null`** — sandboxed iframe bypass (browsers send null from `data:` URIs and sandboxed iframes)
+4. **Suffix confusion** — tests `Origin: https://attacker-target.com` to catch naive `endsWith()` validators
+5. **Gateway fingerprinting** — identifies CDN/gateway from response headers (CloudFront, Cloudflare, nginx, etc.)
+6. **PoC snippet generation** — writes a minimal JavaScript proof-of-concept if a wildcard or reflection is found
+
+Severity classification is:
+
+| Condition | Severity |
+|---|---|
+| `ACAO: *` + `ACAC: true` | CRITICAL — potential credential theft |
+| `ACAO: *` alone | HIGH — unauthenticated cross-origin read |
+| Arbitrary origin reflected | HIGH — targeted cross-origin read |
+| `null` origin accepted | MEDIUM — sandboxed iframe bypass |
+| No CORS issues | LOW — no finding |
+
+The CRITICAL scenario (`ACAO: *` combined with `Access-Control-Allow-Credentials: true`) is worth understanding even if it is rare. RFC 7034 means browsers will not include cookies when `ACAO: *` is set — the spec does not allow credentialed wildcard requests — but some older CDN configs and custom middleware can accidentally set both headers together. Check for it even when it seems impossible.
+
+---
+
+## The results
+
+| Target | CORS | Result |
+|---|---|---|
+| vinted.com | Clean | LOW |
+| wolt.com | Clean | LOW |
+| odoo.com | Clean | LOW |
+| ripe.net | `ACAO: *` | **HIGH** |
+| visma.com | Clean | LOW |
+
+### Four that came up clean
+
+**vinted.com** returns no `Access-Control-Allow-Origin` header at all on non-CORS requests. OPTIONS returns 405 — there are no CORS headers. Correctly locked down.
+
+**wolt.com** is the standout in this cohort on header hygiene. No CORS issues, and a CSP with 46 SHA-256 script hashes, a `frame-ancestors 'self'` directive, and a Datadog EU CSP reporting endpoint (`browser-intake-datadoghq.eu`). That reporting endpoint means their AppSec team sees violations in real time. If you want an example of a consumer app that has actually invested in headers, Wolt is it.
+
+**odoo.com** returns no CORS headers on the main domain. OPTIONS returns 200 with nothing — nginx handles the preflight at the server level but does not reflect origins. No finding.
+
+**visma.com** has no CORS issues but the worst overall header posture in the cohort. No CSP, no X-Frame-Options, no COOP, no CORP, no Referrer-Policy. Everything absent. No CORS finding, but informational if you are building a report on the full attack surface.
+
+### The one that mattered: ripe.net
+
+The scanner returned a genuine HIGH on the main domain.
+
+```
+CORS wildcard:         YES — Access-Control-Allow-Origin: *
+Origin reflected:      No
+Credentialed wildcard: No (ACAC absent)
+Gateway:               nginx
+Allowed methods:       DELETE, GET, OPTIONS, PATCH, POST, PUT
+```
+
+Raw evidence — OPTIONS preflight to `www.ripe.net` after redirect:
+
+```http
+HTTP/2 200
+server: nginx
+access-control-allow-origin: *
+access-control-allow-headers: accept, authorization, content-type, user-agent, x-csrftoken, x-requested-with
+access-control-allow-methods: DELETE, GET, OPTIONS, PATCH, POST, PUT
+access-control-max-age: 86400
+x-frame-options: DENY
+```
+
+Raw evidence — GET with Origin header:
+
+```http
+HTTP/2 200
+access-control-allow-origin: *
+x-frame-options: DENY
+```
+
+This was not OPTIONS-only. Both the preflight and the actual GET returned the wildcard. That distinction matters — see the false positive section below.
+
+The `Authorization` header is explicitly included in `Access-Control-Allow-Headers`. If any endpoint on `www.ripe.net` uses token-based authentication rather than cookies, those endpoints are attackable cross-origin — any JavaScript payload on any third-party page can read the response.
+
+The method exposure is also relevant. RIPE's wildcard response includes `DELETE, GET, OPTIONS, PATCH, POST, PUT`, which signals that the domain is intended to accept cross-origin write operations. For public-facing endpoints, that is probably fine — and RIPE's actual REST database API at `rest.db.ripe.net` has no wildcard, which suggests they understand the distinction. But the main domain carrying wildcard CORS on top of write methods is worth documenting.
+
+RIPE NCC's WHOIS data is publicly available, so cross-origin reads on public responses are lower impact than they would be for, say, a banking portal. The submission severity is HIGH, possibly borderline MEDIUM depending on whether any authenticated portal endpoints exist at `www.ripe.net`. Manual follow-up to enumerate authenticated surfaces would strengthen the report.
+
+The scan was run 2026-05-10T00:09Z from a clean IP against all five targets. All five programs permit automated tooling explicitly in their Intigriti program policies.
+
+---
+
+## How to spot false positives
+
+CORS scanners are noisy. Three patterns come up constantly:
+
+### 1. Intentional public data APIs
+
+`ACAO: *` is correct for genuinely public data endpoints that intentionally allow cross-origin reads. A weather API that returns public data with a wildcard is not a finding. The distinction is whether the endpoint has authenticated or user-specific data. Public read-only APIs with `ACAO: *` are usually architecture, not misconfiguration.
+
+Check the endpoint type before reporting. If it returns the same data for every user and there is no authentication surface, it is probably intentional.
+
+### 2. Static asset CDNs
+
+Font CDNs, image CDNs, and JS CDN endpoints return `ACAO: *` by design — they need to be loadable from any domain. The scanner does not distinguish CDN asset URLs from application endpoints.
+
+Content-Type is your quick filter. `Content-Type: font/woff2` or `image/png` with `ACAO: *` is a CDN. `Content-Type: application/json` with `ACAO: *` on an endpoint that handles auth is a finding.
+
+### 3. OPTIONS wildcard with no ACAO on GET
+
+Some servers return `ACAO: *` on OPTIONS preflights but omit the header on actual GET responses. Browsers check `ACAO` on the actual response, not just the preflight — if the GET response has no ACAO, the browser blocks the cross-origin read even though the preflight succeeded.
+
+The scanner may flag this as HIGH because the preflight returned a wildcard. It is not exploitable. Always verify manually by sending a GET with an Origin header and checking whether the response includes `ACAO: *`. The RIPE NCC finding above cleared this check — both the preflight and the GET returned the wildcard.
+
+---
+
+## Header comparison across the five targets
+
+| Target | CORS | CSP | X-Frame-Options | COOP | Referrer-Policy |
+|---|---|---|---|---|---|
+| vinted.com | ✅ | ❌ | ❌ | ❌ | ❌ |
+| wolt.com | ✅ | ✅ Strong | ✅ SAMEORIGIN | ❌ | ✅ |
+| odoo.com | ✅ | ❌ | ❌ | ❌ | ✅ |
+| ripe.net | ⚠️ HIGH | ❌ | ✅ DENY | ✅ same-origin | ✅ |
+| visma.com | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+RIPE has the right instincts on traditional isolation headers (X-Frame-Options, COOP, Referrer-Policy), but the CORS wildcard cuts against the isolation those headers are meant to provide. The CDN vendor also correlates loosely with security posture: the CloudFront-hosted target (Wolt) had better header hygiene than the Cloudflare-hosted ones. Cloudflare's default config is less opinionated about security headers — Cloudflare customers add them manually, and many do not.
+
+---
+
+## Remediation
+
+For application endpoints that need cross-origin access, replace the wildcard with an explicit allowlist:
+
+```nginx
+# nginx — explicit origin allowlist
+set $cors_origin "";
+if ($http_origin ~* "^https://(app\.yoursite\.com|api\.yoursite\.com)$") {
+    set $cors_origin $http_origin;
+}
+add_header Access-Control-Allow-Origin $cors_origin always;
+add_header Vary Origin always;
+```
+
+The `Vary: Origin` header is important — without it, CDN edge caches may serve a CORS response cached for one origin to a different origin.
+
+For public APIs where cross-origin reads are intentional, `ACAO: *` is correct. Make sure no authenticated or write endpoints share the same domain.
+
+A full isolation header baseline for EU targets:
+
+```nginx
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Cross-Origin-Opener-Policy "same-origin" always;
+add_header Cross-Origin-Resource-Policy "same-origin" always;
+```
+
+Replace `"DENY"` with `"SAMEORIGIN"` or a CSP `frame-ancestors` directive if your application embeds iframes.
+
+---
+
+## What the scanner does not cover
+
+The scan above hit the main domains only. Three gaps worth knowing about:
+
+**No authenticated endpoint probing.** The scanner tests unauthenticated OPTIONS/GET. CORS misconfigs on authenticated endpoints (higher impact by definition) require an active session token. SecurityClaw's authenticated campaign tooling handles this separately.
+
+**No subdomain enumeration.** CORS misconfigs often live on obscure subdomains (`api2.`, `legacy.`, `internal-api.`). The scanner only tests the URL you give it. Pairing it with CT-log enumeration would increase coverage significantly.
+
+**No origin reflection variants.** The scanner sends one attacker origin. Production testing should also try suffix injection (`Origin: https://yoursite.com.attacker.com`), backslash bypass on broken parsers, capitalisation variants, and `null` origin.
+
+Those are the places to look if the main domain came up clean.
