@@ -10,7 +10,7 @@ tags: [bug-bounty, cors, misconfiguration, recon, eu-targets, intigriti]
 
 Run a CORS scanner against five EU bug bounty targets today and you will probably find noise plus one real thing — if you are lucky. That is roughly what happened when Peng ran SecurityClaw's `apigw-cors-tester` against vinted.com, wolt.com, odoo.com, ripe.net, and visma.com.
 
-Four were clean. One had a genuine HIGH-severity CORS wildcard on the main domain with full method exposure. Here is what the scanner found, what the actual evidence looked like, and the false positive patterns that eat most of people's time in this class of bug.
+Four were clean. One had a genuine HIGH-severity CORS wildcard on the main domain with full method exposure. What follows is what the scanner found, what the actual evidence looked like, and the false positive patterns that will eat most of your time in this class of bug.
 
 ---
 
@@ -91,11 +91,11 @@ access-control-allow-origin: *
 x-frame-options: DENY
 ```
 
-This was not OPTIONS-only. Both the preflight and the actual GET returned the wildcard. That distinction matters — see the false positive section below.
+This was not OPTIONS-only. Both the preflight and the actual GET returned the wildcard. Keep that in mind when you hit the false positive section below.
 
 The `Authorization` header is explicitly included in `Access-Control-Allow-Headers`. If any endpoint on `www.ripe.net` uses token-based authentication rather than cookies, those endpoints are attackable cross-origin — any JavaScript payload on any third-party page can read the response.
 
-The method exposure is also relevant. RIPE's wildcard response includes `DELETE, GET, OPTIONS, PATCH, POST, PUT`, which signals that the domain is intended to accept cross-origin write operations. For public-facing endpoints, that is probably fine — and RIPE's actual REST database API at `rest.db.ripe.net` has no wildcard, which suggests they understand the distinction. But the main domain carrying wildcard CORS on top of write methods is worth documenting.
+The method exposure matters too. RIPE's wildcard response includes `DELETE, GET, OPTIONS, PATCH, POST, PUT`, which signals that the domain is intended to accept cross-origin write operations. For public-facing endpoints, that is probably fine — and RIPE's actual REST database API at `rest.db.ripe.net` has no wildcard, which suggests they understand the distinction. But the main domain carrying wildcard CORS on top of write methods is worth documenting.
 
 RIPE NCC's WHOIS data is publicly available, so cross-origin reads on public responses are lower impact than they would be for, say, a banking portal. The submission severity is HIGH, possibly borderline MEDIUM depending on whether any authenticated portal endpoints exist at `www.ripe.net`. Manual follow-up to enumerate authenticated surfaces would strengthen the report.
 
@@ -155,7 +155,7 @@ add_header Access-Control-Allow-Origin $cors_origin always;
 add_header Vary Origin always;
 ```
 
-The `Vary: Origin` header is important — without it, CDN edge caches may serve a CORS response cached for one origin to a different origin.
+Add `Vary: Origin` too. Without it, CDN edge caches may serve a CORS response cached for one origin to a different origin.
 
 For public APIs where cross-origin reads are intentional, `ACAO: *` is correct. Make sure no authenticated or write endpoints share the same domain.
 
@@ -177,10 +177,10 @@ Replace `"DENY"` with `"SAMEORIGIN"` or a CSP `frame-ancestors` directive if you
 
 The scan above hit the main domains only. Three gaps worth knowing about:
 
-**No authenticated endpoint probing.** The scanner tests unauthenticated OPTIONS/GET. CORS misconfigs on authenticated endpoints (higher impact by definition) require an active session token. SecurityClaw's authenticated campaign tooling handles this separately.
+The scanner tests unauthenticated OPTIONS/GET only. CORS misconfigs on authenticated endpoints are higher impact by definition, but they require an active session token. SecurityClaw's authenticated campaign tooling handles that separately.
 
-**No subdomain enumeration.** CORS misconfigs often live on obscure subdomains (`api2.`, `legacy.`, `internal-api.`). The scanner only tests the URL you give it. Pairing it with CT-log enumeration would increase coverage significantly.
+Subdomain scope is another gap. CORS misconfigs often live on obscure subdomains (`api2.`, `legacy.`, `internal-api.`). The scanner only tests the URL you give it. Pairing it with CT-log enumeration would increase coverage significantly.
 
-**No origin reflection variants.** The scanner sends one attacker origin. Production testing should also try suffix injection (`Origin: https://yoursite.com.attacker.com`), backslash bypass on broken parsers, capitalisation variants, and `null` origin.
+Origin reflection variants are also out of scope. The scanner sends one attacker origin. Production testing should also try suffix injection (`Origin: https://yoursite.com.attacker.com`), backslash bypass on broken parsers, capitalisation variants, and `null` origin.
 
-Those are the places to look if the main domain came up clean.
+If the main domain came up clean, those are the next places to check.
