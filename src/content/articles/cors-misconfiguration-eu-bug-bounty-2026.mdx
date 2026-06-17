@@ -4,6 +4,7 @@ description: "SecurityClaw scanned five EU Intigriti targets for CORS misconfigu
 date: 2026-06-12
 category: research
 tags: [bug-bounty, cors, misconfiguration, recon, eu-targets, intigriti]
+hasFAQ: true
 ---
 
 > **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
@@ -184,3 +185,39 @@ Subdomain scope is another gap. CORS misconfigs often live on obscure subdomains
 Origin reflection variants are also out of scope. The scanner sends one attacker origin. Production testing should also try suffix injection (`Origin: https://yoursite.com.attacker.com`), backslash bypass on broken parsers, capitalisation variants, and `null` origin.
 
 If the main domain came up clean, those are the next places to check.
+
+---
+
+<section class="faq" itemscope itemtype="https://schema.org/FAQPage">
+<h2>Frequently Asked Questions</h2>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">What is a CORS misconfiguration in bug bounty?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">A CORS (Cross-Origin Resource Sharing) misconfiguration lets a malicious website read data from a target API that should be restricted to same-origin requests. The most common finding is an overly permissive Access-Control-Allow-Origin header — either a wildcard (<code>*</code>) or a header that reflects any origin the attacker sends. On bug bounty platforms like Intigriti, CORS wildcards on API endpoints typically qualify as HIGH severity.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">How do you detect CORS misconfigurations automatically?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">SecurityClaw’s <code>apigw-cors-tester</code> sends six probes per target: an OPTIONS preflight with an attacker origin, a GET with attacker origin, a GET with <code>Origin: null</code> (sandboxed iframe bypass), a suffix-confusion test, a gateway fingerprint, and a PoC snippet if a finding is confirmed. Manual verification is still required — automated tools generate false positives on CDN-cached responses and gateway defaults that don’t represent actual server behavior.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">What is the difference between ACAO wildcard and origin reflection?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">A wildcard (<code>Access-Control-Allow-Origin: *</code>) allows any origin to read the response but blocks credentialed requests by spec. Origin reflection mirrors whatever the attacker sends in the Origin header — this is a direct HIGH finding because it allows targeted cross-origin reads, and unlike wildcards it can be combined with <code>Access-Control-Allow-Credentials: true</code> for credential theft.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">How do you remediate a CORS misconfiguration?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">Replace the wildcard or reflection logic with an explicit origin allowlist. In nginx: check <code>$http_origin</code> against a regex of approved origins and only set <code>Access-Control-Allow-Origin</code> when the origin matches. Always add <code>Vary: Origin</code> to prevent CDN edge caches from serving a CORS response cached for one origin to a different origin. For public APIs where cross-origin reads are intentional, a wildcard is correct — ensure no authenticated endpoints share the same domain.</p>
+</div>
+</div>
+
+</section>
+
