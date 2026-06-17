@@ -194,3 +194,35 @@ A few things that show up on "bug bounty tools" lists that aren't worth your tim
 | VPS | DigitalOcean | No ($6/mo) | OOB callbacks |
 
 The single best investment if you're just starting: Burp Suite Pro + a TryHackMe Premium month to get up to speed on the Web Fundamentals path. Everything else builds on top of that.
+
+---
+
+## Frequently Asked Questions
+
+### What is the best tool for bug bounty hunting in 2026?
+
+Burp Suite Professional is the essential starting point for web and API bug bounty. It provides an intercepting proxy, active scanner, Collaborator for out-of-band detection, and a full extension API. For recon, the ProjectDiscovery stack (subfinder + httpx + nuclei) covers subdomain enumeration, live host detection, and automated misconfiguration scanning — all free.
+
+### Is Burp Suite Community Edition enough for bug bounty?
+
+Burp Suite Community Edition covers the basics — intercepting proxy, Repeater, Decoder — but has significant limitations for serious bug bounty work. Intruder is rate-throttled (unusable for fuzzing at scale), the active scanner is unavailable, and Collaborator for blind SSRF/OOB detection is not included. For systematic bug hunting, Burp Suite Professional ($449/year) is the standard investment.
+
+### What free tools do bug bounty hunters use?
+
+The core free toolkit: subfinder (subdomain enumeration), httpx (live host probing and tech fingerprinting), nuclei (automated vulnerability scanning with community templates), ffuf (directory and parameter fuzzing), amass (active and passive DNS enumeration), sqlmap (SQL injection confirmation and PoC), Shodan free tier (exposed service discovery), and Web Security Academy (PortSwigger's free web vulnerability lab). All are actively maintained in 2026.
+
+### How much does it cost to set up a bug bounty toolkit?
+
+A minimal serious toolkit: Burp Suite Pro ($449/year) + a VPS for OOB callbacks (~$72/year for DigitalOcean basic). Everything else — subfinder, httpx, nuclei, ffuf, sqlmap — is free and open source. Total first-year cost: approximately $521. Optional: Shodan membership ($49 one-time) for systematic recon sweeps.
+
+### What is nuclei and how is it used in bug bounty?
+
+Nuclei is a fast, template-based vulnerability scanner from ProjectDiscovery. It runs a library of community-written templates against targets to detect misconfigurations, exposed admin interfaces, outdated software, and known CVEs. In bug bounty, nuclei is used for initial automated discovery before manual investigation. Keep templates updated with `nuclei -update-templates` before each campaign.
+
+### What tools do you use for subdomain enumeration?
+
+The standard combination is subfinder (passive enumeration from certificate transparency logs, DNS brute force, and API sources) piped into httpx (probing which subdomains are live, grabbing status codes and tech stack). One command: `subfinder -d target.com -silent | httpx -status-code -title -tech-detect -o recon-output.txt`. Both are free and in the ProjectDiscovery toolkit.
+
+### When is Shodan worth paying for in bug bounty?
+
+Shodan's free tier covers basic searches. The paid API ($49/month or one-time membership) is worth it if you run systematic recon sweeps across multiple targets, need high rate limits, or want to use advanced filters like `ssl.cert.subject.cn:*target.com` combined with service-specific queries. For occasional use, the free tier is sufficient.

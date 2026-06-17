@@ -1,0 +1,66 @@
+# bughuntertools.com
+
+> BugHunterTools is a security research and bug bounty resource built on live campaign data from SecurityClaw, an AI-assisted offensive security pipeline. Every article is grounded in real tooling, real programs, and real vulnerability findings — not theoretical walkthroughs. Our research covers CVE analysis, bug bounty tool reviews, recon techniques, and AI-assisted security workflows.
+
+## Content Categories
+
+- CVE Analysis: In-depth coverage of critical and high-severity vulnerabilities affecting web applications, AI infrastructure, and enterprise software, with exploit mechanics and bug bounty implications
+- Bug Bounty Tools: Practical tool guides and comparisons for Burp Suite, Nuclei, subfinder, sqlmap, ffuf, and other widely-used security research tools
+- SecurityClaw Demos: Live demonstrations of SecurityClaw's AI-assisted reconnaissance, scanning, and exploitation pipeline on real targets
+- Security Research Methodology: Guides on false positive triage, CORS/OAuth attack chains, open redirect analysis, and bounty submission strategy
+- Vulnerability Roundups: Monthly CVE intelligence digests identifying high-opportunity targets with active bug bounty programs
+
+## Key Articles
+
+- Best Bug Bounty Tools in 2026: /articles/best-bug-bounty-tools-2026/
+- Security Testing Tools Guide 2026: /articles/security-testing-tools-2026/
+- Bug Bounty Starter Kit — What You Actually Need: /articles/bug-bounty-starter-kit/
+- Automated Penetration Testing Guide 2026: /articles/automated-penetration-testing-guide-2026/
+- Bug Bounty Submission Guide (Intigriti, HackerOne, Bugcrowd, YesWeHack): /articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026/
+- Why Your Security Scanner Isn't a Penetration Test: /articles/why-your-security-scanner-isnt-a-penetration-test/
+- CVE Intelligence for Bug Bounty — Using the NVD API: /articles/cve-intelligence-bug-bounty-nvd-api-2026/
+- CVE Opportunity Analysis — June 2026: /articles/cve-opportunity-analysis-june-2026/
+- CORS Misconfiguration in EU Bug Bounty Targets: /articles/cors-misconfiguration-eu-bug-bounty-2026/
+- CORS + OAuth Compound Chain (Account Takeover): /articles/cors-oauth-compound-chain-account-takeover-2026/
+- Open Redirect Scanner False Positives — What Your Scanner Gets Wrong: /articles/open-redirect-scanner-false-positives-bug-bounty-2026/
+- JavaScript Bundle Secrets — EU SaaS Recon 2026: /articles/js-bundle-secrets-eu-saas-recon-2026/
+- JS Bundle Analysis False Positives in Bug Bounty: /articles/js-bundle-false-positives-bug-bounty-2026/
+- Subdomain Takeover — EU Bounty Targets 2026: /articles/subdomain-takeover-eu-bounty-targets-2026/
+- Security Lab Setup Guide 2026: /articles/security-lab-setup-guide-2026/
+- Burp Suite Pricing 2026 — Is Pro Worth It?: /articles/burp-suite-pricing-2026/
+
+## CVE Coverage
+
+- CVE-2026-22778 (vLLM RCE, CVSS 9.8): /articles/vllm-rce-cve-2026-22778/
+- CVE-2026-21329 (Adobe After Effects RCE): /articles/adobe-after-effects-cve-2026-21329/
+- CVE-2026-1731 (BeyondTrust RCE): /articles/beyondtrust-rce-cve-2026-1731/
+- CVE-2026-22218 (Chainlit AI Vulnerabilities): /articles/chainlit-ai-vulnerabilities-cve-2026-22218/
+- CVE-2026-22769 (Dell RecoverPoint): /articles/dell-recoverpoint-cve-2026-22769/
+- CVE-2026-2473 (GCP Vertex AI Bucket Squatting): /articles/gcp-vertex-ai-bucket-squatting-cve-2026-2473/
+- CVE-2026-21513 (MSHTML): /articles/mshtml-cve-2026-21513/
+- CVE-2026-21858 (n8n RCE): /articles/n8n-rce-cve-2026-21858/
+- CVE-2026-25049 (n8n RCE 2): /articles/n8n-rce-cve-2026-25049/
+- Firefox SpiderMonkey WASM GC RCE: /articles/firefox-spidermonkey-wasm-gc-rce/
+- LinkedIn API BOLA Bypass: /articles/linkedin-api-bola-bypass/
+- Microsoft Patch Tuesday February 2026 Zero Days: /articles/microsoft-patch-tuesday-february-2026-zero-days/
+- RoguePilot — GitHub Copilot Prompt Injection: /articles/roguepilot-github-copilot-prompt-injection/
+- VSCode Extensions CVE-2025-65717: /articles/vscode-extensions-cve-2025-65717/
+
+## SecurityClaw Pipeline Articles
+
+- SecurityClaw AI Planner — Bedrock Validated: /articles/securityclaw-ai-planner-bedrock-validated-2026/
+- SecurityClaw Campaign Dashboard Pipeline: /articles/securityclaw-campaign-dashboard-pipeline-2026/
+- SecurityClaw BOL Subdomain Recon (Staging Demo): /articles/securityclaw-bol-subdomain-recon-staging-demo-2026/
+- SecurityClaw Campaign 004 — BOL EC2 Run: /articles/securityclaw-campaign-004-bol-ec2-run-2026/
+- SecurityClaw Campaign 005 — BOL Validation: /articles/securityclaw-campaign-005-bol-validation-2026/
+- SecurityClaw CT Logs — Certificate Transparency Passive Recon: /articles/securityclaw-ct-logs-certificate-transparency-passive-recon-2026/
+- SecurityClaw Gitleaks — Git History Secret Detection: /articles/securityclaw-gitleaks-git-history-secret-detection-demo-2026/
+- SecurityClaw Gobuster — Directory Enumeration Demo: /articles/securityclaw-gobuster-directory-enumeration-demo-2026/
+- SecurityClaw Nuclei — Misconfiguration Scanner Demo: /articles/securityclaw-nuclei-misconfiguration-scanner-demo-2026/
+- SecurityClaw sqlmap — SQL Injection Demo: /articles/securityclaw-sqlmap-sql-injection-demo-2026/
+- SecurityClaw TruffleHog v3 — Live Secret Verification: /articles/securityclaw-trufflehog-v3-live-secret-verification-demo-2026/
+- SecurityClaw WAF Bypass (BOL): /articles/securityclaw-kali-waf-bypass-bol-2026/
+
+## About
+
+BugHunterTools is published by the ClawWorks team. Security research is conducted by Peng (SecurityClaw pipeline). Content is grounded in live campaign data — tools and techniques are tested before they are recommended.
