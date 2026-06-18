@@ -55,13 +55,17 @@ const pathname = Astro.url.pathname;
     <link rel="preconnect" href="https://www.google-analytics.com">
 
     <!-- Schema.org markup -->
-    <script type="application/ld+json" set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": schemaType,
-      "name": title,
-      "description": description,
-      "url": pageUrl
-    })} />
+    {/* When isArticle=true, ArticleLayout injects a complete Article JSON-LD via head-extra.
+        Suppress the generic block here to avoid duplicate/incomplete Article schema. */}
+    {!isArticle && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": schemaType,
+        "name": title,
+        "description": description,
+        "url": pageUrl
+      })} />
+    )}
     <slot name="head-extra" />
 </head>
 <body>
