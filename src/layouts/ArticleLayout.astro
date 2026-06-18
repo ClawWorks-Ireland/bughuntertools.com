@@ -23,11 +23,12 @@ export interface Props {
   category: 'security-news' | 'bug-bounty' | 'tools' | 'research';
   tags?: string[];
   slug?: string;
+  /** Set true when the article contains a FAQ section — injects FAQPage schema */
+  hasFAQ?: boolean;
 }
 
-const { title, description, date, category, tags = [], slug } = Astro.props;
+const { title, description, date, category, tags = [], slug, hasFAQ = false } = Astro.props;
 
-// ISO date string for schema/meta
 const isoDate = date instanceof Date ? date.toISOString() : new Date(date).toISOString();
 // Human-readable date
 const displayDate = new Date(date).toLocaleDateString('en-US', {
@@ -35,6 +36,9 @@ const displayDate = new Date(date).toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
 });
+
+// Canonical URL for this article
+const articleUrl = `https://bughuntertools.com/articles/${slug ?? ''}/`;
 
 // Reading time estimate (rough: 200 wpm)
 // We don't have word count here, so omit or let parent override if needed.
@@ -64,16 +68,26 @@ const categoryLabel = categoryLabels[category] ?? category;
       "@type": "Article",
       "headline": title,
       "description": description,
+      "url": articleUrl,
       "datePublished": isoDate,
       "dateModified": isoDate,
       "author": {
         "@type": "Organization",
-        "name": "Bug Hunter Tools"
+        "name": "BugHunterTools",
+        "url": "https://bughuntertools.com"
       },
       "publisher": {
         "@type": "Organization",
-        "name": "Bug Hunter Tools",
-        "url": "https://bughuntertools.com"
+        "name": "BugHunterTools",
+        "url": "https://bughuntertools.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://bughuntertools.com/android-chrome-256x256.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": articleUrl
       }
     })}
     slot="head-extra"

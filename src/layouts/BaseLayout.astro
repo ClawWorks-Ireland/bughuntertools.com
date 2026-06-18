@@ -62,6 +62,7 @@ const pathname = Astro.url.pathname;
       "description": description,
       "url": pageUrl
     })} />
+    <slot name="head-extra" />
 </head>
 <body>
     <header>

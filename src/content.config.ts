@@ -9,6 +9,7 @@ const articles = defineCollection({
     date: z.coerce.date(),
     category: z.enum(['security-news', 'bug-bounty', 'tools', 'research']),
     tags: z.array(z.string()).optional(),
+    hasFAQ: z.boolean().optional(),
   }),
 });
 
