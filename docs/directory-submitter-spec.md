@@ -169,7 +169,7 @@ async function submitToAiToolsFyi(tool: ToolSubmission) {
 | **Example repo** | https://github.com/vavkamil/awesome-bugbounty-tools |
 | **DA** | GitHub domain authority (~100) |
 | **Protection** | None — standard GitHub PR via `gh` CLI |
-| **Automation verdict** | ✅ **Tier A — fully automatable (already working)** |
+| **Automation verdict** | ✅ **Tier A — fully automatable (pending one PAT fix)** |
 
 **Status:** TASK-682 implements the first PR on `awesome-bugbounty-tools`. The `gh` CLI pattern is fully automatable:
 
@@ -181,9 +181,9 @@ gh pr create --repo vavkamil/awesome-bugbounty-tools \
   --body "..."
 ```
 
-The same pattern applies to any GitHub-hosted awesome list. Jenn can run this pattern independently.
+⚠️ **PAT note (discovered 2026-06-20):** The Jenn-ClawWorks fine-grained PAT is scoped to ClawWorks-Ireland org only and cannot fork external public repos. `gh repo fork <external-repo>` returns HTTP 403. Fix: Delmar needs to update the Jenn-ClawWorks PAT to include either (a) "Fork a repository" permission for public repos, or (b) replace with a classic PAT with `public_repo` scope. Once fixed, all GitHub awesome-list PRs run autonomously via `gh` CLI with zero browser interaction.
 
-**Kirk estimate:** 0 hours additional (pattern already established in TASK-682)
+**Kirk estimate:** 0 hours implementation (pattern works once PAT is fixed; no code needed)
 
 ---
 
