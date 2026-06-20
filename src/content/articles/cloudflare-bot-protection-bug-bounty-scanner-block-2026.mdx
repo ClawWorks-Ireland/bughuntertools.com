@@ -1,0 +1,141 @@
+---
+title: "When your scanner can't get through the front door: Cloudflare bot protection and bug bounty hunting"
+description: "Cloudflare's bot fight mode uses JA3/JA4 TLS fingerprinting to block automated clients — even from residential IPs. What the cf-mitigated header means, why rotating your User-Agent doesn't help, and what to do instead."
+date: 2026-06-20
+category: research
+tags: [cloudflare, tls-fingerprinting, bug-bounty, recon, bot-protection, ja3-ja4, doctolib, yeswehack]
+hasFAQ: true
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Peng had a residential IP. He had the correct `BugBounty/42 (YWH)` User-Agent that YesWeHack programs require. He had a scoped Doctolib campaign with a €50,000 maximum bounty. And the scanner was blocked on every endpoint it tried.
+
+Not rate-limited. Blocked.
+
+The response headers explained it: `cf-mitigated: challenge`. Cloudflare's bot fight mode was active, and it did not care about the User-Agent or the IP. It was operating at a layer below both.
+
+This pattern shows up consistently on high-value targets — healthcare SaaS, fintech, anything processing sensitive user data. Hunters who don't understand the mechanism waste hours trying to debug something that has no configuration-layer fix.
+
+---
+
+## What Cloudflare's bot fight mode actually does
+
+Most bot blocking happens at the HTTP layer. Check the User-Agent header, check whether the IP falls in a known datacenter range, apply a rate limit. You can work around those because they're examining requests after the TLS handshake is already done.
+
+Cloudflare's bot fight mode runs earlier. It looks at the TLS Client Hello — the first message your HTTP client sends when establishing an encrypted connection, before any HTTP headers exist.
+
+That Client Hello has a fingerprint. JA3 is the older standard; JA4 is current. The fingerprint is a hash of how the client negotiates the connection: which cipher suites it offers, which TLS extensions it includes, the order they appear. Different TLS implementations produce different fingerprints. Chrome looks like Chrome. `curl` looks like `libcurl`. Python `requests` looks like `urllib3`.
+
+Cloudflare maintains fingerprints for known non-browser clients. When your scanner connects, Cloudflare reads the Client Hello, hashes it, and checks against that list. The match happens before your User-Agent header is ever read. It happens even from a residential IP, because the IP origin is a separate signal from the fingerprint.
+
+The User-Agent doesn't factor in. The IP doesn't factor in. The fingerprint is what matters.
+
+---
+
+## The 30-second detection check
+
+Before launching any campaign against a target, run this:
+
+```bash
+curl -si https://www.target.com -H "User-Agent: Mozilla/5.0" | grep -i "cf-mitigated"
+```
+
+If you see `cf-mitigated: challenge` in the output, Cloudflare's JS challenge is active. Stop. Do not retry hoping it lifts. Do not try rotating User-Agents. Do not switch to a different datacenter.
+
+If the `grep` returns nothing, either Cloudflare is not present or bot fight mode is not active on that endpoint. Continue normally.
+
+The response will usually include a 403 or a redirect to a Cloudflare challenge page, but the header is the clean signal. Two seconds to check.
+
+---
+
+## Why the common fixes don't work
+
+User-Agent rotation is the first thing most hunters try. It does nothing here. You're modifying a Layer 7 header, and the block is happening at Layer 4 (TLS). The header is read — if it's read at all — only after Cloudflare has already decided to challenge the connection. Changing it has no effect on a decision that was made before the HTTP request was sent.
+
+Switching to a residential IP is the second attempt. This helps against IP-range blocks, which are a different mechanism. It does not help against TLS fingerprinting. A `curl` process running from a residential IP still produces a `libcurl` fingerprint, because the fingerprint is about the client software, not where it's connecting from.
+
+The `BugBounty/42 (YWH)` User-Agent deserves its own explanation because the logic is easy to get backwards. YesWeHack programs instruct their targets to add WAF allowlist rules for this header so authorized scanner traffic doesn't get blocked by the target's own rules. It works at Layer 7 (HTTP), after the TLS handshake completes. Cloudflare's bot fight mode runs at the edge, before the request reaches the target's infrastructure, and it doesn't know about YWH programs. The two protections are independent. The YWH header gets your traffic past the program's own controls. It does nothing to Cloudflare's fingerprint-based decision.
+
+---
+
+## What actually works
+
+**Burp Suite with a real browser.** Proxy Firefox or Chrome through Burp and test through the actual browser. A real browser produces a browser TLS fingerprint that Cloudflare doesn't challenge — or challenges at a much lower rate. You lose automated bulk scanning and keep manual interactive testing. For high-value targets where the interesting findings require authentication anyway, that trade usually makes sense.
+
+**Playwright or Selenium with a real Chrome binary.** If you need some automation, a real Chrome binary carries a browser fingerprint. It's slower and harder to scale than requests-based scanning, but it gets through. Useful for specific endpoint testing, not for mapping a broad attack surface.
+
+**CT log enumeration.** `crt.sh` and `certspotter` query the Certificate Transparency log service directly — not the target. The Cloudflare block is irrelevant. You can enumerate every subdomain that has had a TLS certificate issued for the target domain: internal tooling, staging environments, API endpoints, admin panels. A search against a target like Doctolib returns hundreds of subdomains. Most are noise. Some are not. A quick `cf-mitigated` check against each interesting one tells you which can be reached with standard tooling and which require a browser.
+
+---
+
+## What the Doctolib campaign found
+
+Doctolib runs patient bookings across France, Germany, and Italy. The YesWeHack program has a €50,000 maximum bounty. SecurityClaw ran a structured campaign: main domain probing, CT log enumeration, JS bundle analysis from accessible endpoints.
+
+The main domain and patient-facing booking endpoints: fully behind Cloudflare bot fight mode. `cf-mitigated: challenge` on every automated probe, consistently, from multiple source IPs.
+
+CT log enumeration surfaced several hundred subdomains. One stood out: `connect-admin.doctolib.com`, an admin panel with no Cloudflare bot protection active. The panel returned enough response data to identify the stack and the authentication mechanism — an internal OIDC flow.
+
+All findings were INFO/recon level. No authenticated testing was done. No live vulnerability was confirmed. The admin panel is documented as a future research surface: worth revisiting with an authenticated test account if the program scope allows it.
+
+One thing from this campaign worth flagging separately: the SecurityClaw CVE pipeline scored Doctolib high because it matched on bounty ceiling and CVSS score. The matched CVEs — SimpleHelp OIDC bypass, SAP NetWeaver, Magento file upload — have nothing to do with Doctolib's Ruby on Rails stack. Automated CVE-to-target matching based on bounty amounts generates noise until the tech stack is confirmed. The high CVE score meant nothing here.
+
+---
+
+## Before you start the next healthcare or fintech campaign
+
+The pattern is consistent enough that a short preflight check saves real time. Healthcare SaaS and fintech targets tend to have aggressive Cloudflare configurations, strict scope boundaries, and automated scanner findings that are explicitly non-qualifying on most programs.
+
+A recon flow that accounts for this:
+
+1. Run the `cf-mitigated` check before anything else. One command, two seconds.
+2. If bot fight mode is active on the main domain, shift to CT log enumeration before doing anything else.
+3. Check each interesting subdomain for bot protection separately — configuration is rarely uniform across a target's full subdomain list.
+4. For subdomains accessible to automated tools, run your normal scanner workflow.
+5. For endpoints that only respond to real browsers, switch to Burp with browser proxy.
+6. Create a test account if the program allows and scope permits — authenticated testing is where the high-value findings in healthcare SaaS actually sit.
+
+The €50k bounty ceiling on Doctolib reflects what the target will pay for an IDOR that exposes patient data. Getting there requires an authenticated session and a real browser. A residential IP and a rotated User-Agent won't get you past the front door.
+
+---
+
+<section class="faq" itemscope itemtype="https://schema.org/FAQPage">
+<h2>Frequently Asked Questions</h2>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">What is JA3/JA4 TLS fingerprinting?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">JA3 and JA4 are methods of fingerprinting HTTPS clients based on how they negotiate the TLS connection. The fingerprint is derived from fields in the TLS Client Hello: the cipher suites offered, the TLS extensions included, and the order they appear in. Different HTTP libraries — curl, Python requests, browser engines — produce consistently different fingerprints. Cloudflare's bot detection uses these fingerprints to identify automated clients before any HTTP headers are read.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">How do I detect if Cloudflare bot fight mode is blocking my scanner?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">Run: curl -si https://www.target.com -H "User-Agent: Mozilla/5.0" | grep -i "cf-mitigated". If the response includes cf-mitigated: challenge, Cloudflare's JS challenge is active. This check takes under five seconds and should be done before launching any automated scanner against a target.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">Does using a residential IP bypass Cloudflare bot detection?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">No. Residential IPs help against datacenter IP-range blocks, which are a separate mechanism. Cloudflare's TLS fingerprint check is based on the client software, not where the connection originates. A curl process on a residential IP still produces a libcurl fingerprint, which Cloudflare identifies as a non-browser client.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">What is the BugBounty/42 User-Agent and does it bypass Cloudflare?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">The BugBounty/42 (YWH) User-Agent is a YesWeHack convention. Programs on YWH instruct their targets to add WAF allowlist rules for this header so authorized scanner traffic isn't blocked by the target's own rules. It operates at Layer 7 (HTTP), after the TLS handshake completes. Cloudflare's bot fight mode operates at Layer 4 (TLS) and makes its challenge decision before the User-Agent header is ever read. The YWH header has no effect on Cloudflare's fingerprint-based blocking.</p>
+</div>
+</div>
+
+<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+<h3 itemprop="name">What can I do when Cloudflare blocks my scanner on a bug bounty target?</h3>
+<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+<p itemprop="text">Three options: Switch to browser-based testing — Burp Suite proxying a real Chrome or Firefox browser produces a genuine browser TLS fingerprint that Cloudflare doesn't challenge. Use CT log enumeration (crt.sh, certspotter) to find subdomains that aren't behind bot fight mode — these can be tested with standard tooling. Or accept that automated scanning isn't viable and focus on authenticated manual testing through a real browser, which is usually where the high-value findings are anyway.</p>
+</div>
+</div>
+
+</section>
