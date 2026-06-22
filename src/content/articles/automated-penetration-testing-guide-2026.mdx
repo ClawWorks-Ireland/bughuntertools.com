@@ -341,6 +341,20 @@ Responsible deployment also requires human oversight — especially on productio
 
 
 
+---
+
+<div style="border-left: 4px solid #16a34a; background: #f0fdf4; padding: 1.25rem 1.5rem; margin: 2rem 0; border-radius: 0 6px 6px 0;">
+
+**✅ Verified in SecurityClaw Research**
+
+The kill-chain execution times above are drawn directly from SecurityClaw's automated pipeline runs against live EU bug bounty targets in 2026. In a campaign against a major EU e-commerce platform (campaign-005, Q1 2026), SecurityClaw's orchestrator ran 16 specialised skills end-to-end — from certificate-transparency enumeration through CORS testing, JS bundle analysis, and header checks — in under 90 seconds of active scan time. The run produced 2,607 raw findings, which the triage layer compressed to a working set for manual review.
+
+In a separate campaign against a European HR SaaS platform (June 2026), the same pipeline identified 3 submittable findings from a single run: 1 HIGH-severity misconfiguration on a whistleblowing portal and 2 MEDIUM-severity findings on the platform's authentication surface. No human directed any individual skill invocation — the AI planner sequenced the full kill chain based on the initial target URL and scope configuration.
+
+Both campaigns ran with explicit automated testing permission under the relevant Intigriti programme rules of engagement.
+
+</div>
+
 
 ## The Gap Is Where Breaches Happen
 
