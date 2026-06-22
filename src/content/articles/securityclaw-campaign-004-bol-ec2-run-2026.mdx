@@ -87,6 +87,36 @@ The fix is already in progress: Campaign-005 routes all findings to S3 before re
 
 But for Campaign-004: those findings are gone.
 
+## What JS Bundle Recon Actually Surfaces
+
+The lost bol.com JS bundle finding is worth dwelling on because this class of recon produces disproportionately high-value results relative to its cost. JavaScript bundles served by major e-commerce platforms are compressed and minified for production — but they're also complete. The entire client-side application, including all the API paths the app calls, all the configuration values the app references, and all the strings the developer left in during development, is served to every browser that loads the page.
+
+What SecurityClaw's JS bundle skill looks for:
+
+**Internal API endpoints.** E-commerce platforms typically have a documented public API and an undocumented internal API used by their own frontend. The internal API endpoints appear in the bundle as string constants: `"/api/v2/internal/cart"`, `"/api/v2/internal/checkout/validate"`. These endpoints often have weaker authentication than the public API — they were written assuming only the platform's own frontend would ever call them.
+
+**Hardcoded credentials and API keys.** Developers occasionally commit staging API keys, internal service tokens, or third-party integration credentials to the bundle during development and forget to rotate them before production. SecurityClaw's skill uses regex patterns for common credential formats: `AKIA[A-Z0-9]{16}` for AWS access keys, `sk_live_[a-zA-Z0-9]{24}` for Stripe, `xoxb-[0-9]{11}-[0-9]{11}-[a-zA-Z0-9]{24}` for Slack.
+
+**Tech stack fingerprinting.** Framework versions, library versions, build tool signatures. Knowing that `www.bol.com` runs webpack 5.75.0 and React 18.2.0 narrows the applicable CVE set substantially.
+
+For bol.com specifically, the one unrecovered finding almost certainly fell into one of the first two categories — endpoint disclosure or credential exposure. The cert transparency findings alone generate far more than 24KB, so the JS finding was the last thing written before truncation. It's why the S3 pipeline fix was prioritised.
+
+## Reading the CT Log Data as Recon Intelligence
+
+The 2,606 expired certificate findings have a secondary use beyond the "informational, don't submit" verdict. Certificate transparency logs are a passive recon tool that reveals infrastructure history without sending a single packet to the target.
+
+**What the subdomain list tells you:**
+
+The subdomain names themselves are documentation. `cms-gateway.bol.com` tells you bol.com runs a CMS and had an API gateway for it. `recruitment-git.bol.com` tells you bol.com ran an internal Git service for their recruiting team (likely Gitea or Gogs based on the naming pattern). `servicedesktps.bol.com` (with the typo) tells you someone manually created a DNS entry for an IT service desk — meaning it wasn't provisioned through bol.com's automated infrastructure pipeline, which means it probably wasn't cleaned up through that pipeline either.
+
+**Cert expiry dates as activity signals:**
+
+All five interesting subdomains expired within a 2-week window in January 2025. This suggests a coordinated infrastructure retirement — not a gradual decommissioning. Something changed at bol.com in Q4 2024 that resulted in multiple services being shut down simultaneously. A platform migration? A cloud provider switch? A microservices consolidation? The cert expiry dates don't answer the question, but they point the follow-up research in the right direction.
+
+**`hipstershop.stg.bol.com` as a Kubernetes fingerprint:**
+
+Google's Online Boutique demo (`hipstershop`) is specifically a Kubernetes/GCP reference implementation. Finding it on `*.stg.bol.com` is a strong signal that bol.com's staging environment runs on GKE or a Kubernetes-based platform. If bol.com migrated from one infrastructure platform to another in Q4 2024, and staging now runs on Kubernetes, `hipstershop.stg.bol.com` is the proof-of-concept that predated that migration going live.
+
 ## What This Means for the Platform
 
 Campaign-004 was a productive failure. The security findings themselves were largely informational — expired certs at scale, one unexpected CA, one curious subdomain. Nothing we'd submit to Intigriti today.
