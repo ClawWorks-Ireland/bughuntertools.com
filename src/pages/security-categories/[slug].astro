@@ -1,0 +1,253 @@
+---
+/**
+ * [slug].astro — Dynamic route for Security Category pages.
+ * Reads from src/_data/scorecard.json (SecurityClaw scorecard categories).
+ * Each category gets a dedicated SEO page with relevant tools, articles, and affiliate resources.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import scorecardData from '../../_data/scorecard.json';
+import toolsData from '../../_data/tools.json';
+
+export function getStaticPaths() {
+  return Object.entries(scorecardData.categories).map(([slug, category]) => ({
+    params: { slug },
+    props: { slug, category },
+  }));
+}
+
+const { slug, category } = Astro.props;
+
+// Enrich category info
+interface CategoryMeta {
+  title: string;
+  description: string;
+  h1: string;
+  intro: string;
+  whyMatters: string;
+  keyVulnerabilities: string[];
+  amazonQuery: string;
+  bugBountyImpact: string;
+}
+
+const categoryMeta: Record<string, CategoryMeta> = {
+  'secrets-detection': {
+    title: 'Secrets Detection in Bug Bounty — SecurityClaw 2026 Guide | Bug Hunter Tools',
+    description: 'How SecurityClaw finds hardcoded API keys, credentials, and tokens in bug bounty targets. TruffleHog v3 integration, JS bundle analysis, and git history scanning.',
+    h1: 'Secrets Detection: Finding Exposed Credentials in Bug Bounty',
+    intro: 'Exposed secrets — API keys, database credentials, OAuth tokens, and private keys — are among the highest-severity findings in bug bounty programmes. A single hardcoded AWS key can unlock cloud infrastructure; a leaked OAuth client secret can enable account takeover at scale.',
+    whyMatters: 'Secret exposure is consistently in the top-5 highest-payout finding categories on Intigriti and HackerOne. Programmes pay CRITICAL severity for confirmed, exploitable credentials because the blast radius is enormous.',
+    keyVulnerabilities: [
+      'Hardcoded API keys in JavaScript bundles',
+      'Database credentials in .env files committed to git',
+      'AWS IAM keys leaked in CloudFormation templates',
+      'OAuth client secrets in mobile app binaries',
+      'Private keys in exposed .git directories',
+      'Service account tokens in Kubernetes YAML'
+    ],
+    amazonQuery: 'secrets management security devops credential scanning',
+    bugBountyImpact: 'CRITICAL/HIGH — confirmed exploitable credentials typically receive the maximum bounty ceiling'
+  },
+  'web-vuln-scanning': {
+    title: 'Web Vulnerability Scanning in Bug Bounty — SecurityClaw 2026 Guide | Bug Hunter Tools',
+    description: 'How SecurityClaw runs automated web vulnerability scanning with Nuclei, Nikto, and custom skills. CVE detection, misconfiguration scanning, and AI-validated findings.',
+    h1: 'Web Vulnerability Scanning: From Automated Scan to Validated Finding',
+    intro: 'Web vulnerability scanning in bug bounty is not about running Nessus and submitting the CSV. Programme security teams have already done that. The edge comes from going deeper — correlating CVEs with confirmed tech stacks, chaining misconfigurations, and validating findings with AI before wasting the programme\'s time.',
+    whyMatters: 'Web vulnerabilities represent the largest surface area in modern bug bounty programmes. XSS, SSRF, SQL injection, security header failures, and misconfigured APIs are found in every assessment — the differentiator is chaining and context.',
+    keyVulnerabilities: [
+      'Cross-Site Scripting (XSS) — reflected, stored, DOM-based',
+      'Server-Side Request Forgery (SSRF)',
+      'Security header failures (CSP, HSTS, X-Frame-Options)',
+      'SQL injection via parameter manipulation',
+      'Open redirect enabling account takeover chains',
+      'Subresource Integrity (SRI) failures on CDN resources'
+    ],
+    amazonQuery: 'web application security testing owasp vulnerability scanning',
+    bugBountyImpact: 'MEDIUM/HIGH — depends on exploitability. SSRF to internal services = CRITICAL; missing security headers alone = LOW'
+  },
+  'cloud-misconfiguration': {
+    title: 'Cloud Misconfiguration in Bug Bounty — SecurityClaw 2026 Guide | Bug Hunter Tools',
+    description: 'How SecurityClaw hunts cloud misconfigurations in AWS and Azure: public S3 buckets, storage account exposure, naming enumeration, and IAM over-privilege.',
+    h1: 'Cloud Misconfiguration Hunting: AWS, Azure, and GCP Bug Bounty',
+    intro: 'Cloud misconfiguration is the fastest-growing finding category in enterprise bug bounty programmes. As organisations migrate to cloud-native architectures, the attack surface shifts from web applications to storage buckets, IAM roles, serverless functions, and poorly-secured APIs.',
+    whyMatters: 'A single misconfigured S3 bucket can expose millions of records. Azure storage accounts with public access enabled, GCP buckets with allUsers read, or Lambda functions with overly permissive IAM roles are all real-world findings that have paid out CRITICAL bounties.',
+    keyVulnerabilities: [
+      'Public S3 buckets with sensitive data (PII, credentials, backups)',
+      'Azure Blob Storage containers with public access',
+      'GCP Cloud Storage buckets accessible by allUsers',
+      'Exposed AWS metadata service via SSRF',
+      'Lambda/Cloud Functions with hardcoded credentials',
+      'Over-privileged IAM roles accessible without authentication'
+    ],
+    amazonQuery: 'cloud security aws azure misconfiguration penetration testing',
+    bugBountyImpact: 'CRITICAL — exposed cloud storage with PII routinely hits maximum bounty payouts'
+  },
+  'api-security': {
+    title: 'API Security Testing in Bug Bounty — SecurityClaw 2026 Guide | Bug Hunter Tools',
+    description: 'How SecurityClaw tests API security: IDOR/BOLA detection, OAuth misconfiguration, CORS testing, and authenticated API sweeps. AI-powered differential analysis for high-precision results.',
+    h1: 'API Security Testing: IDOR, OAuth, and CORS in Bug Bounty',
+    intro: 'APIs are the primary attack surface in modern applications. REST APIs, GraphQL endpoints, and mobile backends expose business logic directly — and broken object-level authorization (BOLA/IDOR) is consistently the #1 finding on HackerOne\'s annual top-10.',
+    whyMatters: 'API security vulnerabilities are high-signal because they directly affect business logic. IDOR vulnerabilities expose another user\'s data with a single request. OAuth misconfigurations enable account takeover. CORS wildcards allow arbitrary origin access to authenticated APIs.',
+    keyVulnerabilities: [
+      'Insecure Direct Object Reference (IDOR / BOLA)',
+      'OAuth 2.0 redirect_uri validation bypass',
+      'CORS wildcard origin reflection (ACAO: *)',
+      'Broken Function-Level Authorization (BFLA)',
+      'Exposed Swagger / OpenAPI documentation in production',
+      'API key leakage in JavaScript bundles or mobile apps'
+    ],
+    amazonQuery: 'api security testing oauth rest graphql vulnerability',
+    bugBountyImpact: 'HIGH/CRITICAL — IDOR vulnerabilities regularly pay $5,000–$50,000 depending on data sensitivity'
+  },
+  'network-recon': {
+    title: 'Network Reconnaissance in Bug Bounty — SecurityClaw 2026 Guide | Bug Hunter Tools',
+    description: 'How SecurityClaw performs network recon: subfinder subdomain enumeration, Nmap port scanning, TLS auditing, and certificate transparency monitoring for bug bounty targets.',
+    h1: 'Network Reconnaissance: Building Your Bug Bounty Attack Surface Map',
+    intro: 'Network reconnaissance is the foundation of every effective bug bounty campaign. Before you can find vulnerabilities, you need to know everything that\'s in scope — all subdomains, all open ports, all exposed services. A single forgotten staging subdomain running an old CMS has paid six-figure bounties.',
+    whyMatters: 'Programme security teams know their primary assets well. The edge is in finding what they forgot: the staging subdomain, the old admin panel, the forgotten microservice, the wildcard subdomain with an old TLS cert. These are routinely the highest-severity findings.',
+    keyVulnerabilities: [
+      'Forgotten subdomains with old software versions',
+      'Staging environments exposed to the internet',
+      'Subdomain takeover (CNAME pointing to unclaimed service)',
+      'Exposed admin panels on non-standard ports',
+      'Weak TLS configurations and expired certificates',
+      'Internal services exposed via DNS misconfiguration'
+    ],
+    amazonQuery: 'network reconnaissance penetration testing nmap subfinder recon',
+    bugBountyImpact: 'MEDIUM/HIGH — subdomain takeovers pay CRITICAL; old admin panels with default creds pay CRITICAL'
+  }
+};
+
+const meta = categoryMeta[slug] || {
+  title: `${category.name} — Security Category | Bug Hunter Tools`,
+  description: `SecurityClaw's ${category.name} assessment results and methodology for bug bounty campaigns.`,
+  h1: category.name,
+  intro: '',
+  whyMatters: '',
+  keyVulnerabilities: [],
+  amazonQuery: 'security testing penetration testing',
+  bugBountyImpact: 'Varies by finding'
+};
+
+// Find related tools
+const relatedTools = toolsData.tools.filter((t) => t.scorecard_category === slug).slice(0, 8);
+
+const detectionRate = category.detection_rate;
+const resultColor = category.result === 'pass' ? '#4caf50' : category.result === 'none' ? '#888' : '#ff9800';
+const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(meta.amazonQuery)}&tag=bughuntertools-20`;
+---
+
+<BaseLayout title={meta.title} description={meta.description}>
+  <article style="max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; font-family: system-ui, sans-serif; line-height: 1.7; color: #1a1a2e;">
+
+    <nav style="margin-bottom: 1.5rem; font-size: 0.875rem; color: #666;">
+      <a href="/" style="color: #667eea; text-decoration: none;">Bug Hunter Tools</a>
+      <span style="margin: 0 0.5rem;">›</span>
+      <a href="/securityclaw/" style="color: #667eea; text-decoration: none;">SecurityClaw</a>
+      <span style="margin: 0 0.5rem;">›</span>
+      <span>{category.name}</span>
+    </nav>
+
+    <header style="margin-bottom: 2.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+        <span style={`background: ${resultColor}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;`}>
+          SecurityClaw: {category.result === 'pass' ? '✓ Pass' : category.result === 'none' ? '— No data yet' : '⚠ Partial'}
+        </span>
+        {category.campaigns > 0 && (
+          <span style="background: #f0f0f8; color: #555; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+            {category.campaigns} campaign{category.campaigns !== 1 ? 's' : ''} run
+          </span>
+        )}
+        {detectionRate > 0 && (
+          <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+            {detectionRate}% detection rate
+          </span>
+        )}
+      </div>
+      <h1 style="font-size: 2rem; font-weight: 800; margin: 0 0 1rem; color: #1a1a2e;">{meta.h1}</h1>
+      {meta.intro && (
+        <p style="font-size: 1.1rem; color: #444; margin: 0; line-height: 1.75;">{meta.intro}</p>
+      )}
+    </header>
+
+    {meta.whyMatters && (
+      <section style="margin-bottom: 2.5rem; background: #f7f7ff; border-left: 4px solid #667eea; padding: 1.25rem 1.5rem; border-radius: 0 8px 8px 0;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin: 0 0 0.5rem; color: #1a1a2e;">💰 Bug Bounty Impact</h2>
+        <p style="margin: 0 0 0.5rem; color: #444;"><strong>Severity potential:</strong> {meta.bugBountyImpact}</p>
+        <p style="margin: 0; color: #444;">{meta.whyMatters}</p>
+      </section>
+    )}
+
+    {meta.keyVulnerabilities.length > 0 && (
+      <section style="margin-bottom: 2.5rem;">
+        <h2 style="font-size: 1.375rem; font-weight: 700; color: #1a1a2e; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; margin-bottom: 1rem;">Key Vulnerabilities in This Category</h2>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #444;">
+          {meta.keyVulnerabilities.map((vuln) => (
+            <li style="margin-bottom: 0.5rem;">{vuln}</li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {category.notes && (
+      <section style="margin-bottom: 2.5rem;">
+        <h2 style="font-size: 1.375rem; font-weight: 700; color: #1a1a2e; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; margin-bottom: 1rem;">SecurityClaw Campaign Notes</h2>
+        <div style="background: #f0f7f0; border: 1px solid #c8e6c9; border-radius: 8px; padding: 1.25rem;">
+          <p style="margin: 0; color: #2e7d32;">{category.notes}</p>
+        </div>
+      </section>
+    )}
+
+    {category.pending_label && (
+      <section style="margin-bottom: 2.5rem;">
+        <div style="background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 1.25rem;">
+          <p style="margin: 0; color: #e65100;">🔧 <strong>In Development:</strong> {category.pending_label}</p>
+        </div>
+      </section>
+    )}
+
+    {relatedTools.length > 0 && (
+      <section style="margin-bottom: 2.5rem;">
+        <h2 style="font-size: 1.375rem; font-weight: 700; color: #1a1a2e; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; margin-bottom: 1rem;">SecurityClaw Tools for This Category</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
+          {relatedTools.map((tool) => (
+            <a
+              href={`/tools/${tool.slug}/`}
+              style="display: block; background: white; border: 1px solid #e0e0f0; border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
+            >
+              <div style="font-weight: 700; color: #1a1a2e; margin-bottom: 0.25rem;">{tool.name}</div>
+              <div style="font-size: 0.8rem; color: #888;">{tool.use_case.slice(0, 60)}…</div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section style="margin-bottom: 2.5rem; background: #fffbf0; border: 1px solid #ffe082; border-radius: 12px; padding: 1.5rem;">
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem;">📚 Recommended Books & Resources</h2>
+      <p style="color: #666; margin-bottom: 1rem; font-size: 0.95rem;">
+        Master {category.name.replace(/[🔑🌐☁️🔌📡]/g, '').trim()} with curated security books and courses:
+      </p>
+      <a
+        href={amazonUrl}
+        rel="sponsored nofollow"
+        target="_blank"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ff9900; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600;"
+      >
+        🛒 Browse on Amazon →
+      </a>
+      <p style="color: #888; font-size: 0.8rem; margin-top: 0.75rem; margin-bottom: 0;">
+        <em>Affiliate link — we earn a small commission at no extra cost to you. Supports bughuntertools.com.</em>
+      </p>
+    </section>
+
+    <footer style="border-top: 1px solid #e0e0f0; padding-top: 1.5rem; color: #888; font-size: 0.875rem;">
+      <p>
+        <a href="/securityclaw/" style="color: #667eea; text-decoration: none;">← SecurityClaw Platform Overview</a>
+        {' · '}
+        <a href="/tools/" style="color: #667eea; text-decoration: none;">Tools Database</a>
+        {' · '}
+        <a href="/articles/" style="color: #667eea; text-decoration: none;">Security Articles</a>
+      </p>
+    </footer>
+  </article>
+</BaseLayout>
