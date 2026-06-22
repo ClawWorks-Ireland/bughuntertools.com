@@ -1,6 +1,6 @@
 ---
 title: "SecurityClaw Scanned bol.com With 16 AI Skills — Here's What It Found"
-description: "Campaign-005 ran SecurityClaw against bol.com on EC2, recovering 2,607 findings including 2,547 expired certs, wildcard issues, and a WAF detection. A look at what the platform revealed."
+description: "SecurityClaw ran 16 AI skills against bol.com on EC2 and recovered 2,607 findings. Here's what they mean for bug bounty recon at scale."
 date: 2026-04-30
 category: research
 tags: [securityclaw, bug-bounty, bol.com, certificate-hygiene, waf-detection, ec2]
@@ -48,7 +48,7 @@ Campaign-005 ran in **4 minutes 8 seconds** on a single EC2 instance. 16 skills.
 
 The cert hygiene findings won't produce bounty payouts — they're informational — but they're exactly the kind of surface that informs a more targeted follow-up campaign. Where are the unexpired but misissued certs? What's `techlab.bol.com` running under that unexpected CA? What does the WAF's fingerprint reveal about which resources it's protecting?
 
-Campaign-006 is scoped to dig into those questions. The platform is ready.
+Campaign-006 is scoped to dig into those questions. The platform is ready. If you're hunting subdomain-related findings on mature targets, see the [bol.com subdomain recon walkthrough](/articles/securityclaw-bol-subdomain-recon-staging-demo-2026/) for a deeper look at what CT log enumeration surfaces.
 
 ## Understanding Certificate Findings at Scale
 
@@ -67,7 +67,7 @@ The CT log enumeration from Campaign-005 surfaced subdomains that wouldn't appea
 - `techlab.bol.com` — lab or R&D environment, unexpected CA (Trust Provider B.V.), currently serving
 - `recruitment-git.bol.com` — historical Gitea or similar, decommissioned
 - `cms-gateway.bol.com` — historical CMS gateway, decommissioned
-- `hipstershop.stg.bol.com` — Google microservices demo app on staging environment (see Campaign-004 for detail)
+- `hipstershop.stg.bol.com` — Google microservices demo app on staging environment (see [Campaign-004](/articles/securityclaw-campaign-004-bol-ec2-run-2026/) for detail)
 - `servicedesktps.bol.com` — typo in the domain name (`desktps` rather than `desktops`) — suggests manual DNS entry rather than automated provisioning
 
 The typo subdomain is the most interesting from a security perspective. Automated DNS provisioning doesn't produce typos. This entry was probably created manually for a service desk or IT portal. Manual entries are more likely to survive decommissioning unnoticed, because automated rotation pipelines don't clean them.

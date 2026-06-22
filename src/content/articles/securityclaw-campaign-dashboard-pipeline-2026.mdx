@@ -1,6 +1,6 @@
 ---
 title: "320 findings, 4 submittable: inside a bug bounty campaign dashboard"
-description: "Most coverage is about the clever finding. Nobody covers the unglamorous infrastructure behind running campaigns at scale. Here's how SecurityClaw tracks everything — and what the numbers actually look like."
+description: "320 raw findings, 4 submittable. How SecurityClaw tracks bug bounty campaigns at scale — dashboard architecture, submission rates, and triage layer."
 date: 2026-06-01
 category: research
 tags: [bug-bounty, automation, securityclaw, intigriti, yeswehack, tools, "2026"]
@@ -172,6 +172,8 @@ Current planned additions:
 - **Payout tracking** — link submitted findings to bounty amounts once resolved
 - **CVE correlation** — surface campaigns with findings linked to known CVEs (connects to the [June 2026 CVE opportunity analysis](/articles/cve-opportunity-analysis-june-2026))
 - **Platform comparison** — Intigriti vs YesWeHack: where does SecurityClaw find higher-quality submittable findings?
+
+For a closer look at the campaigns where WAF blocks prevented automated scanning entirely, see [How SecurityClaw Got Past bol.com's WAF](/articles/securityclaw-kali-waf-bypass-bol-2026/).
 
 The source is in `SecurityClaw/dashboard/`. If you're building something similar, the structured campaign output format is the part worth copying — the dashboard is just a query layer over consistently organised files.
 
