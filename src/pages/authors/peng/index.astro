@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const title = 'Peng — Senior Security Engineer | Bug Hunter Tools';
+const description = 'Peng is the Senior Security Engineer at ClawWorks and the architect of SecurityClaw, an autonomous penetration testing platform. Security research methodology, campaign history, and bug classes covered.';
+---
+
+<BaseLayout title={title} description={description} schemaType="ProfilePage">
+  <script type="application/ld+json" slot="head-extra" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Peng",
+    "jobTitle": "Senior Security Engineer",
+    "description": "Senior Security Engineer at ClawWorks. Architect and primary researcher of the SecurityClaw autonomous penetration testing platform. Specialises in web application security, bug bounty automation, and vulnerability research.",
+    "url": "https://bughuntertools.com/authors/peng/",
+    "worksFor": {
+      "@type": "Organization",
+      "name": "ClawWorks",
+      "url": "https://bughuntertools.com"
+    },
+    "knowsAbout": [
+      "Web application security",
+      "Penetration testing",
+      "Bug bounty hunting",
+      "CORS misconfiguration",
+      "SSRF exploitation",
+      "OAuth security",
+      "IDOR vulnerabilities",
+      "CVE analysis"
+    ]
+  })} />
+
+  <div class="container" style="max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem;">
+    <article>
+      <div class="meta" style="margin-bottom: 1rem;">
+        <span style="display: inline-block; background: #1e293b; color: white; padding: 0.2rem 0.7rem; border-radius: 4px; font-size: 0.85rem; margin-right: 0.5rem;">Researcher Profile</span>
+        <span style="display: inline-block; background: #dc2626; color: white; padding: 0.2rem 0.7rem; border-radius: 4px; font-size: 0.85rem;">Senior Security Engineer</span>
+      </div>
+
+      <h1>Peng</h1>
+      <p style="font-size: 1.1rem; color: #64748b; margin-top: 0.25rem;">Senior Security Engineer, ClawWorks · Architect of SecurityClaw</p>
+
+      <p>Peng is the Senior Security Engineer at ClawWorks and the primary researcher behind the content on this site. Peng built and maintains SecurityClaw — a 54-skill autonomous penetration testing platform that runs structured security campaigns against live bug bounty targets on Intigriti, HackerOne, YesWeHack, and Bugcrowd.</p>
+
+      <h2>Research approach</h2>
+
+      <p>Peng's methodology is systematic rather than ad-hoc. Every campaign runs through a structured pipeline: passive reconnaissance first, then active probing of identified attack surfaces, then exploitation attempts on credible findings, then automated submission draft generation for verified issues. The platform's adaptive engine means findings feed each other — a JS bundle analysis revealing an internal API endpoint immediately triggers the API enumeration chain, not a manual note to investigate later.</p>
+
+      <p>The 54 SecurityClaw skills cover attack classes Peng finds consistently underserved in bug bounty tooling:</p>
+      <ul>
+        <li>CORS misconfiguration detection — including the false positive patterns that waste most researchers' time (see the <a href="/articles/open-redirect-scanner-false-positives-bug-bounty-2026/">scanner false positive analysis</a>)</li>
+        <li>SSRF hypothesis generation — chains from hostname leaks to server-side request forgery</li>
+        <li>OAuth scope abuse and client enumeration</li>
+        <li>IDOR scanning across API endpoints</li>
+        <li>Open redirect hunting with WAF-bypass variants</li>
+        <li>Subdomain takeover detection via certificate transparency monitoring</li>
+        <li>JS bundle analysis for hardcoded credentials and internal API paths</li>
+        <li>CVE intelligence correlation — cross-referencing a target's tech stack with the NVD to identify exploitable CVEs before scanning</li>
+      </ul>
+
+      <h2>Campaign history</h2>
+
+      <p>SecurityClaw has run 27 campaign-result sets since launch. Targets include publicly disclosed programs on Intigriti (Tomorrowland, Visma, Personio, Telenor Sweden, RIPE NCC, DoctoLib, DigitalOcean, Lansweeper) and research campaigns on specific attack classes (CORS, subdomain takeover, JS bundle analysis, OAuth). Each campaign result is stored, analysed, and used to improve the next campaign's hypothesis generation.</p>
+
+      <p>Formal submission track record on Intigriti:</p>
+      <ul>
+        <li>Tomorrowland clickjacking on CAS authentication endpoint</li>
+        <li>Visma AI Assistant subdomain — clickjacking (missing frame protection)</li>
+        <li>Visma AutoInterface — X-Frame-Options set to ALLOWALL</li>
+      </ul>
+
+      <p>Campaign infrastructure runs on ephemeral AWS EC2 instances. Each campaign gets a fresh instance, a clean IP, and no history — the configuration most likely to avoid WAF correlation and rate-limiting before the campaign reaches its interesting findings.</p>
+
+      <h2>What Peng writes here</h2>
+
+      <p>Peng produces the research. The campaign outputs — findings, false positive patterns, tool evaluations, methodology decisions — are briefed to Jenn (ClawWorks content lead), who turns them into the articles published on this site. Technical accuracy is Peng's responsibility; clarity for a broader bug bounty audience is Jenn's.</p>
+
+      <p>The result is that every article here is grounded in actual campaign work, not reconstructed from documentation or synthetic examples. When an article describes a CORS scanner false positive pattern, it's because that pattern appeared in real campaign output and Peng had to build detection logic to distinguish it from a real finding.</p>
+
+      <h2>Articles by Peng</h2>
+      <p>All articles on Bug Hunter Tools are sourced from Peng's research. Browse the full archive:</p>
+      <ul>
+        <li><a href="/articles/">All articles</a></li>
+        <li><a href="/securityclaw/">SecurityClaw platform overview</a></li>
+      </ul>
+    </article>
+  </div>
+</BaseLayout>
