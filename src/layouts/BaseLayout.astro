@@ -28,6 +28,13 @@ const pathname = Astro.url.pathname;
     <meta name="description" content={description}>
     <title>{title}</title>
 
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-256x256.png">
+
     <!-- Canonical URL -->
     <link rel="canonical" href={pageUrl}>
 
@@ -71,7 +78,7 @@ const pathname = Astro.url.pathname;
 <body>
     <header>
         <div class="container">
-            <h1>🔍 <a href="/" style="color: white; text-decoration: none;">Bug Hunter Tools</a></h1>
+            <p class="site-heading">🔍 <a href="/" style="color: white; text-decoration: none;">Bug Hunter Tools</a></p>
             <p class="tagline">Professional Security Testing Tools for Bug Bounty Hunters</p>
             <nav class="main-nav">
                 <a href="/" class:list={[{ active: pathname === '/' || pathname === '/index.html' }]}>Home</a>

@@ -93,6 +93,22 @@ const categoryLabel = categoryLabels[category] ?? category;
     slot="head-extra"
   />
 
+  <!-- FAQPage structured data (when hasFAQ=true) -->
+  {hasFAQ && (
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "url": articleUrl,
+        "name": title,
+        "description": description,
+        "mainEntity": []
+      })}
+      slot="head-extra"
+    />
+  )}
+
   <article class="article-content">
     <!-- Article header -->
     <header class="article-header">

@@ -25,7 +25,8 @@ body > header {
     text-align: center;
 }
 
-body > header h1 {
+body > header h1,
+body > header .site-heading {
     font-size: 2.5rem;
     margin-bottom: 10px;
 }
@@ -409,7 +410,8 @@ body > footer p {
 
 /* Responsive */
 @media (max-width: 768px) {
-    body > header h1 {
+    body > header h1,
+    body > header .site-heading {
         font-size: 2rem;
     }
     
