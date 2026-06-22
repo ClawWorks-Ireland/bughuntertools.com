@@ -113,6 +113,28 @@ The CVSS distribution in the raw findings is H:101, M:121, L:54, I:75. A lot of 
 
 ---
 
+## What the submittable findings actually were
+
+The 4 submittable findings across 21 campaigns give a concrete picture of what automated recon surfaces in real programs:
+
+**Wolt (wolt.com / Intigriti):** CORS wildcard subdomain reflection with `Access-Control-Allow-Credentials: true`, chained with 5 dangling Route53 NS delegations. The chain is what made it submittable as HIGH: subdomain takeover via Route53 zone squatting → CORS bypass → credentialed cross-origin read of the main wolt.com API. Each piece individually was MEDIUM at best. The chain elevates it to HIGH.
+
+Verification at 2026-05-10T07:30Z:
+```bash
+curl -sv -X OPTIONS \
+  -H "Origin: https://evil.wolt.com" \
+  -H "Access-Control-Request-Method: GET" \
+  "https://wolt.com" 2>&1 | grep "access-control"
+# access-control-allow-origin: https://evil.wolt.com
+# access-control-allow-credentials: true
+```
+
+**Visma (aiassistant.stage.vismaonline.com / Intigriti):** Two clickjacking findings. First: `aiassistant.stage.vismaonline.com` missing both `X-Frame-Options` and `Content-Security-Policy: frame-ancestors`. Second: `autointerface.stag.visma.net` serving `X-Frame-Options: ALLOWALL` — an invalid directive that Chrome, Firefox, and Safari silently ignore, leaving the page fully frameable. The `ALLOWALL` value is a known false-safety trap: developers who add it believe they've protected against clickjacking, but all modern browsers treat unrecognised X-Frame-Options values the same as no header at all.
+
+**Tomorrowland (cas.tomorrowland.com / Intigriti):** Clickjacking on the CAS Single Sign-On portal. The SSO authentication page was fully embeddable with no framing protection. An attacker could iframe the login form inside a fake ticket-giveaway page and use UI redressing to steal credentials. Rated MEDIUM — CVSS 4.3 — because the SSO portal handles authentication for all Tomorrowland services including ticket purchase and payment methods.
+
+---
+
 ## HTML export
 
 For team review or program retrospectives:
@@ -125,6 +147,24 @@ The output is a self-contained HTML file — dark-themed, colour-coded by severi
 
 ---
 
+## The triage layer: where the real work happens
+
+The gap between 320 raw findings and 4 submittable ones isn't a failure of the scanner — it's the triage layer working correctly. Understanding what gets filtered and why is what separates experienced bug bounty hunters from the ones who burn submission credits on invalid reports.
+
+**Common false positive patterns SecurityClaw triage catches:**
+
+1. **CSP report-only mode** — Doctolib's `api.doctolib.fr` serves a well-crafted `Content-Security-Policy-Report-Only` header with nonces and a strict allowlist. SecurityClaw's header checker correctly flags the absence of an enforced CSP, but triage catches that report-only is a mid-rollout state, not a missing control. Submitting "no CSP" on a target that has a report-only CSP is a sure way to get marked as informational.
+
+2. **Permissions-Policy and COOP/CORP** — these are valid security controls, but on API endpoints they have negligible exploit paths. Programs frequently treat them as informational or out-of-scope. Triage catches the ones where there's no demonstrated impact path.
+
+3. **SRI missing on vendor CDN scripts** — `Subresource Integrity` missing on Datadog RUM or Sentry scripts is a real finding in theory, but programs almost universally consider third-party monitoring scripts out-of-scope for SRI enforcement. Triage flags these as "informational — vendor dependency, not submittable."
+
+4. **WAF false-positive detection** — Tomorrowland's scanner returned "Fastly MEDIUM confidence." Actual response headers showed CloudFront (`via: 1.1 ...cloudfront.net`, `x-amz-cf-pop: DUB56-P4`). The scanner's WAF fingerprinting matched on a Fastly CDN signature pattern that appears in some CloudFront responses. Triage caught the discrepancy by checking the actual response headers.
+
+The 0.3% end-to-end submission rate looks like scanner failure. It isn't. Automated scanning is a surface-coverage tool. Human triage is the quality gate. The dashboard makes the pipeline visible so neither step gets skipped.
+
+---
+
 ## Where this goes next
 
 Current planned additions:
@@ -134,6 +174,18 @@ Current planned additions:
 - **Platform comparison** — Intigriti vs YesWeHack: where does SecurityClaw find higher-quality submittable findings?
 
 The source is in `SecurityClaw/dashboard/`. If you're building something similar, the structured campaign output format is the part worth copying — the dashboard is just a query layer over consistently organised files.
+
+## The numbers that matter
+
+Running 21 campaigns across multiple bug bounty platforms produces a lot of data that doesn't mean much without context. Here are the numbers that actually tell you how SecurityClaw is performing:
+
+- **4 minutes 8 seconds** — median campaign run time on a single `t3.medium` EC2 instance, 16 skills, a real European target
+- **1.25% submission rate** — raw findings to submittable after triage. Consistent with industry benchmarks for automated scanning.
+- **0.3% end-to-end rate** — raw findings to actually submitted. The gap between 1.25% and 0.3% is submission backlog, not additional triage filtering — those reports are sitting ready.
+- **3 blocked campaigns** — 14% of bug bounty campaigns hit a WAF or bot protection layer that prevented automated scanning. Without the dashboard, those would be invisible.
+- **H:101 / M:121 in raw findings** — these are scanner-assigned severities, not confirmed exploitability. Human triage downgrades the majority. The H count is the most inflated — scanners tend to call missing CSP `HIGH`, which overstates the actual risk in most contexts.
+
+The dashboard's value isn't the chart output. It's that every campaign is accounted for, every blocked target is visible, and nothing submittable sits in a directory unnoticed.
 
 ---
 

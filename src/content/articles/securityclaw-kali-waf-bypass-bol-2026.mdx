@@ -20,6 +20,40 @@ This isn't a flaw in the WAF. It's working as designed. For security researchers
 
 SecurityClaw's previous four bol.com campaigns (002–005) all hit this wall. Over 2,600 findings were eventually recovered from Campaign 005 via an S3 results pipeline — but those were certificate findings from subdomain scanning, the one phase that didn't require direct HTTP contact with the main site. Anything needing live HTTP contact was silently WAF-blocked.
 
+## The CDN Reputation Problem in Practice
+
+The scale of IP reputation blocking is worth understanding before you try to work around it. Akamai, Cloudflare, and Fastly all maintain continuously updated intelligence feeds correlating BGP ASN prefixes against scanner behaviour. The key signals that get a prefix flagged:
+
+- **High request rate from a single IP** — even modest automated scanning from EC2 generates rates that look like abuse
+- **Lack of browser TLS fingerprint** — covered separately below, but many WAFs now operate at both IP and TLS layers simultaneously
+- **No human browsing patterns** — a scanner hitting 30 distinct paths in 8 seconds doesn't look like a user navigating
+
+The practical implication: even if you slow your scanner to 2 requests/second — slower than most legitimate users — you can still be blocked purely on ASN reputation if your egress is in the `52.0.0.0/11` range or similar AWS prefixes. The WAF doesn't need to see scanner-like behaviour. It already knows you're from AWS.
+
+For SecurityClaw's EC2 campaigns, this manifested as `HTTP 403` responses with Akamai's signature block headers returned in under 50ms — before any of the 14–16 security skills even transmitted their first real request payload.
+
+## Confirming the Block Source
+
+Before building the residential infrastructure, the team confirmed the block was IP-based (not content-based) using a simple before/after test:
+
+```bash
+# From EC2 (t3.medium, eu-west-1) — blocked
+curl -si https://www.bol.com -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" \
+  -H "Accept: text/html" | head -5
+# HTTP/1.1 403 Forbidden
+# X-Check-Cacheable: NO
+# Server: AkamaiGHost
+
+# From residential IP (Sky UK, Dublin) — passes
+curl -si https://www.bol.com -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" \
+  -H "Accept: text/html" | head -5
+# HTTP/2 200
+# content-type: text/html; charset=utf-8
+# server: Apache
+```
+
+Same User-Agent. Same request structure. Different IP. Different result. The block was entirely IP-reputation-based, not content-based. This confirmed the residential egress approach would work — no TLS fingerprint manipulation, no header spoofing required.
+
 ## The Solution: A Residential Kali Container
 
 The fix was Peng's `securityclaw-kali` Docker container, running SecurityClaw from a residential network rather than a cloud instance. The container runs on AirDelmar's home infrastructure with egress through a Sky UK broadband connection in Dublin, Ireland — AS5607, residential, Dublin IE.
@@ -75,6 +109,26 @@ The HTTP security headers are a different story:
 
 Nine real findings where EC2 campaigns returned nothing but walls. The header gaps, particularly the missing CSP on an e-commerce platform handling payment flows, are genuinely worth reporting through Intigriti.
 
+## Reading the Header Findings in Context
+
+Missing security headers produce a lot of scanner noise because they're trivially detectable and ubiquitous. Understanding which ones matter — and why — determines whether you're looking at a reportable finding or informational noise.
+
+**Content-Security-Policy on an e-commerce platform is different from CSP on a static blog.** bol.com handles active shopping sessions, third-party payment integrations, loyalty programme scripts, and recommendation engine widgets. Without a CSP, any cross-site scripting vulnerability anywhere on the site — in a product review, a search parameter, a third-party ad script — has unrestricted DOM access. The attack surface for XSS payload delivery is significantly wider than it would be on a simpler application.
+
+**The X-Content-Type-Options finding** is subtle but real. Browsers will attempt to MIME-sniff responses if `nosniff` isn't set. For a site that allows user-generated content (product reviews, seller listings), this creates a vector where a carefully crafted file upload could be rendered as HTML by the browser even if it was stored as `text/plain`. Combined with a file-upload endpoint, MIME sniffing has been the root cause of stored XSS findings on several major e-commerce platforms.
+
+**X-Frame-Options and CSP frame-ancestors** overlap, but neither is present on bol.com. The clickjacking surface on an e-commerce checkout flow is higher-impact than most programs acknowledge: a convincing framing attack can trick a user into completing a purchase they didn't intend to make, or redirect post-payment to a phishing page.
+
+On the Intigriti submission threshold, missing security headers typically score LOW or MEDIUM individually, but can escalate to HIGH when combined with a demonstrated exploit path. The missing CSP, if paired with a reflected XSS in bol.com's search or product URL parameters (a known class on e-commerce platforms), would produce a HIGH combined finding.
+
+## What This Changes for Future Campaigns
+
+The bol.com Campaign 006 now has a clear direction: follow the header findings. Specifically:
+
+1. **CSP gap exploration** — test bol.com's search, product, and review parameters for reflected XSS using the residential container. Without CSP enforcement, any XSS finding has immediate impact.
+2. **Referrer-Policy leak audit** — map which internal URL paths bol.com leaks to third-party analytics and ad scripts. High-value referrer paths (cart pages, order confirmation, account settings) can reveal internal structure.
+3. **Permissions-Policy scope** — check whether any embedded third-party widgets on bol.com's product pages attempt to request camera, microphone, or location permissions. Without a Permissions-Policy, there's no browser-level restriction.
+
 ## What This Unlocks
 
 The residential Kali container isn't just a workaround for one target — it changes SecurityClaw's operational model for any Akamai- or Cloudflare-protected target. Cloud IP blocking is the default posture for major CDNs, which means most enterprise targets have been effectively out of reach for EC2-based scanning.
@@ -82,3 +136,7 @@ The residential Kali container isn't just a workaround for one target — it cha
 With residential egress confirmed and validated end-to-end, SecurityClaw can now run meaningful campaigns against the category of targets that previously returned nothing. The acceptance test suite is in place to verify the setup before each campaign cycle.
 
 bol.com Campaign 006 has a real findings baseline to build from. The wall is down.
+
+---
+
+*Peng is Senior Security Engineer at ClawWorks. SecurityClaw is the research platform behind [bughuntertools.com](/).*

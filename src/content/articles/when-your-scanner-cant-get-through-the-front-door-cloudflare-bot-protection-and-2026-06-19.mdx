@@ -14,25 +14,101 @@ This article turns the Doctolib experience into a practical guide: what TLS fing
 
 ---
 
+## The Doctolib Campaign
+
+SecurityClaw ran a structured campaign against Doctolib in May 2026: 15 skills, `User-Agent: BugBounty/42 (YWH)`, rate-limited to ≤10 requests/second, targeting `api.doctolib.fr` as the primary surface (the API endpoint that bypasses the JS challenge on `www.doctolib.fr`).
+
+The infrastructure confirmed before the campaign ran: Cloudflare CDN on `www.doctolib.fr` (CF-RAY in response headers, `cf-mitigated: challenge` on curl), Rails monolith (`_doctolib_session` encrypted session cookie), Datadog RUM and Sentry monitoring. Target scope confirmed in YesWeHack program: `*.doctolib.fr`, `*.doctolib.de`, `*.doctolib.it` all in-scope.
+
+15 skills ran against `api.doctolib.fr`. 20 raw findings. Zero submittable.
+
+The reason: every finding that looked interesting on first pass had an explanation that killed submittability on second look.
+
+---
+
 ## Key Technical Points
 
-1. **The real block is TLS fingerprinting, not IP or User-Agent**
-   Cloudflare's bot fight mode uses JA3/JA4 TLS fingerprints — a hash of how your TLS client says hello. `curl`, Python `requests`, and most HTTP libraries have fingerprints that are trivially identified as non-browser. Rotating the User-Agent string does nothing because the block happens at the TLS layer, before HTTP headers are even read. Even on a residential IP, a curl-based client will be challenged.
+### 1. The real block is TLS fingerprinting, not IP or User-Agent
 
-2. **Detection signature: `cf-mitigated: challenge`**
-   When Cloudflare's JS challenge fires, the response includes `cf-mitigated: challenge` in the headers. If your scanner is getting this header, you're not hitting a rate limit or a soft block — you're hitting active bot protection. Stop, don't retry 20 times hoping it'll lift.
+Cloudflare's bot fight mode uses JA3/JA4 TLS fingerprints — a hash of how your TLS client says hello. `curl`, Python `requests`, and most HTTP libraries have fingerprints that are trivially identified as non-browser. Rotating the User-Agent string does nothing because the block happens at the TLS layer, before HTTP headers are even read. Even on a residential IP, a curl-based client will be challenged.
 
-3. **`BugBounty/42 (YWH)` User-Agent is program-layer, not Cloudflare-layer**
-   YesWeHack programs require this UA header so the target's *own WAF rules* whitelist scanner traffic. It operates at Layer 7 (HTTP). Cloudflare's bot fight mode operates at Layer 4 (TLS). The two layers are independent. YWH UA passes the program's allowlist; it does not bypass Cloudflare's TLS fingerprint challenge.
+The JA3 fingerprint is computed from:
+- TLS version
+- Cipher suites (in order)
+- Extension types (in order)
+- Elliptic curve groups
+- Elliptic curve point formats
 
-4. **Your options when blocked by Cloudflare bot fight mode**
-   - **Switch to browser-based testing**: Selenium/Playwright with a real Chrome binary has a browser TLS fingerprint. Cloudflare typically doesn't challenge it (or challenges much less aggressively). This works for interactive testing but not for bulk automation.
-   - **Use a browser-based proxy**: Tools like Caido or Burp with embedded Chromium keep your proxy fingerprint clean. Combine with manual exploration.
-   - **Focus on what the scanner CAN reach**: Even when all HTTP endpoints are blocked, CT log enumeration (certspotter, crt.sh) still works — it queries the CT log service, not the target. JS bundle analysis from the one admin panel that IS accessible can reveal API endpoints for authenticated manual testing later.
-   - **Accept the scope and prioritise manual work**: If the target has a €50k bounty and automation is impossible, switch to manual browser testing. The highest-value findings (IDOR, business logic) require authentication anyway.
+A `curl 8.x` TLS hello looks nothing like a Chrome 124 TLS hello, and Cloudflare's fingerprint database has been trained on billions of browser interactions. The mismatch is detected in milliseconds. No User-Agent string changes this — the fingerprint comes from the TLS handshake, not the HTTP request.
 
-5. **The CVE scoring mismatch problem** *(secondary angle — could be a follow-up article)*
-   The SecurityClaw CVE pipeline scored Doctolib at 10.0 because it matched by bounty ceiling × CVSS, not by tech stack relevance. The matched CVEs (SimpleHelp OIDC bypass, SAP NetWeaver, Flowise, Magento file upload) have zero relevance to Doctolib's Ruby on Rails stack. This is a known gap in automated CVE-to-target matching — the pipeline needs tech stack confirmation before a CVE score means anything.
+### 2. Detection signature: `cf-mitigated: challenge`
+
+When Cloudflare's JS challenge fires, the response includes `cf-mitigated: challenge` in the headers. If your scanner is getting this header, you're not hitting a rate limit or a soft block — you're hitting active bot protection. Stop, don't retry 20 times hoping it'll lift.
+
+```bash
+# Quick detection check (30 seconds):
+curl -si https://www.target.com -H "User-Agent: Mozilla/5.0" | grep -i "cf-mitigated"
+# cf-mitigated: challenge  ← Cloudflare JS challenge active
+```
+
+If `cf-mitigated: challenge` appears, `curl` and Python `requests` won't get through regardless of IP, User-Agent, or rate limiting.
+
+### 3. `BugBounty/42 (YWH)` User-Agent is program-layer, not Cloudflare-layer
+
+YesWeHack programs require this UA header so the target's *own WAF rules* whitelist scanner traffic. It operates at Layer 7 (HTTP). Cloudflare's bot fight mode operates at Layer 4 (TLS). The two layers are independent. YWH UA passes the program's allowlist; it does not bypass Cloudflare's TLS fingerprint challenge.
+
+This matters because hunters frequently assume that using the correct platform User-Agent should get them through bot protection. It doesn't. The program operator added the UA to their own WAF allowlist — they can't add it to Cloudflare's TLS fingerprint whitelist, which operates at a layer the origin server doesn't control.
+
+### 4. What the Doctolib triage found
+
+20 raw findings, 0 submittable. The triage breakdown explains why:
+
+**Finding 1 — CSP Missing (scanner: HIGH → FALSE POSITIVE)**
+`api.doctolib.fr` serves `content-security-policy-report-only` with nonces and a strict allowlist. The scanner flagged "no enforced CSP." Correct technical observation. But report-only with a well-crafted policy is a mid-rollout deployment state, not a missing control. Not submittable.
+
+**Finding 2 — Permissions-Policy / COOP / CORP (scanner: MEDIUM/LOW → NOT SUBMITTABLE)**
+Standard browser-hardening headers. On an API endpoint, no demonstrated exploit path. Doctolib's existing CSP and HSTS already address higher-priority controls. These are treated as informational by YesWeHack programs.
+
+**Finding 3 — SRI Missing on Datadog/Sentry (scanner: HIGH × 7 → INFORMATIONAL)**
+`www.datadoghq-browser-agent.com/datadog-rum-v4.js` and Sentry scripts loaded without Subresource Integrity. Technically valid. Programs universally treat third-party monitoring scripts as out-of-scope for SRI enforcement — vendors don't publish stable hashes for CDN scripts that update continuously.
+
+**Finding 4 — Referrer-Policy missing on `pro.doctolib.fr` (scanner: MEDIUM → INFORMATIONAL)**
+`pro.doctolib.fr` sends `Referrer: https://pro.doctolib.fr/internal/path` to third-party requests. Real privacy concern for a healthcare platform handling patient data. YesWeHack verdict: informational, no demonstrated patient data exposure.
+
+The pattern: SecurityClaw found real things, but real things that Doctolib's program explicitly excludes or treats as informational. That's not scanner failure — it's triage working.
+
+---
+
+### 5. Your options when blocked by Cloudflare bot fight mode
+
+**Switch to browser-based testing:** Selenium/Playwright with a real Chrome binary has a browser TLS fingerprint. Cloudflare typically doesn't challenge it (or challenges much less aggressively). This works for interactive testing but not for bulk automation.
+
+```python
+from playwright.async_api import async_playwright
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch(headless=True)
+    page = await browser.new_page()
+    response = await page.goto("https://www.doctolib.fr/")
+    # Chrome TLS fingerprint — Cloudflare doesn't challenge it
+    print(response.status)  # 200
+```
+
+**Use a browser-based proxy:** Tools like Caido or Burp Suite with an embedded Chromium keep your proxy fingerprint clean. Combine with manual exploration.
+
+**Focus on what the scanner CAN reach:** Even when `www.doctolib.fr` is blocked, CT log enumeration (certspotter, crt.sh) still works — it queries the CT log service, not the target. JS bundle analysis from `assets.doctolib.fr` (accessible, CDN-served, no JS challenge) can reveal API endpoints for authenticated manual testing later.
+
+**Accept the scope and prioritise manual work:** Doctolib has a €50k max bounty. The highest-value findings on a healthcare platform — IDOR in patient booking data, authentication bypass on `pro.doctolib.fr`, access control failures in the API — require authentication anyway. A valid test account and Burp Suite with a browser are a better investment than fighting Cloudflare.
+
+---
+
+## The CVE scoring mismatch problem
+
+The SecurityClaw CVE pipeline scored Doctolib at 10.0 because it matched by bounty ceiling × CVSS, not by tech stack relevance. The matched CVEs (SimpleHelp OIDC bypass, SAP NetWeaver, Flowise, Magento file upload) have zero relevance to Doctolib's Ruby on Rails stack.
+
+This is a known gap in automated CVE-to-target matching — the pipeline needs tech stack confirmation before a CVE score means anything. A CVSS 10.0 CVE in Magento doesn't mean anything if the target runs Rails. The fix is in progress: the CVE intelligence pipeline ([covered separately](/articles/cve-intelligence-bug-bounty-nvd-api-2026)) now validates tech stack match before computing opportunity scores.
+
+The Doctolib campaign was also where this mismatch became visible at real scale: a €50k max bounty target that looks like the highest-opportunity target in the queue, but where the relevant CVE surface (Rails CVEs, Rails gem vulnerabilities, OAuth implementation bugs in `omniauth-doctolib`) is a much smaller set than the automated score suggested.
 
 ---
 
@@ -42,32 +118,18 @@ Healthcare SaaS is a high-value bug bounty category: PHI (Protected Health Infor
 
 The lesson for hunters: before launching a campaign against a healthcare/fintech target, spend 10 minutes checking whether their Cloudflare configuration blocks programmatic clients. The detection signature (`cf-mitigated: challenge`) takes 2 seconds to check with a single curl command. If it fires, you're not getting in with standard tooling.
 
+Doctolib in particular is worth manual testing. The program is open, the bounties are real, and the patient data surface is significant. But it's a manual test target, not an automated scan target.
+
 ---
 
-## Why This Matters For Bht Readers
+## Why This Matters For Bug Bounty Hunters
 
 Cloudflare's bot protection is deployed on a large fraction of high-value bug bounty targets. Hunters hitting this wall typically:
 1. Assume it's a User-Agent block (it isn't) and rotate UA strings (doesn't work)
-2. Assume it's a datacenter IP block (it isn't — residential egress doesn't help)
+2. Assume it's a datacenter IP block (it isn't — residential egress doesn't help with TLS fingerprinting)
 3. Waste hours trying to debug or bypass something that fundamentally requires a real browser
 
 This article saves those hours. It explains the real mechanism, the correct detection signature, and the actual options — including when to abandon automation and switch to manual browser-based testing.
-
----
-
-## Concrete "Do This" For Readers
-
-**Quick detection check (30 seconds):**
-```bash
-curl -si https://www.target.com -H "User-Agent: Mozilla/5.0" | grep -i "cf-mitigated"
-```
-If `cf-mitigated: challenge` is in the response → Cloudflare JS challenge active. Do not continue with curl/requests-based tooling.
-
-**What to do next:**
-1. Switch to Burp Suite + browser (Firefox or Chrome) for manual exploration
-2. Use certspotter or crt.sh for subdomain enumeration (doesn't touch the target)
-3. Identify subdomains that DON'T hit Cloudflare (admin panels on internal subdomains, API endpoints, mobile API base URLs from JS bundles)
-4. Create a test account if the program allows it, and test with a real browser session
 
 ---
 

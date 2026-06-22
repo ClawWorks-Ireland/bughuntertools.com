@@ -49,3 +49,64 @@ Campaign-005 ran in **4 minutes 8 seconds** on a single EC2 instance. 16 skills.
 The cert hygiene findings won't produce bounty payouts — they're informational — but they're exactly the kind of surface that informs a more targeted follow-up campaign. Where are the unexpired but misissued certs? What's `techlab.bol.com` running under that unexpected CA? What does the WAF's fingerprint reveal about which resources it's protecting?
 
 Campaign-006 is scoped to dig into those questions. The platform is ready.
+
+## Understanding Certificate Findings at Scale
+
+The 2,547 expired certificate findings deserve more explanation than "P3, not submittable." Certificate transparency data is a research tool, not just a finding type — and understanding what the volume signals about a target's infrastructure is part of using it effectively.
+
+### Why Expired Certs Accumulate
+
+Certificate lifecycle management at scale is genuinely hard. A large e-commerce platform like bol.com runs dozens of active services simultaneously: the main storefront, seller portals, internal APIs, staging environments, microservices, partner integrations, monitoring endpoints. Each service needs a TLS certificate. The difficulty is that cert renewal is typically tied to the service's deployment pipeline — and when a service is decommissioned, the cert renewal job gets cancelled, but the DNS record stays active for weeks or months.
+
+The result: a graveyard of expired certs in CT logs, each representing a service that once existed at a subdomain. From a recon perspective, this is useful. Expired certs from 2024–2025 reveal the architecture of the old infrastructure. Services named `partner.bol.com`, `recruitment-git.bol.com`, and `cms-gateway.bol.com` suggest a Git service for internal recruitment, a CMS gateway facing the internet, and a partner portal — all of which may have been decommissioned but could still have successors at different URLs.
+
+### Reading the Subdomain List
+
+The CT log enumeration from Campaign-005 surfaced subdomains that wouldn't appear in normal DNS resolution. A selection that warrant follow-up:
+
+- `techlab.bol.com` — lab or R&D environment, unexpected CA (Trust Provider B.V.), currently serving
+- `recruitment-git.bol.com` — historical Gitea or similar, decommissioned
+- `cms-gateway.bol.com` — historical CMS gateway, decommissioned
+- `hipstershop.stg.bol.com` — Google microservices demo app on staging environment (see Campaign-004 for detail)
+- `servicedesktps.bol.com` — typo in the domain name (`desktps` rather than `desktops`) — suggests manual DNS entry rather than automated provisioning
+
+The typo subdomain is the most interesting from a security perspective. Automated DNS provisioning doesn't produce typos. This entry was probably created manually for a service desk or IT portal. Manual entries are more likely to survive decommissioning unnoticed, because automated rotation pipelines don't clean them.
+
+### What "WAF_BLOCK" Means as a Finding
+
+The single WAF_BLOCK finding from Campaign-005 was Akamai blocking a specific skill probe on bol.com's main domain. The finding type is important to understand correctly: it doesn't mean the WAF was bypassed — it means SecurityClaw correctly detected the WAF and logged the block as a structured finding.
+
+What you do with a WAF_BLOCK finding:
+
+1. **Map which skill triggered it.** Different skills send different request shapes. If the CORS-testing skill triggered the block but the header-checker didn't, that tells you the WAF is pattern-matching on specific request headers (like `Origin: evil.com`) rather than on IP/ASN alone.
+2. **Check which assets are behind the WAF vs. not.** Large platforms often have inconsistent WAF coverage — the main domain is protected, but API subdomains, staging environments, or partner portals may not be. Campaign-005's single WAF_BLOCK suggests the block was targeted at a specific probe, not a blanket IP-level block (which would have returned dozens of WAF_BLOCK findings).
+3. **Use it as a scope signal.** If the WAF is blocking your scanner on the main domain but not on `techlab.bol.com` or `hipstershop.stg.bol.com`, those subdomains become higher-priority targets for follow-up campaigns.
+
+## The Data Pipeline That Made This Possible
+
+The reason Campaign-005 recovered 2,607 findings — where Campaign-004 recovered only 57 — was entirely a platform infrastructure fix, not a change in what bol.com exposes.
+
+The old result collection flow used AWS Systems Manager (SSM) `RunCommand` to execute the campaign script and collect output via `CommandInvocation.Output`. SSM caps stdout at 24,000 bytes. A certificate transparency scan of `bol.com` and `*.bol.com` produces hundreds of kilobytes of JSON — the first 24KB gets returned, the rest is silently discarded.
+
+The new flow:
+
+```python
+# skills write findings to S3 during execution
+s3_client.put_object(
+    Bucket=RESULTS_BUCKET,
+    Key=f"campaigns/{campaign_id}/findings/{skill_name}.json",
+    Body=json.dumps(findings)
+)
+
+# coordinator reads from S3 after execution completes
+response = s3_client.get_object(Bucket=RESULTS_BUCKET, Key=findings_key)
+findings = json.loads(response['Body'].read())
+```
+
+Each skill writes its findings directly to S3 as it runs. The coordinator reads from S3 after the campaign completes. No stdout. No 24KB limit. Campaign-005 returned 978,146 bytes — the full output.
+
+This is the fix that unlocked real-scale scanning. Without it, SecurityClaw was running 16 skills and seeing only the first ~50 findings regardless of target.
+
+---
+
+*Peng is Senior Security Engineer at ClawWorks. SecurityClaw is the research platform behind [bughuntertools.com](/).*
