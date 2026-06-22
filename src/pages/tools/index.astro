@@ -1,0 +1,120 @@
+---
+/**
+ * tools/index.astro — Tools Database index page.
+ * Lists all SecurityClaw tools from tools.json, grouped by category.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import toolsData from '../../_data/tools.json';
+
+const title = 'SecurityClaw Tools Database — Bug Bounty Security Tools 2026 | Bug Hunter Tools';
+const description = 'Complete database of 40+ bug bounty security tools used in SecurityClaw autonomous campaigns. Per-tool guides covering recon, web testing, API security, cloud, and exploitation.';
+
+const categoryLabels: Record<string, { label: string; icon: string; description: string }> = {
+  'recon':           { label: 'Reconnaissance & OSINT',    icon: '🔍', description: 'Passive and active discovery' },
+  'web-testing':     { label: 'Web Application Testing',   icon: '🌐', description: 'XSS, SSRF, SQLi, misconfigurations' },
+  'api-security':    { label: 'API Security',              icon: '🔌', description: 'IDOR, OAuth, CORS, key testing' },
+  'network-recon':   { label: 'Network Reconnaissance',   icon: '📡', description: 'Port scanning, TLS, service mapping' },
+  'exploitation':    { label: 'Exploitation',              icon: '⚡', description: 'Human-approved exploitation tools' },
+  'cloud':           { label: 'Cloud Security',            icon: '☁️',  description: 'AWS, Azure, GCP misconfiguration' },
+  'mobile':          { label: 'Mobile Security',           icon: '📱', description: 'APK/IPA, deep links, ATS' },
+  'enumeration':     { label: 'Enumeration',               icon: '📂', description: 'Directory & DNS enumeration' },
+  'scanning':        { label: 'Scanning',                  icon: '🔬', description: 'Misconfiguration & vulnerability scans' },
+  'secrets-detection': { label: 'Secrets Detection',       icon: '🔑', description: 'Credentials, API keys, tokens' },
+  'osint':           { label: 'OSINT',                     icon: '🕵️',  description: 'Passive intelligence gathering' },
+  'platform':        { label: 'Platform / Automation',     icon: '🤖', description: 'Campaign orchestration & scoring' },
+  'web-scanning':    { label: 'Web Scanning',              icon: '🌐', description: 'Automated web vulnerability scanning' },
+};
+
+// Group tools by category
+const grouped: Record<string, typeof toolsData.tools> = {};
+for (const tool of toolsData.tools) {
+  if (!grouped[tool.category]) grouped[tool.category] = [];
+  grouped[tool.category].push(tool);
+}
+
+// Sort categories by tool count desc
+const sortedCategories = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
+
+const kindBadgeColor: Record<string, string> = {
+  'external': '#4caf50',
+  'skill': '#667eea',
+};
+---
+
+<BaseLayout title={title} description={description}>
+  <div style="max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; font-family: system-ui, sans-serif; color: #1a1a2e;">
+
+    <header style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.75rem; color: #1a1a2e;">SecurityClaw Tools Database</h1>
+      <p style="font-size: 1.125rem; color: #555; max-width: 680px; margin: 0 auto 1.5rem;">
+        {toolsData.tools.length}+ security tools powering SecurityClaw's autonomous bug bounty campaigns.
+        Per-tool pages cover use cases, campaign chain rules, and recommended resources.
+      </p>
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <span style="background: #4caf50; color: white; padding: 0.35rem 0.9rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">🛠 External Tools</span>
+        <span style="background: #667eea; color: white; padding: 0.35rem 0.9rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">⚙️ SecurityClaw Skills</span>
+      </div>
+    </header>
+
+    {sortedCategories.map(([cat, tools]) => {
+      const meta = categoryLabels[cat] || { label: cat, icon: '🔧', description: '' };
+      return (
+        <section style="margin-bottom: 3rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.25rem;">
+            {meta.icon} {meta.label}
+          </h2>
+          {meta.description && (
+            <p style="color: #666; font-size: 0.95rem; margin-top: 0; margin-bottom: 1.25rem;">{meta.description}</p>
+          )}
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+            {tools.map((tool) => (
+              <a
+                href={`/tools/${tool.slug}/`}
+                style="display: block; background: white; border: 1px solid #e0e0f0; border-radius: 12px; padding: 1.25rem; text-decoration: none; color: inherit; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow 0.2s, border-color 0.2s;"
+              >
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span style="font-weight: 700; color: #1a1a2e; font-size: 1rem;">{tool.name}</span>
+                  <span style={`background: ${kindBadgeColor[tool.kind] || '#888'}; color: white; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.7rem; white-space: nowrap; margin-left: 0.5rem;`}>
+                    {tool.kind === 'skill' ? 'Skill' : 'External'}
+                  </span>
+                </div>
+                <p style="font-size: 0.875rem; color: #555; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                  {tool.use_case}
+                </p>
+                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                  {tool.tags.slice(0, 3).map((tag) => (
+                    <span style="background: #f0f0f8; color: #666; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">#{tag}</span>
+                  ))}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      );
+    })}
+
+    <section style="background: #fffbf0; border: 1px solid #ffe082; border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 2rem;">
+      <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem;">📚 Learn Security Testing — Recommended Books</h2>
+      <p style="color: #666; margin-bottom: 1rem; font-size: 0.9rem;">From beginner guides to advanced penetration testing — handpicked resources for bug bounty hunters.</p>
+      <a
+        href={`https://www.amazon.com/s?k=bug+bounty+penetration+testing+security+tools&tag=bughuntertools-20`}
+        rel="sponsored nofollow"
+        target="_blank"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ff9900; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600;"
+      >
+        🛒 Browse Security Books on Amazon →
+      </a>
+      <p style="color: #888; font-size: 0.75rem; margin-top: 0.75rem; margin-bottom: 0;"><em>Affiliate link — supports bughuntertools.com at no extra cost to you.</em></p>
+    </section>
+
+    <footer style="border-top: 1px solid #e0e0f0; padding-top: 1.5rem; text-align: center; color: #888; font-size: 0.875rem;">
+      <p>
+        <a href="/securityclaw/" style="color: #667eea; text-decoration: none;">SecurityClaw Platform Overview</a>
+        {' · '}
+        <a href="/articles/" style="color: #667eea; text-decoration: none;">Security Research Articles</a>
+        {' · '}
+        <a href="/" style="color: #667eea; text-decoration: none;">Bug Hunter Tools Home</a>
+      </p>
+    </footer>
+  </div>
+</BaseLayout>
