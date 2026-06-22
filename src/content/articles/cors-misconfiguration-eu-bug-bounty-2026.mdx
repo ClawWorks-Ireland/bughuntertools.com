@@ -1,6 +1,6 @@
 ---
 title: "CORS misconfiguration hunting on EU bug bounty targets: one real finding out of five"
-description: "SecurityClaw scanned five EU Intigriti targets for CORS misconfigurations. Four were clean. One — RIPE NCC — had a genuine HIGH: wildcard ACAO with full write methods. Here is what that looks like, how the scanner found it, and how to tell it from a false positive."
+description: "One CORS HIGH out of five EU targets: RIPE NCC's wildcard ACAO with write methods. What it looked like, how SecurityClaw found it, and how to spot it."
 date: 2026-06-12
 category: research
 tags: [bug-bounty, cors, misconfiguration, recon, eu-targets, intigriti]
@@ -220,4 +220,8 @@ If the main domain came up clean, those are the next places to check.
 </div>
 
 </section>
+
+---
+
+If you are working through false positive patterns in other vulnerability classes, [open redirect false positives on EU bug bounty targets](/articles/open-redirect-scanner-false-positives-bug-bounty-2026/) follows the same filter-first methodology. Once you have a confirmed CORS finding, the [bug bounty submission guide for Intigriti, HackerOne, Bugcrowd, and YesWeHack](/articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026/) covers exactly what the form expects and how to frame CORS severity for each platform. The compound chain — CORS misconfiguration plus OAuth on the same endpoint — is documented in the [CORS + OAuth compound account takeover walkthrough](/articles/cors-oauth-compound-chain-account-takeover-2026/).
 

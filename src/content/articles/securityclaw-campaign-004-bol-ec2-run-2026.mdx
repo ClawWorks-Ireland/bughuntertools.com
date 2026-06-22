@@ -1,6 +1,6 @@
 ---
 title: "SecurityClaw's First Real Bug Bounty Campaign: What We Found on bol.com"
-description: "SecurityClaw ran its first EC2 batch campaign against bol.com on Intigriti. 5 minutes. 2,607 findings. A Google demo app on staging. And one lost finding we can't recover."
+description: "SecurityClaw's first EC2 batch campaign against bol.com: 2,607 findings in 5 minutes, a Google demo app on staging, and one lost finding we can't recover."
 date: 2026-04-29
 category: research
 tags: [securityclaw, bug-bounty, bol.com, certificate-transparency, ec2, recon]
@@ -126,3 +126,7 @@ What it did expose was a production-scale platform bottleneck we wouldn't have d
 Campaign-005 runs with the fix in place. The same target. Better instrumentation. The data that campaign-004 should have recovered.
 
 The `hipstershop.stg.bol.com` surface stays on the list for manual follow-up.
+
+---
+
+Campaign-005 results — with the S3 pipeline fix in production — are documented in [SecurityClaw scanned bol.com with 16 AI skills](/articles/securityclaw-campaign-005-bol-validation-2026/). For the architecture connecting EC2 execution to finding storage to dashboard, see [inside a bug bounty campaign dashboard pipeline](/articles/securityclaw-campaign-dashboard-pipeline-2026/). The subdomain recon that preceded the campaigns — CT log enumeration and cert transparency analysis on bol.com — is in the [bol.com subdomain recon walkthrough](/articles/securityclaw-bol-subdomain-recon-staging-demo-2026/).
