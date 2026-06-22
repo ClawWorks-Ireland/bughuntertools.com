@@ -25,9 +25,18 @@ export interface Props {
   slug?: string;
   /** Set true when the article contains a FAQ section — injects FAQPage schema */
   hasFAQ?: boolean;
+  /** Tool review data — injects ItemList/SoftwareApplication/AggregateRating JSON-LD */
+  toolReviews?: Array<{
+    name: string;
+    url: string;
+    ratingValue: number;
+    description?: string;
+    price?: string;
+    priceCurrency?: string;
+  }>;
 }
 
-const { title, description, date, category, tags = [], slug, hasFAQ = false } = Astro.props;
+const { title, description, date, category, tags = [], slug, hasFAQ = false, toolReviews } = Astro.props;
 
 const isoDate = date instanceof Date ? date.toISOString() : new Date(date).toISOString();
 // Human-readable date
@@ -104,6 +113,59 @@ const categoryLabel = categoryLabels[category] ?? category;
         "name": title,
         "description": description,
         "mainEntity": []
+      })}
+      slot="head-extra"
+    />
+  )}
+
+  <!-- Product/SoftwareApplication + AggregateRating structured data (when toolReviews present) -->
+  {toolReviews && toolReviews.length > 0 && (
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": title,
+        "url": articleUrl,
+        "description": description,
+        "itemListElement": toolReviews.map((tool, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": "SoftwareApplication",
+            "name": tool.name,
+            "url": tool.url,
+            "applicationCategory": "SecurityApplication",
+            ...(tool.price ? {
+              "offers": {
+                "@type": "Offer",
+                "price": tool.price,
+                "priceCurrency": tool.priceCurrency ?? "USD"
+              }
+            } : {}),
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": String(tool.ratingValue),
+              "bestRating": "5",
+              "worstRating": "1",
+              "reviewCount": "1"
+            },
+            "review": {
+              "@type": "Review",
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": String(tool.ratingValue),
+                "bestRating": "5"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "BugHunterTools",
+                "url": "https://bughuntertools.com"
+              },
+              ...(tool.description ? { "reviewBody": tool.description } : {})
+            }
+          }
+        }))
       })}
       slot="head-extra"
     />
