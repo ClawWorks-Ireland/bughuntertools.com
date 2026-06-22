@@ -228,6 +228,20 @@ For CORS findings:
 
 ---
 
+<div style="border-left: 4px solid #16a34a; background: #f0fdf4; padding: 1.25rem 1.5rem; margin: 2rem 0; border-radius: 0 6px 6px 0;">
+
+**✅ Verified in SecurityClaw Research**
+
+The submission structure described in this guide reflects SecurityClaw's actual reporting workflow across Intigriti, HackerOne, and YesWeHack programmes in 2025–2026.
+
+In May 2026, SecurityClaw submitted a HIGH-severity CORS misconfiguration finding against an EU internet infrastructure organisation's Intigriti programme: `Access-Control-Allow-Origin: *` with full method exposure on the main web application. The report followed the Intigriti CVSS structure, included numbered curl reproduction steps (matching the CORS example above), and opened with a two-sentence impact summary stating the attacker-accessible data class and the credential requirement gap.
+
+In June 2026, a campaign against a European HR SaaS platform produced a HIGH-severity clickjacking finding on a whistleblowing portal (missing `X-Frame-Options` and `Content-Security-Policy: frame-ancestors`) and a MEDIUM-severity CORS wildcard subdomain reflection with `Access-Control-Allow-Credentials: true`. Both reports were prepared using this exact structure: title, severity, CVSS vector, affected assets, description with attacker scenario, numbered reproduction steps, and recommended fix language. The HIGH finding's severity was elevated from the raw CVSS score because of the whistleblowing context — a concrete example of the business-impact framing described in the Intigriti section above.
+
+All submissions follow responsible disclosure under programme rules of engagement. No exploit code was distributed and no production data was retained.
+
+</div>
+
 ## Further resources
 
 - [Intigriti researcher portal](https://app.intigriti.com/researcher/programs)

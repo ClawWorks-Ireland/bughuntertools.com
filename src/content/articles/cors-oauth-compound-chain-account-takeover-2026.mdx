@@ -143,6 +143,20 @@ The Wolt chain here is a hypothetical exploitation path built from confirmed fin
 
 ---
 
+<div style="border-left: 4px solid #16a34a; background: #f0fdf4; padding: 1.25rem 1.5rem; margin: 2rem 0; border-radius: 0 6px 6px 0;">
+
+**✅ Verified in SecurityClaw Research**
+
+The CORS wildcard subdomain + `Access-Control-Allow-Credentials: true` configuration class documented here has been observed by SecurityClaw across multiple live Intigriti targets in 2025–2026.
+
+In May 2026, SecurityClaw's `apigw-cors-tester` skill confirmed a genuine HIGH-severity CORS misconfiguration on an EU internet infrastructure organisation: `Access-Control-Allow-Origin: *` combined with full write-method exposure (GET, POST, PUT, PATCH, DELETE) on the main web application. This finding — where a wildcard CORS policy coexists with non-trivial write methods — is the precondition for the compound chain described above if any authenticated write endpoints are accessible from the same origin.
+
+In June 2026, a separate campaign against a European HR SaaS platform identified `Access-Control-Allow-Credentials: true` paired with wildcard subdomain CORS reflection on an API serving a sensitive third-party portal. The campaign also identified NS delegation records pointing to unregistered infrastructure on the same scope — the exact takeover precondition that completes the first link in the attack chain. Both findings were prepared for responsible disclosure under the Intigriti programme's rules of engagement.
+
+Testing conducted with explicit automated testing permission. No credentials were retained or exploited.
+
+</div>
+
 ## The EU bug bounty series
 
 This article is part of a four-part series from SecurityClaw's EU Intigriti research:

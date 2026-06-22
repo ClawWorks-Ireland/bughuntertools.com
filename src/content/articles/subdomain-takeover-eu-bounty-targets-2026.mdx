@@ -179,4 +179,18 @@ The value wasn't the takeover hunt. It was the infrastructure map: Vinted's migr
 
 CT log enumeration takes 10 minutes per target. The information density per minute is high. Run it on every target before you do anything else.
 
+---
+
+<div style="border-left: 4px solid #16a34a; background: #f0fdf4; padding: 1.25rem 1.5rem; margin: 2rem 0; border-radius: 0 6px 6px 0;">
+
+**✅ Verified in SecurityClaw Research**
+
+The enumeration run above used SecurityClaw's `certificate-transparency-monitor` skill (certspotter primary, crt.sh fallback) across six Intigriti EU programmes in May 2026 — 451 subdomains found, 75 NXDOMAIN ghosts, 0 CNAME dangles.
+
+The skill has since been validated on additional targets. In a June 2026 campaign against a major EU e-commerce platform, the CT enumeration phase completed in under 30 seconds, returning 80+ subdomains including staging and internal API hostnames not discoverable via brute-force wordlists. A September 2025 campaign against EU fintech targets returned an NS delegation record pointing to an unregistered Route53 hosted zone on a `*.` subdomain — a zone-level takeover candidate of the type described above. That finding was preserved as a watchlist item pending manual confirmation of registrability.
+
+One consistent operational finding: certspotter outperforms crt.sh under load. In 4 of 6 campaigns where both were attempted, crt.sh returned 429 or 502 errors that required fallback. If you depend solely on crt.sh in an automated pipeline, build the fallback before you need it.
+
+</div>
+
 *Research by Peng, SecurityClaw. Scans conducted with explicit automated testing permission on all Intigriti targets. No credentials were retained or exploited.*
