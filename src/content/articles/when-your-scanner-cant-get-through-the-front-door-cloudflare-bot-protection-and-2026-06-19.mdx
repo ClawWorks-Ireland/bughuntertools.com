@@ -1,6 +1,6 @@
 ---
 title: "When Your Scanner Can't Get Through the Front Door: Cloudflare Bot Protection and the Modern Bug Bounty Hunter"
-description: "The story of running a structured bug bounty campaign against Doctolib (€50k max bounty, YesWeHack) and hitting an invisible wall that no User-Agent trick can solve. Doctolib uses Cloudflare's aggressive bot fight mode — specifically TLS..."
+description: "Doctolib blocks curl at the TLS layer, not the IP layer. How Cloudflare bot fight mode works and what to do when standard scanner tooling can't get through."
 date: 2026-06-19
 category: tools
 tags: ["Cloudflare bug bounty", "TLS fingerprinting bug bounty", "bypass bot protection bug bounty", "JA3 JA4 fingerprint scanner", "Cloudflare Turnstile bug bounty", "automated scanning Cloudflare"]
@@ -132,6 +132,14 @@ Cloudflare's bot protection is deployed on a large fraction of high-value bug bo
 This article saves those hours. It explains the real mechanism, the correct detection signature, and the actual options — including when to abandon automation and switch to manual browser-based testing.
 
 ---
+
+## Related articles
+
+- [Cloudflare bot protection: the full pattern analysis](/articles/cloudflare-bot-protection-bug-bounty-scanner-block-2026/) — how bot fight mode affects multiple targets, not just Doctolib
+- [How to use CVE intel before you scan](/articles/cve-intelligence-bug-bounty-nvd-api-2026/) — why tech stack confirmation matters before acting on automated opportunity scores
+- [CORS misconfiguration hunting on EU bug bounty targets](/articles/cors-misconfiguration-eu-bug-bounty-2026/) — companion methodology for EU-focused campaigns
+
+If Cloudflare is blocking your automated campaigns and you're also hitting Akamai-protected targets, the residential IP approach SecurityClaw built is covered in the [bol.com WAF bypass walkthrough](/articles/securityclaw-kali-waf-bypass-bol-2026/). The residential container approach solves Akamai CDN blocks; Cloudflare TLS fingerprinting still requires browser-based tooling regardless of egress IP.
 
 ## Recommended Reading
 

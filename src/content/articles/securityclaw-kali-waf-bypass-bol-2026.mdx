@@ -1,6 +1,6 @@
 ---
 title: "How SecurityClaw Finally Got Past bol.com's WAF — and What It Found"
-description: "Enterprise WAFs block cloud IPs before your scanner says hello. SecurityClaw solved the problem with a Kali Linux container running from a residential IP — and bol.com had real findings waiting."
+description: "Enterprise WAFs block cloud IPs by default. How SecurityClaw bypassed bol.com's Akamai block with a residential Kali container — and what the scan found."
 date: 2026-05-01
 category: bug-bounty
 tags: [securityclaw, waf-bypass, bol.com, kali, residential-ip, header-security, bug-bounty]
@@ -136,6 +136,8 @@ The residential Kali container isn't just a workaround for one target — it cha
 With residential egress confirmed and validated end-to-end, SecurityClaw can now run meaningful campaigns against the category of targets that previously returned nothing. The acceptance test suite is in place to verify the setup before each campaign cycle.
 
 bol.com Campaign 006 has a real findings baseline to build from. The wall is down.
+
+For context on what EC2-based campaigns returned before this fix, see [Campaign-005's full findings breakdown](/articles/securityclaw-campaign-005-bol-validation-2026/). For the header findings that residential scanning surfaces on other major targets, see [CORS misconfiguration hunting on EU bug bounty targets](/articles/cors-misconfiguration-eu-bug-bounty-2026/).
 
 ---
 
