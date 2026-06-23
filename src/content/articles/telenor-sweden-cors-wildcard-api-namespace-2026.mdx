@@ -1,0 +1,163 @@
+---
+title: "CORS wildcard on Telenor Sweden's API namespace: what the headers said and what it means"
+description: "SecurityClaw found ACAO: * on every path under /api/* at www.telenor.se, a Spring Boot health actuator exposed on api-app.telenor.se, and missing HSTS on Ownit. Here's what the scan turned up across Telenor's YesWeHack program."
+date: 2026-06-23
+category: research
+tags: [bug-bounty, cors, recon, yeswehack, telenor, telco, security-headers]
+hasFAQ: true
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Running CORS recon on a major EU telecom feels like it should produce complicated results. Infrastructure this large tends to have multiple teams, legacy middleware, and wildly inconsistent header policies across different subdomains. Telenor Sweden's YesWeHack program had exactly that — a single infrastructure-layer CORS misconfiguration that applied to an entire API path namespace.
+
+Three submittable findings from the campaign. The headline is `www.telenor.se`'s `/api/*` namespace accepting `Access-Control-Allow-Origin: *` on every tested path regardless of whether the endpoint existed.
+
+---
+
+## The scope
+
+Telenor Sweden's bug bounty covers a wide range of brands: `*.telenor.se`, `*.bredbandsbolaget.se`, `*.europolitan.se`, `*.ownit.se`, `*.vimla.se`, and several others. The campaign ran against `www.telenor.se` and `www.ownit.se` — the two primary consumer brand sites.
+
+`www.bredbandsbolaget.se` redirected to `www.telenor.se` (same platform, same findings). `www.vimla.se` returned HTTP 403 from an AWS ALB — WAF-blocked, no testable surface reached.
+
+---
+
+## Finding 1: CORS wildcard on the full /api/* namespace
+
+```bash
+curl -sI -H "Origin: https://attacker.com" "https://www.telenor.se/api"
+```
+
+Response:
+
+```http
+HTTP/2 404
+access-control-allow-origin: *
+access-control-allow-methods: GET
+```
+
+The same headers came back against `https://www.telenor.se/api/v1`, `https://www.telenor.se/api/user`, and every other `/api/*` path tested. HTTP 404 bodies, but the CORS headers were there on every response.
+
+The misconfiguration is at the infrastructure layer. The ASP.NET Core application or the F5 BIG-IP load balancer in front of it is injecting `ACAO: *` on everything matching `/api/*` — the response status code and whether the path exists does not change what headers get applied. This is the load-balancer-adds-headers-in-front-of-app pattern, and it is common in enterprise stacks that configure CORS at the edge rather than inside the application.
+
+### What the wildcard means
+
+`ACAO: *` allows any cross-origin JavaScript to read the response body. The limitation everyone knows: browsers will not include session cookies when `ACAO: *` is set — `credentials: 'include'` requires an explicit origin, not a wildcard.
+
+That limitation matters here. All tested paths returned 404 to unauthenticated requests, so there was no visible authenticated data to demonstrate direct impact. The risk is structural: the CORS policy is wrong for the entire API namespace, and if any of those endpoints serve authenticated data via token-based auth (localStorage/sessionStorage), the wildcard exposes them to cross-origin reads. An attacker can fetch `https://www.telenor.se/api/<endpoint>` from any page the user visits — cookie auth cannot be included, but Bearer tokens that JavaScript can read can be.
+
+The recommendation is to replace `*` with an explicit allowlist: `Access-Control-Allow-Origin: https://www.telenor.se`. Infrastructure-layer CORS policies that apply to an entire API namespace are exactly the kind of configuration that should reference a specific origin, not a wildcard.
+
+---
+
+## Finding 2: Spring Boot health actuator on api-app.telenor.se
+
+```bash
+curl -s https://api-app.telenor.se/health
+```
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "diskSpace": {
+      "status": "UP",
+      "details": {
+        "total": 10724814848,
+        "free": 5385363456,
+        "threshold": 10485760,
+        "exists": true
+      }
+    },
+    "ping": {"status": "UP"},
+    "refreshScope": {"status": "UP"}
+  }
+}
+```
+
+The `/health` actuator endpoint was publicly accessible without authentication. The response confirms disk metrics (10.7 GB total, 5.3 GB free), Spring Cloud's `refreshScope` being up (indicating a Config Server-based microservice architecture), and internal application status.
+
+Spring Boot Actuator endpoints are meant for operations teams behind internal access controls. The `refreshScope: UP` entry is particularly informative — it confirms the application pulls its config from a Spring Cloud Config Server, which is a detail about the internal service architecture that is not useful for users but is useful for someone mapping the internal stack.
+
+The public Swagger UI shell at `https://api-app.telenor.se/` was also notable. The OpenAPI spec at `/api/v1/openapi.json` returned 404, but the Swagger UI loaded successfully — meaning the API documentation interface is publicly accessible even if the spec is not.
+
+**Fix:** Bind the management endpoints to an internal port only and restrict them by IP. Spring Boot configuration:
+
+```yaml
+management:
+  server:
+    port: 8081  # internal only
+  endpoints:
+    web:
+      exposure:
+        include: none
+```
+
+---
+
+## Finding 3: missing HSTS on www.ownit.se
+
+`www.ownit.se` — Telenor's Ownit broadband brand — was missing `Strict-Transport-Security` on HTTPS responses. HTTP requests redirect to HTTPS (301), but without HSTS, the browser does not cache the HTTPS preference. First-time visitors and users with cleared caches are exposed to downgrade attacks before the redirect fires.
+
+The contrast with the main brand is direct:
+
+```bash
+curl -sI https://www.ownit.se/ | grep -i strict-transport
+# (no output)
+
+curl -sI https://www.telenor.se/ | grep -i strict-transport
+# strict-transport-security: max-age=16070400
+```
+
+`www.telenor.se` has HSTS set at ~186 days. `www.ownit.se` does not. These two sites share a corporate family — the header was configured for one and not propagated to the other. The same platform inconsistency pattern as the Personio case.
+
+---
+
+## The false positive landscape
+
+The scanner returned several findings that were rejected on triage:
+
+**CORS origin reflection on `apis.telenor.se`** — The main `apis.telenor.se` domain reflected origins, but only on root 404 responses, and the entire API surface requires OAuth2 Bearer tokens. A reflection on a 404 response to an unauthenticated request, without a scenario where credentials are sent, does not constitute an exploitable CORS misconfiguration.
+
+**Expired certificates from CT log monitoring** — The `certificate-transparency-monitor` skill returned historical cert expiration records. These are past events in the Certificate Transparency logs, not current TLS issues. CT log data is useful for historical attack surface mapping but not for active security findings.
+
+**Missing CSP on `www.ownit.se`** — Noted but not submitted standalone. Missing CSP without a demonstrated XSS path is informational on most programs. Combined with an XSS it would raise impact; on its own it does not meet the bar.
+
+**Missing Referrer-Policy, Permissions-Policy, COOP, CORP** on various subdomains — Too low severity for a paid program, and these are commonly out of scope in explicit program policies.
+
+---
+
+## On submitting CORS wildcards to YesWeHack
+
+The CORS finding at P3/MEDIUM requires demonstrating why a wildcard on 404-only paths is a meaningful risk rather than a purely theoretical one. The strongest framing:
+
+1. Show that the CORS headers are consistent across the namespace — not a single endpoint but the entire `/api/*` prefix. This is an infrastructure-level misconfiguration, not an isolated path.
+2. Note the token-based auth scenario explicitly. Telenor's main consumer account portal (Mitt Telenor) likely uses some form of front-end token for API calls. Whether those tokens are stored in localStorage or sessionStorage determines direct exploitability, but that is a configuration detail you cannot verify from outside without an authenticated test account.
+3. Explain the fix in one line: `Access-Control-Allow-Origin: https://www.telenor.se` on API paths, no wildcard.
+
+The Spring Boot actuator finding at P4/LOW is straightforward to report — a curl command, the JSON response, and a one-paragraph explanation of what `refreshScope: UP` implies about the internal stack.
+
+---
+
+## Related
+
+- [CORS misconfiguration hunting on EU bug bounty targets: one real finding out of five](/articles/cors-misconfiguration-eu-bug-bounty-2026/) — methodology for finding and verifying CORS issues
+- [Best CORS testing tools in 2026](/articles/best-cors-testing-tools-2026/) — tools and approach for systematic CORS recon
+- [Bug bounty submission guide for Intigriti, HackerOne, Bugcrowd, and YesWeHack](/articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026/) — YesWeHack-specific severity and submission format
+
+---
+
+## FAQ
+
+**Does CORS wildcard matter if all endpoints return 404?**
+
+It depends on what the 404 means. A 404 on an unauthenticated request to `/api/user` does not mean the endpoint does not exist — it may mean it requires authentication and returns 404 rather than 401 when unauthenticated. The CORS headers being present on the 404 response confirm the policy applies to the path. If authenticated requests return data at the same path, and if the frontend uses token-based auth that JavaScript can access, the wildcard is exploitable. It is a structural misconfiguration, not a confirmed immediate impact.
+
+**What is the risk from an exposed Spring Boot actuator?**
+
+The `/health` endpoint specifically discloses disk metrics, application status, and the presence of Spring Cloud Config Server in the stack. That information helps an attacker map the internal architecture. The higher-risk actuator endpoints are `/env` (exposes environment variables, potentially including credentials), `/dump` (thread dump), and `/trace` (HTTP trace). The health endpoint alone is a LOW finding. Finding those other endpoints exposed would be a higher severity.
+
+**Can you exploit CORS wildcard without sending credentials?**
+
+Yes, for unauthenticated content. If any `/api/*` endpoint returns sensitive data to unauthenticated requests (personal data visible before login, internal data exposed without auth), `ACAO: *` lets any cross-origin page read it. The credential limitation applies specifically to session cookies — the wildcard still permits reading responses to cookie-less requests.
