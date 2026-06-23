@@ -1,0 +1,202 @@
+---
+title: "Clickjacking still works in 2026: three EU bug bounty targets that missed the memo"
+description: "Clickjacking findings on Tomorrowland's SSO portal and two Visma staging apps. How React SPAs on cloud hosting get this wrong, and how to test for it."
+date: 2026-06-23
+category: research
+tags: [bug-bounty, clickjacking, security-headers, intigriti, research, sso, react-spa]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Three findings, two Intigriti programs, one recurring mistake. SecurityClaw ran campaigns against Tomorrowland and Visma in May 2026 and turned up clickjacking on three separate assets — a MEDIUM on Tomorrowland's SSO portal and two LOWs on Visma staging apps. One of the Visma findings had an X-Frame-Options header that looked correct until you read the value. It said `ALLOWALL`. That is not a valid directive. Every modern browser ignores it.
+
+This is not a novel class of vulnerability. Clickjacking has been well documented for twenty years. The reason it keeps showing up is specific to how modern SPAs get deployed.
+
+---
+
+## The short version
+
+| Asset | Severity | Finding |
+|-------|----------|---------|
+| `cas.tomorrowland.com` | MEDIUM (CVSS 5.4) | X-Frame-Options missing, CSP missing — SSO portal fully embeddable |
+| `aiassistant.stage.vismaonline.com` | LOW | X-Frame-Options missing, CSP missing — staging AI assistant |
+| `autointerface.stag.visma.net` | LOW | X-Frame-Options: `ALLOWALL` (invalid value, ignored by browsers) + SameSite=None cookies |
+
+All three are React SPAs. Two are on cloud-managed hosting (S3+CloudFront, Azure Static Web App). None had Content-Security-Policy configured.
+
+---
+
+## Finding 1: Tomorrowland's SSO portal
+
+Tomorrowland runs a CAS (Central Authentication Service) SSO portal at `cas.tomorrowland.com`. This handles authentication for all Tomorrowland services — ticket purchases, personal data, payment methods, festival registration. It is the front door for the entire platform.
+
+Running `curl -sI https://cas.tomorrowland.com/` returns:
+
+```http
+HTTP/2 200
+content-type: text/html
+server: AmazonS3
+via: 1.1 ...cloudfront.net
+x-amz-cf-pop: DUB56-P4
+```
+
+That is the complete set of security headers. No `X-Frame-Options`. No `Content-Security-Policy`. No `Strict-Transport-Security`. No `X-Content-Type-Options`. The portal is hosted as a React SPA on S3 behind CloudFront and has no response headers policy applied to the distribution.
+
+This is a straightforward embed:
+
+```html
+<!DOCTYPE html>
+<html>
+<head><title>You've won a Tomorrowland ticket!</title></head>
+<body>
+  <h1>Claim your free Tomorrowland 2026 ticket</h1>
+  <p>Verify your account to claim your reward:</p>
+  <iframe
+    src="https://cas.tomorrowland.com/"
+    width="500"
+    height="600"
+    style="border: none;">
+  </iframe>
+</body>
+</html>
+```
+
+Save that to a file, open it in a browser, and the Tomorrowland login form loads inside the iframe without restriction. Because the CAS portal accepts email as a URL parameter for pre-filling the login form, an attacker can land a victim on a fake prize page with their email already populated in the iframe — they just need to type a password.
+
+The SSO scope makes this a MEDIUM rather than a LOW. Compromising a `cas.tomorrowland.com` session means access to everything connected to that account, not just one service. CVSS 5.4: `AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N`.
+
+**Remediation for CloudFront-hosted SPAs:**
+
+Add a CloudFront Response Headers Policy to the distribution:
+
+```
+X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'
+```
+
+In CloudFront: Distributions → Behaviors → Response headers policy → add custom headers. Attach to the distribution serving `cas.tomorrowland.com`. Both headers together cover legacy browsers (XFO) and modern ones (CSP `frame-ancestors` takes precedence in Chrome 40+, Firefox 45+, Safari 11+).
+
+---
+
+## Finding 2: Visma AI Assistant staging
+
+`aiassistant.stage.vismaonline.com` is explicitly in-scope for the Visma Intigriti program as a Tier 2 staging asset. It is a React SPA on Azure Static Web App with an Azure App Service backend.
+
+The headers tell most of the story:
+
+```http
+HTTP/2 200
+strict-transport-security: max-age=10886400; includeSubDomains; preload
+referrer-policy: same-origin
+x-content-type-options: nosniff
+x-xss-protection: 1; mode=block
+```
+
+HSTS is configured. X-Content-Type-Options is there. Someone has thought about headers on this deployment — just not `X-Frame-Options` or `Content-Security-Policy: frame-ancestors`. The page embeds cleanly in an iframe.
+
+Visma's identity layer (`connect.identity.stagaws.visma.com`) is configured correctly: it serves `Content-Security-Policy: frame-ancestors 'self'` along with a full security header set. The SSO portal is protected. The staging app that sits in front of it is not.
+
+The impact on a staging asset is limited — this scored LOW rather than MEDIUM partly because the blast radius of a staging credential is smaller. But the finding is valid, and it shows the gap between how carefully the identity team hardened the SSO layer versus how the staging apps were deployed.
+
+**Remediation for Azure Static Web Apps:**
+
+Add to `staticwebapp.config.json`:
+
+```json
+{
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "frame-ancestors 'self'"
+  }
+}
+```
+
+---
+
+## Finding 3: the ALLOWALL problem
+
+`autointerface.stag.visma.net` is the staging environment for Visma's Auto Interface accounting automation product. It is explicitly in-scope as a Tier 2 asset. The sign-in page is the relevant endpoint.
+
+```http
+HTTP/2 302
+x-frame-options: ALLOWALL
+```
+
+Someone configured `X-Frame-Options: ALLOWALL`. It looks like a legitimate directive. It is not.
+
+RFC 7034 defines exactly three valid values for X-Frame-Options: `DENY`, `SAMEORIGIN`, and `ALLOW-FROM origin`. `ALLOWALL` is not one of them. The RFC makes this explicit — unknown values are ignored. Chrome, Firefox, and Safari all silently discard the header when the value is unrecognized. The page loads in an iframe as if the header were absent.
+
+The interesting detail is what comes alongside it: the session cookie uses `SameSite=None`. This is not accidental. When a cookie is `SameSite=None`, it gets sent on cross-site requests, including requests made from inside iframes on different origins. The developers probably set `SameSite=None` because the app is meant to be embedded in a parent Visma product. To allow that embedding, they set `X-Frame-Options: ALLOWALL` — trying to permit framing while still looking like they had a security control. The problem is the value they chose does nothing.
+
+The result is a sign-in page with:
+- No framing restrictions (browsers ignore the invalid value)
+- Session cookies that travel cross-site (`SameSite=None`)
+- No CSP `frame-ancestors` fallback
+
+If cross-origin embedding is genuinely required for this app, the correct approach is `Content-Security-Policy: frame-ancestors 'self' https://vismaonline.com` to restrict embedding to trusted parent origins. Not `ALLOWALL`.
+
+**Remediation:**
+
+Replace `X-Frame-Options: ALLOWALL` with either:
+
+```
+X-Frame-Options: SAMEORIGIN
+Content-Security-Policy: frame-ancestors 'self'
+```
+
+Or, if cross-origin embedding to specific Visma domains is needed:
+
+```
+Content-Security-Policy: frame-ancestors 'self' https://vismaonline.com https://visma.net
+```
+
+Note: `ALLOW-FROM` in X-Frame-Options is deprecated and not supported by Chrome. CSP `frame-ancestors` is the right tool when you need to allow specific origins.
+
+---
+
+## The common pattern: SPAs on cloud hosting
+
+All three findings share the same root cause. A React SPA is deployed to a cloud-managed static hosting service — S3+CloudFront, Azure Static Web App — and the default configuration adds no security headers. The dev team thinks about authentication, about the app logic, about the backend API. Nobody applies a response headers policy to the CDN.
+
+This came up in the Personio campaign too. SecurityClaw found [clickjacking on Personio's whistleblowing platform](/articles/personio-whistleblowing-clickjacking-cors-2026) — another React SPA on S3 without a CloudFront headers policy. Same fingerprint: `server: AmazonS3`, zero security headers.
+
+The pattern is worth noting as a recon heuristic. If you see `server: AmazonS3` or `server: Microsoft-IIS` on an SPA with no CloudFront/Azure response headers policy in place, the framing headers are almost certainly missing. It takes two minutes to verify with curl, and programs that have this gap on SSO or authentication pages will generally rate it MEDIUM or above.
+
+---
+
+## How to test
+
+The test is simple:
+
+```bash
+curl -sI https://target.example.com/ | grep -i -E "x-frame-options|content-security-policy|frame-ancestors"
+```
+
+If neither header appears, check whether the page embeds:
+
+```html
+<iframe src="https://target.example.com/" width="800" height="600"></iframe>
+```
+
+Save to a local HTML file, open in Chrome. If the login or sensitive form renders inside the iframe, you have a valid finding. Take a screenshot.
+
+Before submitting, confirm:
+1. The target is in-scope (authentication pages, SSO portals, and sensitive forms are the ones that score MEDIUM or above)
+2. The page loads inside the iframe without redirecting to a framing-disallowed error
+3. You are not submitting on a page that has `X-Frame-Options: SAMEORIGIN` when the embedding test also uses the same origin — test from a different domain
+
+For Intigriti specifically: standalone missing-header findings on low-sensitivity pages typically score LOW or get closed as informational. The severity follows the sensitivity of what is in the frame. An SSO login page scores differently than a public marketing page.
+
+---
+
+## Practical notes for Intigriti researchers
+
+Clickjacking is not glamorous. It does not make Hacker News. But it shows up repeatedly in cloud-hosted SPAs because the default deployment path for S3+CloudFront and Azure Static Web Apps does not include security headers, and a lot of engineering teams do not add them.
+
+The findings here were all on Intigriti-hosted programs. Tomorrowland (€2,500 max) and Visma (€7,500 max) both accept automated tooling with a custom header to identify the researcher. If you are working EU Intigriti programs and have not checked whether their SPAs have framing headers, it is worth 60 seconds of curl output.
+
+The ALLOWALL finding is the more interesting one to file. It requires more explanation in the report — you have to explain that the value is non-standard, what browsers do with it, and why the protection people thought was in place is actually absent. Triagers who have not seen the RFC do not always understand this immediately. Worth including the RFC 7034 citation in your submission.
+
+---
+
+*Research by Peng, SecurityClaw — May 2026. Campaigns run against Tomorrowland (Intigriti) and Visma (Intigriti) with programme-approved automated tooling and custom identification headers.*
