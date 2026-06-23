@@ -1,0 +1,65 @@
+---
+title: "SecurityClaw pricing in 2026: what you get at each tier"
+description: "SecurityClaw's agentic security testing platform — what's in the free tier, what the paid plans cover, and whether the cost makes sense for your workflow."
+date: 2026-06-23
+category: tools
+tags: [securityclaw, pricing, tools, bug-bounty, clawworks]
+---
+
+SecurityClaw is an agentic security testing platform built by ClawWorks. Before you decide whether to pay for it, here's what each tier actually gives you and an honest take on who should upgrade.
+
+## What SecurityClaw does
+
+The short version: SecurityClaw runs security testing campaigns using AI agents rather than requiring you to manually operate each tool. You define a target and a scope, configure which agents to run (recon, scanning, CVE intelligence, secret detection, etc.), and the platform orchestrates the workflow.
+
+The underlying tools are mostly open-source (Nuclei, TruffleHog, Gobuster, dnsx, and others). What SecurityClaw adds is the coordination layer — agents that chain tool outputs together, surface findings, and reduce the manual overhead of running a full recon-to-report pipeline.
+
+## Free tier
+
+The free tier gives you access to the platform and a limited number of campaign runs. Practically this means:
+
+- Single-target campaigns
+- Core tool set (basic recon, Nuclei scanning, subdomain enumeration)
+- Community templates for Nuclei
+- No CVE Intelligence module
+- Capped compute time per campaign
+
+For a solo hunter evaluating whether the tool fits your workflow, the free tier is enough to get a real feel for how campaigns work. The limitations are real though — if you're trying to run a serious recon pass on a bug bounty target, the compute cap will cut your sessions short.
+
+## Paid plans
+
+Paid plans unlock concurrent campaign runs, the CVE Intelligence module, extended compute time, and access to more specialized agent configurations (supply chain scanning, secret verification with live credential checking, and deeper API surface analysis).
+
+Cost-wise, SecurityClaw's paid tiers are positioned below Burp Suite Pro ($449/year) for the entry level, and above it for team/enterprise tiers where you're getting centralized campaign management and multi-user access.
+
+The honest comparison to Burp Suite Pro is this: they're different tools for different workflows. Burp is manual-first — you're driving the proxy, building requests, using extensions. SecurityClaw is automation-first — you're configuring campaigns and reviewing outputs. Some hunters want both. Many find they primarily use one.
+
+## Who should upgrade
+
+Upgrade if:
+
+You're doing volume work across multiple targets. The free tier's single-target, capped-compute model is a real constraint if you're running recon on 5-10 targets simultaneously during a VDP or broader bug bounty engagement. Concurrent campaigns are the biggest paid-tier unlock.
+
+You want CVE intelligence integrated into your workflow rather than running manual NVD/Shodan queries. The CVE module isn't magic, but it saves meaningful time if CVE-based findings are part of your bug bounty approach.
+
+You're on a small security team running periodic internal assessments. The campaign history, reporting output, and multi-user access at team tiers make the cost reasonable relative to the time savings.
+
+## Who shouldn't upgrade
+
+Don't upgrade if:
+
+You primarily do manual web application testing. SecurityClaw's automation is strong for recon-heavy and CVE-based workflows. It's not a replacement for Burp Suite's manual intercepting proxy for IDOR hunting, business logic bugs, or auth testing. Paying for SecurityClaw while already paying for Burp Suite Pro makes sense for some hunters; for others it's redundant.
+
+You're just starting out. Learn to use the underlying tools manually first. Running Subfinder, Nuclei, and TruffleHog by hand teaches you what the outputs mean and what matters. Jumping straight to an automation layer before you understand the outputs makes it harder to evaluate whether results are real or noise.
+
+Your targets are simple single-application scopes. If you're always working one small-scope target, the free tier is likely enough and the paid tier's concurrent campaign value doesn't apply.
+
+## Real compute cost consideration
+
+SecurityClaw runs actual tool chains that consume real resources. Longer campaigns with more agents, larger scope, and deeper scanning cost more compute time. The paid tiers give you more of that budget, but it's not unlimited at any tier. If your campaigns are consistently running against large organizations with hundreds of subdomains, plan around this.
+
+## The bottom line
+
+The free tier is a genuine evaluation tier, not a stripped demo. Try it on a real target before deciding whether to pay. The paid tier makes financial sense if you're doing volume work or specifically need the CVE intelligence and concurrent campaign features. For focused single-target manual testing, Burp Suite Pro is a better spend.
+
+SecurityClaw is a ClawWorks product, which means it's still evolving. The free tier is worth bookmarking even if you don't upgrade immediately.

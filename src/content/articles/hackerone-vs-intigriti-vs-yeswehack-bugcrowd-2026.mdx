@@ -1,0 +1,93 @@
+---
+title: "HackerOne vs Intigriti vs YesWeHack vs Bugcrowd 2026: Which Platform Pays Better?"
+description: "Four platforms, different payout structures, different program quality. Here's what actually matters when choosing where to spend your time in 2026."
+date: 2026-06-23
+category: tools
+tags: [bug-bounty, hackerone, intigriti, yeswehack, bugcrowd, platforms, comparison]
+---
+
+Choosing a bug bounty platform sounds straightforward until you actually have to pick one. They all have programs. They all pay. The differences that matter — payout rates, program quality, time-to-resolution, triage culture — don't show up on the homepage.
+
+Here's what the four main platforms look like in practice in 2026.
+
+---
+
+## HackerOne
+
+HackerOne is the biggest platform by reported volume and the one most non-security people have heard of. It has the most enterprise programs: companies like Google, Microsoft, and Goldman Sachs run private programs here.
+
+**What works well:** Private program access is genuinely better on HackerOne than anywhere else. If you're skilled enough to get invited, the programs are larger-scope and often pay higher ceilings. Response times on top-tier programs are fast. HackerOne's triage team (H1/TRIAGE) is used by smaller programs and reduces researcher frustration with unqualified programs that don't know what they're looking at.
+
+**What doesn't:** The public programs are crowded. If you're hunting on publicly-accessible programs, you're competing with thousands of other researchers. Older CVE-based findings get submitted fast and duplicated faster. Report resolution times on smaller programs vary widely. The payout for MEDIUM findings in particular can feel low relative to the effort required.
+
+For new researchers, breaking into HackerOne private programs takes time. The metrics system (signal, reputation) gates invitations, and building those metrics requires submitting valid bugs first, which requires starting on public programs. It's a reasonable system but it's not fast.
+
+---
+
+## Intigriti
+
+Intigriti is based in Belgium and is the dominant platform for European corporate programs. If your targets are EU companies — banks, fintechs, SaaS platforms, healthcare companies — Intigriti is where most of them run programs.
+
+**What works well:** European programs on Intigriti often have higher max bounties relative to program maturity. Companies using Intigriti tend to be newer to bug bounty, which means lower researcher competition. Triage quality is generally good. Intigriti's support team is more responsive than most platforms when things go wrong.
+
+Payout speed is better than average. Intigriti's SLA structure encourages programs to respond within 48 hours, and most programs actually do. For EU-focused researchers, the combination of GDPR-compliant scopes and well-defined automation policies makes it easier to know what you can and can't test.
+
+**What doesn't:** The platform is smaller than HackerOne. There are fewer programs overall, and the highest-paying private programs are concentrated among a small number of large companies. If you want U.S. tech company programs, most of them aren't here.
+
+---
+
+## YesWeHack
+
+YesWeHack is a French platform with a strong presence in France, Germany, and the broader EU. It's smaller than Intigriti but competitive in some segments.
+
+**What works well:** YesWeHack has some programs that aren't available elsewhere — French government programs, energy companies, and mid-market European SaaS. If you've saturated the Intigriti program pool, YesWeHack adds scope without significant overlap. The bonus system (extra payouts for particularly well-written reports or particularly impactful findings) is a real differentiator on some programs.
+
+**What doesn't:** Triage quality is uneven. Some programs take weeks to respond. The platform's overall researcher tooling is less polished than HackerOne or Intigriti. Report status tracking is confusing — "acknowledged" doesn't always mean what you'd expect.
+
+Max bounties are often lower than Intigriti for comparable program types. If you're choosing between the two for an EU-focused strategy, Intigriti generally has better payout potential for the same vulnerability class.
+
+---
+
+## Bugcrowd
+
+Bugcrowd is a U.S.-based platform that sits somewhere between HackerOne and a managed security services firm. It offers VDP (Vulnerability Disclosure Programs) alongside standard bug bounty, and a large number of its programs are managed internally rather than triaged by the vendor.
+
+**What works well:** Bugcrowd has a number of mid-tier U.S. programs that aren't on HackerOne. The point system (Bugcrowd Points) gives you a secondary metric that some researchers find motivating, though it doesn't translate to cash. For VDPs and programs where you're not expecting large payouts anyway, the lower competition makes it easier to build a track record.
+
+**What doesn't:** The payout rates on Bugcrowd's public programs are lower than HackerOne for comparable findings. MEDIUM bugs on HackerOne private programs can pay $500–2,000+; the same bug on a comparable Bugcrowd public program might pay $150–500. The managed triage adds a layer between you and the vendor that sometimes slows resolution.
+
+The platform's design feels dated compared to its competitors. Small thing, but you spend a lot of time in the UI.
+
+---
+
+## What actually determines payout
+
+Platform choice matters less than program selection. A well-scoped private program on any platform pays better than a poorly-scoped public one.
+
+The variables that actually move your earnings per hour:
+
+**Scope breadth.** Wider scope means more targets, more attack surface, more findable bugs. A program with `*.example.com` in scope pays better per unit of time than one with only `app.example.com`.
+
+**Max bounty ceiling.** Programs with higher max bounties usually pay better across all severity levels, not just critical. If a program pays $10,000 for a critical, it usually pays $500–2,000 for a medium. A program that caps at $2,000 for critical will pay $50–200 for the same medium.
+
+**Program age.** Newer programs have more unfound bugs. Older programs have had thousands of researchers over them.
+
+**Automation-allowed status.** Programs that allow automated testing tools dramatically increase your coverage speed. Programs that ban automation require purely manual work, which is slower per finding.
+
+---
+
+## A rough guide to where to start
+
+**New to bug bounty?** Start on HackerOne or Intigriti public programs. HackerOne has more infrastructure (learning resources, structured reputation building). Intigriti has less competition on EU programs.
+
+**Already earning but want more European programs?** Add Intigriti if you haven't already. YesWeHack is a secondary add if you want more scope.
+
+**U.S.-focused and trying to break into private programs?** Focus on HackerOne. The private program quality there is still the best for U.S. tech companies.
+
+**Running security automation and looking for automation-friendly programs?** Filter Intigriti and YesWeHack specifically for automation-allowed programs. EU companies tend to be more permissive about this than U.S. ones.
+
+---
+
+There's no objectively best platform. HackerOne has the best private programs. Intigriti has the best EU coverage. They're different tools for different strategies, and most active researchers eventually use two or three of them.
+
+Pick the one that has the most programs in the sectors you actually know. Domain knowledge beats tool selection almost every time.

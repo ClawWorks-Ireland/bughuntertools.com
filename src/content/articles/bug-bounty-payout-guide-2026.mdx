@@ -1,0 +1,65 @@
+---
+title: "Bug bounty payouts in 2026: what actually pays and what doesn't"
+description: "Real payout data from HackerOne, Intigriti, and YesWeHack. Which vulnerability classes pay well, which programs notoriously lowball, and how to target your work."
+date: 2026-06-23
+category: bug-bounty
+tags: [bug-bounty, payouts, hackerone, intigriti, yeswehack]
+---
+
+Bug bounty payout guides online are usually either vague ("it depends!") or based on best-case numbers that bear no resemblance to what most hunters actually collect. Here's a more grounded look at 2026 payout reality.
+
+## Payout ranges by severity
+
+These are the real ranges you see across public programs on HackerOne, Intigriti, and YesWeHack. The top end exists but requires assets that matter to the program.
+
+**Critical (CVSS 9.0+):** $1,000 to $15,000+. Most critical findings land between $2,500 and $8,000. The $15,000+ payouts happen on major platform programs (Uber, Shopify, GitLab) for things like full account takeover chains or RCE on production infrastructure. Smaller programs with critical bugs typically pay $1,000-$3,000 even if the CVSS score is high.
+
+**High (CVSS 7.0-8.9):** $500 to $3,000. This is where most hunters earn most of their money. A solid SSRF to internal AWS metadata, an IDOR affecting other users' data, or a significant auth bypass in a large program typically lands in this range.
+
+**Medium (CVSS 4.0-6.9):** $100 to $500. Stored XSS affecting other users (not just self-XSS), open redirects on OAuth flows, CORS misconfigs on authenticated endpoints. The $500 end requires the bug to have a clear impact chain — medium findings with vague impact get pushed to the lower end.
+
+**Low (CVSS 0.1-3.9):** $50 to $150, or nothing. Many programs don't pay for low findings at all. VDP-only programs often don't pay regardless of severity. Know before you submit.
+
+## Which vulnerability classes actually pay
+
+**Remote code execution:** Best payout rate relative to severity, but also the hardest to find legitimately. RCE on an in-scope production host will max out the critical range on most programs. If you find actual RCE and the program has a reasonable reputation, expect $5,000-$15,000.
+
+**SSRF (Server-Side Request Forgery):** High value. SSRF to AWS metadata that exposes IAM credentials is a critical finding on cloud-hosted programs. Blind SSRF with limited impact usually lands as medium. The impact chain matters enormously here.
+
+**Authentication bypass:** Consistently pays well. Bypassing MFA, session fixation that leads to account takeover, password reset flaws. Programs understand these bugs intuitively and they're hard to rationalize as "low impact."
+
+**IDOR / Broken Object Level Authorization:** Volume play. Individual IDOR findings on well-protected programs pay $300-$1,000. Finding an IDOR that affects all users or exposes sensitive data upgrades to high. The frustration is that many programs have tight scope restrictions that exclude IDOR on less critical endpoints.
+
+**XSS (Cross-Site Scripting):** Commoditized. Reflected XSS pays $50-$200 on most programs. Stored XSS affecting other users pays more, $200-$500, but self-XSS pays nothing. DOM-based XSS that chains into something meaningful is underrated. On its own, expect medium-low payouts.
+
+**Open redirects:** Pay almost nothing. Some programs don't pay at all. Include them when they're part of a chain (OAuth redirect bypass, phishing vector with brand trust), not as standalone submissions.
+
+**SQL injection:** Still pays well when real. Blind SQLi with confirmed data extraction on an in-scope endpoint is critical-to-high. SQLi in low-value endpoints with no data access gets treated as medium.
+
+**Self-XSS, tab nabbing, HTML injection without script execution:** These are the time-wasters. Most programs reject them outright or pay $50 as a courtesy. Unless you can chain them into real impact, skip them.
+
+## Programs that pay well
+
+GitLab's bug bounty program has a solid reputation for fair payouts and responsive triage. Their scope is broad and they pay at the high end for critical findings. Shopify pays well and has a track record of upgrading severity when hunters explain the impact properly.
+
+Intigriti's managed programs (where Intigriti handles triage rather than the company) generally pay more consistently than self-managed programs. The triage layer reduces the lowball rejection risk.
+
+## Programs that lowball
+
+Any program where the company controls triage and has no public reputation to protect. Small SaaS companies running public programs to check a compliance box often downgrade severity, add out-of-scope calls on questionable grounds, or take 90+ days to respond.
+
+Public VDP (Vulnerability Disclosure Programs) that offer no bounties at all are everywhere. They're worth submitting to if you find something serious (it helps the program and builds reputation), but budget your time accordingly.
+
+## Private programs vs public
+
+Private programs on HackerOne and Intigriti generally pay better than public programs. The competition is lower, the programs are more mature, and companies tend to open private programs when they're ready to actually pay meaningful amounts. Getting invited to private programs requires reputation on the platform, which means submitting to public programs first.
+
+This is the clearest upside path for hunters: build reputation on public programs even at lower payouts, get invited to private programs, earn better on those.
+
+## Targeting tips
+
+Go where the attack surface is interesting, not just where the payout table looks good. Programs with huge attack surfaces and complex applications have more bugs than well-maintained small-scope programs, even if the payout table looks identical.
+
+Check the program's disclosed report history before investing time. Programs that have accepted and paid 200+ reports in the last year are actively engaging with hunters. Programs with 3 reports accepted in two years are likely to reject yours on technicalities.
+
+Payout dates matter more than payout amounts on some programs. A program paying $800 in 14 days is better than one paying $1,200 with a 180-day payout timeline. Chase quality programs over paper-high payouts.
