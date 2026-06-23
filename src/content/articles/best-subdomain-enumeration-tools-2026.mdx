@@ -97,3 +97,5 @@ cat amass-active.txt | dnsx -resp -a -o resolved-active.txt
 The wordlist choice for active brute-forcing matters. SecLists' `dns/subdomains-top1million-110000.txt` is a solid starting point. For deeper coverage on high-value targets, Daniel Miessler's `n0kovo_subdomains` lists are worth trying.
 
 Don't skip the dnsx step. Passive sources returning 5,000 subdomains where 1,800 actually resolve means you're saving yourself from manually chasing 3,200 dead ends. That time adds up.
+
+Once you have a list of live subdomains, check them for takeover opportunities — the [subdomain takeover guide for EU bounty targets](/articles/subdomain-takeover-eu-bounty-targets-2026/) covers which services are exploitable and what programs pay for them. If you're setting up a repeatable recon environment, the [security lab setup guide](/articles/security-lab-setup-guide-2026/) has recommendations for organizing your tooling.

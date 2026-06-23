@@ -136,3 +136,5 @@ Burp Suite 2023+ has gRPC support via the HTTP/2 deserialization. Using the Prot
 JavaScript bundles on the frontend application contain API call patterns. Running `linkfinder` or `gf` (with js-secrets patterns) against downloaded JS files finds API paths that aren't in Burp's crawl. The OpenAPI spec is often at `/api/docs`, `/swagger.json`, `/openapi.json`, or `/api/v1/docs` — check these before manually crawling.
 
 The highest-value API bugs are authorization issues: BOLA, BFLA, and field-level access failures. These require manual analysis of what each user role should and shouldn't be able to access. Scanners won't find them. Time spent understanding the application's data model pays better than running more automated tools.
+
+For a broader look at tooling that complements API testing, see the [best bug bounty tools roundup for 2026](/articles/best-bug-bounty-tools-2026/). If you're evaluating whether Burp Suite Pro is worth the cost for API-heavy work, the [Burp Suite pricing breakdown](/articles/burp-suite-pricing-2026/) covers what you get at each tier.

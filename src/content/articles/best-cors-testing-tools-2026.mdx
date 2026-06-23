@@ -99,3 +99,5 @@ Pipe the output to CORSy. The combination of endpoint discovery and CORS scannin
 ## The finding quality question
 
 A CORS misconfiguration without a proof-of-concept demonstrating data exfiltration is a weak report. Write the PoC HTML page that fetches sensitive data from the vulnerable endpoint and displays it. Run it from a different origin. Document what data is exposed. That's what separates a $500 CORS report from a $50 one.
+
+For a deeper look at how CORS misconfigurations appear in real EU bug bounty targets, see the [CORS misconfiguration guide for EU programs](/articles/cors-misconfiguration-eu-bug-bounty-2026/). If you want to see how CORS bugs chain with OAuth for account takeover, the [CORS OAuth compound chain writeup](/articles/cors-oauth-compound-chain-account-takeover-2026/) walks through a full example.
