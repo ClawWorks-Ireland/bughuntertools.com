@@ -18,7 +18,7 @@ This is not a novel class of vulnerability. Clickjacking has been well documente
 
 | Asset | Severity | Finding |
 |-------|----------|---------|
-| `cas.tomorrowland.com` | MEDIUM (CVSS 4.3) | X-Frame-Options missing, CSP missing — SSO portal fully embeddable |
+| `cas.tomorrowland.com` | MEDIUM (CVSS 5.4) | X-Frame-Options missing, CSP missing — SSO portal fully embeddable |
 | `aiassistant.stage.vismaonline.com` | LOW | X-Frame-Options missing, CSP missing — staging AI assistant |
 | `autointerface.stag.visma.net` | LOW | X-Frame-Options: `ALLOWALL` (invalid value, ignored by browsers) + SameSite=None cookies |
 
@@ -63,7 +63,7 @@ This is a straightforward embed:
 
 Save that to a file, open it in a browser, and the Tomorrowland login form loads inside the iframe without restriction. Because the CAS portal accepts email as a URL parameter for pre-filling the login form, an attacker can land a victim on a fake prize page with their email already populated in the iframe — they just need to type a password.
 
-The SSO scope makes this a MEDIUM rather than a LOW. Compromising a `cas.tomorrowland.com` session means access to everything connected to that account, not just one service. CVSS 4.3: `AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N`.
+The SSO scope makes this a MEDIUM rather than a LOW. Compromising a `cas.tomorrowland.com` session means access to everything connected to that account, not just one service. CVSS 5.4: `AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N`.
 
 **Remediation for CloudFront-hosted SPAs:**
 
