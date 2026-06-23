@@ -1,0 +1,145 @@
+---
+title: "Clickjacking and CORS on Personio's whistleblowing platform: two findings on the wrong target"
+description: "SecurityClaw found HIGH clickjacking and MEDIUM CORS subdomain reflection on Personio's whistleblowing platform — the tool employees use to report misconduct. Here's what the headers looked like and why it matters."
+date: 2026-06-23
+category: research
+tags: [bug-bounty, clickjacking, cors, intigriti, personio, hr-saas, whistleblowing]
+hasFAQ: true
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+If you are going to have a clickjacking vulnerability somewhere in your product, a whistleblowing platform is about the worst place it could be. That is what SecurityClaw found on Personio's.
+
+Two findings, both on `*.personiowhistleblowing.com`: a HIGH-severity clickjacking issue and a MEDIUM CORS subdomain reflection with credentials on the API. Personio's main HR product had better header security than the sensitive platform sitting right next to it.
+
+---
+
+## What the platform is
+
+Personio is a German HR and payroll SaaS used by thousands of small and mid-size companies across Europe. The `app.personio.com` product handles employee records, payroll, time tracking, and recruitment for its customers. `personiowhistleblowing.com` is a separate product — a whistleblowing reporting tool that allows employees to submit anonymous reports about their employer, potentially to external compliance officers. The `*.personiowhistleblowing.com` domain gives each company a dedicated subdomain (for example, `acme-corp.personiowhistleblowing.com`).
+
+This is an EU-specific product. The EU Whistleblower Protection Directive (2019/1937) requires medium and large organisations to have internal reporting channels. Personio sells the platform as a compliance solution. The sensitivity of what it handles — employees reporting on their employers, potentially about illegal activity, in a context where anonymity may be critical — means that security failures carry a different kind of risk than on a marketing site.
+
+---
+
+## Finding 1: clickjacking on the whistleblowing form
+
+`www.personiowhistleblowing.com` and `app.personiowhistleblowing.com` were both missing `X-Frame-Options` and `Content-Security-Policy`. No `frame-ancestors` directive either. The headers that arrived:
+
+```http
+HTTP/2 200
+content-type: text/html
+server: AmazonS3
+x-amz-server-side-encryption: AES256
+```
+
+That is it. The platform is hosted on S3 without a CloudFront response headers policy applied. No framing restrictions at all.
+
+Compare this to `candidates.personio.com`, which is Personio's job board — a non-sensitive page:
+
+```http
+HTTP/2 200
+x-frame-options: DENY
+content-security-policy: base-uri 'self'; ... frame-ancestors 'self' ...
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+```
+
+Personio applies `X-Frame-Options: DENY` and a full CSP with `frame-ancestors` to their job board and not to the whistleblowing platform.
+
+### Why clickjacking matters specifically here
+
+On most platforms, clickjacking is a medium. You can embed the page in an iframe, overlay a transparent layer, and trick a user into clicking something they did not intend to click. The impact depends heavily on what the target page does.
+
+On a whistleblowing platform, the impact calculus is different:
+
+- An attacker can embed the report submission form under a fake contest or survey page
+- A reporter's clicks could be intercepted to either submit a fraudulent report or, more interestingly, to leak that they are filing a report at all
+- Timing attacks and IntersectionObserver API can let the attacker's page infer user actions inside the iframe even without directly reading the content
+- The fact of submitting a report — irrespective of its content — can be sensitive for the reporter
+
+The platform's purpose is to allow employees to report on their employers. If the employer is also the attacker, they have clear motive to compromise the reporting mechanism. This is not a theoretical adversary profile.
+
+---
+
+## Finding 2: CORS wildcard subdomain reflection with credentials on the API
+
+`api.personiowhistleblowing.com/prod/` reflected any `*.personiowhistleblowing.com` subdomain in `Access-Control-Allow-Origin` while setting `Access-Control-Allow-Credentials: true`.
+
+```bash
+curl -sI -X OPTIONS \
+  -H "Origin: https://evilsubdomain.personiowhistleblowing.com" \
+  -H "Access-Control-Request-Method: GET" \
+  "https://api.personiowhistleblowing.com/prod/categories"
+```
+
+Response:
+
+```http
+HTTP/2 204
+access-control-allow-origin: https://evilsubdomain.personiowhistleblowing.com
+access-control-allow-credentials: true
+access-control-allow-methods: OPTIONS,POST,GET,PATCH,DELETE,PUT,HEAD
+access-control-allow-headers: ...,Authorization,...,X-Reporter-Authentication,...
+```
+
+External origins were blocked — `attacker.com` returned HTTP 400. But `*.personiowhistleblowing.com` was fully trusted.
+
+The attack chain: Personio sells the whistleblowing platform on a self-service basis. Registering an account gives you a `your-company.personiowhistleblowing.com` subdomain. If you can register a company account (even a trial), you control a trusted subdomain. From there:
+
+1. Host malicious JavaScript at your controlled subdomain
+2. Social engineer an authenticated company admin of `victimcompany.personiowhistleblowing.com` into visiting your page
+3. Your JavaScript makes credentialed cross-origin requests to `api.personiowhistleblowing.com/prod/`
+4. The API reflects your origin and includes credentials — the cross-origin policy is bypassed
+
+The `access-control-allow-headers` line includes `X-Reporter-Authentication`, which suggests there is a reporter-specific auth token separate from the company admin auth. The extent of accessible data depends on how authentication is structured — cookie-based auth would give the full cross-tenant path immediately; Bearer tokens that require explicit inclusion need an additional step.
+
+The fix is an origin allowlist. The API should maintain a list of registered customer origins and only reflect those, not every `*.personiowhistleblowing.com` value it receives.
+
+---
+
+## The header contrast
+
+What stands out about this campaign is the gap between the main Personio product and the whistleblowing platform. The main HR app at `app.personio.com` had `X-Frame-Options: DENY`, HSTS, and `X-Content-Type-Options`. The candidate-facing job board had a full CSP with `frame-ancestors`. The whistleblowing platform had none of these.
+
+This kind of inconsistency usually comes from the same place: the main application went through a security review, the ancillary platform was added later from a different codebase, and the headers configured for one were never applied to the other. S3-hosted static sites have no headers by default — you have to configure them explicitly in a CloudFront response headers policy or at the origin. If that step gets missed, nothing complains.
+
+---
+
+## Submitting on Intigriti
+
+The Personio program on Intigriti has a maximum bounty of €5,000 and `*.personiowhistleblowing.com` in scope as a Tier 2 asset.
+
+For Finding 1 (clickjacking), the report leans on the platform context to justify HIGH severity rather than the default CVSS score of ~6.1. The triage note included the whistleblowing directive context and the header comparison between `candidates.personio.com` and the whistleblowing platform. Intigriti allows contextual severity adjustment when impact can be reasoned clearly — the argument here is that the sensitivity of the platform, not just the CVSS vector, determines severity.
+
+For Finding 2 (CORS), the question of whether the impact requires cookie-based auth or can be demonstrated with Bearer token interception matters for how you frame the severity. Including the curl proof of the reflection and `access-control-allow-credentials: true` is required. Documenting the `X-Reporter-Authentication` header in the allowed CORS headers adds to the case that the API serves sensitive auth flows.
+
+Both findings have clean, reproducible evidence — the header responses are deterministic and a test subdomain registration can confirm the CORS reflection without needing access to another customer's data.
+
+---
+
+## Related
+
+- [CORS misconfiguration hunting on EU bug bounty targets: one real finding out of five](/articles/cors-misconfiguration-eu-bug-bounty-2026/) — methodology and patterns for CORS recon
+- [Bug bounty submission guide for Intigriti, HackerOne, Bugcrowd, and YesWeHack](/articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026/) — Intigriti-specific submission mechanics
+- [Best CORS testing tools in 2026](/articles/best-cors-testing-tools-2026/) — tools for systematic CORS recon
+
+---
+
+## FAQ
+
+**Is clickjacking still a valid bug bounty finding in 2026?**
+
+Yes, but severity varies significantly by target. On a marketing page or static blog, programs typically rate it informational. On authentication flows, payment forms, or — as here — whistleblowing report submission forms, it is rated higher because the specific interaction that can be hijacked has real-world impact. The key is arguing why the specific page matters, not just that clickjacking is possible.
+
+**What makes subdomain CORS reflection with credentials serious?**
+
+The combination matters. `Access-Control-Allow-Origin: *` alone cannot carry credentials — browsers block it. But when a server reflects a supplied origin (rather than using a wildcard) while setting `Access-Control-Allow-Credentials: true`, it is trusting that specific origin to make credentialed requests. If the attacker controls a trusted origin — which they can if any `*.personiowhistleblowing.com` subdomain counts — the CORS policy is effectively bypassed for that origin.
+
+**How do you get a `*.personiowhistleblowing.com` subdomain to test this?**
+
+You register a company account on the whistleblowing platform. Personio sells it self-service. The question is whether the registration flow creates a subdomain for free-trial accounts. If it does, any attacker can obtain a trusted subdomain. This is why the finding is rated MEDIUM despite requiring attacker-controlled infrastructure — the infrastructure may not be difficult to obtain.
+
+**Should missing CSP on app.personio.com be submitted as a standalone finding?**
+
+Probably not on its own. Intigriti programs generally treat missing headers as informational unless paired with a specific exploitation path. If you find an XSS on `app.personio.com`, the missing CSP becomes relevant to the impact of that finding. Standalone header findings typically get acknowledged but do not generate bounties.
