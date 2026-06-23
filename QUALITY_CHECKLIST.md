@@ -15,6 +15,7 @@
 - [ ] Spelling and grammar checked
 - [ ] All CTAs have actionable text
 - [ ] Contact information is accurate
+- [ ] **≥ 2 internal links** to relevant existing BHT articles (C5 requirement — add as prose or References section)
 
 ### 3. SEO & Metadata
 - [ ] `<title>` tag present and descriptive
