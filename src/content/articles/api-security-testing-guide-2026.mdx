@@ -1,0 +1,138 @@
+---
+title: "API security testing guide for bug bounty hunters 2026"
+description: "REST, GraphQL, and gRPC. What to test, what tools to use, and where the high-value bugs are hiding in API endpoints in 2026."
+date: 2026-06-23
+category: bug-bounty
+tags: [api-security, bug-bounty, rest-api, graphql, testing-guide]
+---
+
+API bugs pay well and they're consistently underreported because most hunters stick to what web app scanners find automatically. The high-value findings in APIs require understanding the protocol, not just running a tool. Here's what to look for across REST, GraphQL, and gRPC.
+
+## REST APIs
+
+REST is where most bug bounty hunters spend most of their time, so the competition is higher here. The bugs that still pay are the ones that require understanding the application's data model rather than just fuzzing.
+
+### BOLA (Broken Object Level Authorization) / IDOR
+
+BOLA is the most common high-severity API bug. The pattern: the API accepts an object ID as a path or query parameter and returns data without verifying the requesting user owns or has access to that object.
+
+```http
+GET /api/v1/orders/12345 HTTP/1.1
+Authorization: Bearer USER_A_TOKEN
+```
+
+If changing `12345` to `12346` (User B's order) returns User B's data, that's a BOLA. Testing this requires two accounts. Create two test users, get the IDs associated with one user's data, test access from the other user's session.
+
+UUID-based IDs don't eliminate BOLA — they just make enumeration harder. If you can discover another user's UUID through a different endpoint (user search, shared resource, profile link), the IDOR is still exploitable.
+
+### Mass Assignment
+
+REST APIs often bind request body parameters directly to data models. If you can add parameters to a request that the API shouldn't accept from users, you might be setting fields you're not supposed to.
+
+```http
+POST /api/v1/users/profile HTTP/1.1
+Content-Type: application/json
+
+{"name": "New Name", "role": "admin", "credits": 9999}
+```
+
+The API might only intend to allow updating `name`, but if it passes the entire body to the ORM, `role` and `credits` get updated too. Arjun is the right tool for discovering hidden parameters:
+
+```bash
+arjun -u "https://api.target.com/v1/users/profile" -m POST
+```
+
+### BFLA (Broken Function Level Authorization)
+
+Different from BOLA — this is about function access rather than object access. Can a regular user call admin API endpoints? Often these endpoints exist at predictable paths (`/api/admin/`, `/api/internal/`, `/v1/management/`) and rely only on authentication (verifying the user is logged in) without authorization (verifying the user has the right role).
+
+Wordlists like SecLists' `Discovery/Web-Content/api/api-endpoints.txt` help here.
+
+## GraphQL
+
+GraphQL APIs are often misconfigured in ways that REST APIs aren't. The flexible query model creates a different threat surface.
+
+### Introspection
+
+GraphQL introspection lets clients query the schema — what types, queries, mutations, and fields are available. Many production deployments leave introspection enabled.
+
+```bash
+# Check if introspection is enabled
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ __schema { types { name } } }"}' \
+  https://api.target.com/graphql
+```
+
+If introspection is enabled, you get the full schema. Use graphw00f to fingerprint the GraphQL server implementation, then generate an introspection dump with InQL or graphql-voyager to visualize the schema.
+
+Introspection itself isn't a bug — it's a recon enabler. The bugs you find after introspection are.
+
+### Batch Query Abuse
+
+GraphQL allows batching multiple operations in a single request. Applications with rate limiting on individual operations often don't limit batched requests at the same rate.
+
+```json
+[
+  {"query": "mutation { login(email: \"user@example.com\", password: \"pass1\") { token } }"},
+  {"query": "mutation { login(email: \"user@example.com\", password: \"pass2\") { token } }"},
+  ...
+]
+```
+
+Batch 100 login attempts in one HTTP request and you've effectively bypassed per-request rate limiting. This works particularly well for credential stuffing, OTP bypass, and any other brute-force scenario where the application limits by request count rather than operation count.
+
+### Deep Recursion
+
+GraphQL schemas often include types that can be recursively nested. A deeply nested query can create O(n^k) server-side work from a small request.
+
+```graphql
+{ user { friends { friends { friends { friends { id name } } } } } }
+```
+
+This doesn't always qualify as a bug (depends on program scope and denial-of-service policy), but it demonstrates lack of query depth limiting. Some programs accept this as a valid finding.
+
+### Field-Level Authorization Issues
+
+Not all GraphQL implementations correctly check field-level access. You might have read access to a `User` type but not to the `User.internalNotes` field. If field-level authorization isn't properly implemented, querying that field returns data anyway.
+
+## gRPC
+
+gRPC is the most underexplored API type in bug bounty. Most hunters skip it because it requires different tooling and HTTP/2 understanding. That's exactly why the bugs there are less picked over.
+
+### Server Reflection
+
+gRPC server reflection is the equivalent of GraphQL introspection. When enabled, clients can discover available services, methods, and message types without having the proto files.
+
+```bash
+grpcurl -plaintext api.target.com:443 list
+grpcurl -plaintext api.target.com:443 describe ServiceName
+```
+
+With `grpcurl` you can call gRPC endpoints directly from the command line. Reflection is often enabled in staging environments that share the same auth systems as production.
+
+### Unauthenticated Endpoints
+
+gRPC services sometimes have some methods protected and others not. The reflection service itself may be unauthenticated even when the business logic methods require authentication. More interestingly, internal gRPC services exposed to the internet via a misconfigured load balancer rule sometimes have no authentication at all — the assumption was that they'd never be externally accessible.
+
+### Burp Suite + gRPC
+
+Burp Suite 2023+ has gRPC support via the HTTP/2 deserialization. Using the Protobuf extension alongside Burp's repeater lets you intercept and modify gRPC requests similarly to how you'd work with REST in Burp. The setup is more complex but opens the same classes of IDOR, injection, and auth bypass testing to gRPC.
+
+## Tools summary
+
+**Postman:** Best for exploring and manually testing API endpoints once you have a collection or OpenAPI spec. Import OpenAPI docs directly when available.
+
+**Burp Suite + OpenAPI Parser extension:** Auto-import API specs into Burp and auto-generate test requests. Significant time-saver when the target provides an API spec.
+
+**graphw00f:** Fingerprints GraphQL server implementations (Apollo, Hasura, Strawberry, etc.). Useful because different implementations have known vulnerabilities.
+
+**Arjun:** Parameter discovery for REST APIs. Finds hidden GET/POST parameters by fuzzing against wordlists. Run it before testing mass assignment.
+
+**grpcurl:** gRPC equivalent of curl. Required for testing gRPC APIs.
+
+## Where to find API endpoints
+
+JavaScript bundles on the frontend application contain API call patterns. Running `linkfinder` or `gf` (with js-secrets patterns) against downloaded JS files finds API paths that aren't in Burp's crawl. The OpenAPI spec is often at `/api/docs`, `/swagger.json`, `/openapi.json`, or `/api/v1/docs` — check these before manually crawling.
+
+The highest-value API bugs are authorization issues: BOLA, BFLA, and field-level access failures. These require manual analysis of what each user role should and shouldn't be able to access. Scanners won't find them. Time spent understanding the application's data model pays better than running more automated tools.

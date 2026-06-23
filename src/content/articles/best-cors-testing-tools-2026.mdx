@@ -1,0 +1,101 @@
+---
+title: "Best CORS testing tools in 2026"
+description: "CORSy, CORStest, Burp Suite's CORS scanner, manual curl testing. What actually catches CORS misconfigurations that automated scanners miss."
+date: 2026-06-23
+category: tools
+tags: [cors, tools, bug-bounty, web-security, testing]
+---
+
+CORS misconfigurations are among the most underreported findings in bug bounty, partly because automated scanners catch the obvious ones and hunters assume the work is done. The interesting CORS bugs require a mix of automated discovery and manual confirmation. Here's what each tool in the stack actually does.
+
+## Why CORS bugs matter
+
+A CORS misconfiguration on an authenticated endpoint can let an attacker-controlled site read sensitive data from a victim's session. The impact depends entirely on what the misconfigured endpoint returns. A wildcard CORS header on a public API returning non-sensitive data is low risk. The same wildcard header on a `/api/v1/account/settings` endpoint that returns PII or auth tokens is a different conversation.
+
+The confusing part for beginners: `Access-Control-Allow-Origin: *` with no credentials allowed is often fine. The dangerous patterns are `*` with credentials, reflected origin with credentials, `null` origin with credentials, and subdomain-origin reflection with credentials.
+
+## CORSy
+
+CORSy (github.com/sAjibuu/CORSy) is purpose-built for CORS misconfiguration scanning. It handles the common patterns: reflected origin, null origin, wildcard, and subdomain-of-origin reflection. The tool sends crafted requests with various `Origin` headers and inspects the response for permissive ACAO headers paired with `Access-Control-Allow-Credentials: true`.
+
+```bash
+python3 corsy.py -i urls.txt -t 10 --headers "Cookie: session=abc123"
+```
+
+The `-i` flag accepts a file of URLs — pipe your subdomain list or endpoint list directly in. The `--headers` option is important: CORS misconfigs on authenticated endpoints won't show up without a valid session cookie. Running CORSy against authenticated endpoints without credentials misses the most impactful findings.
+
+CORSy is good at finding the classic reflected-origin pattern. Where it falls short: it doesn't handle complex SPAs well, and it misses misconfigurations that only appear on specific HTTP methods (POST, PUT) rather than GET.
+
+## CORStest
+
+CORStest (github.com/nicktacular/CORStest, or the Sonderman fork) is similar to CORSy in purpose but with a slightly different set of test payloads. Some hunters run both and compare results because the payloads differ enough that one occasionally catches something the other misses.
+
+```bash
+python corstest.py -v -p cookies.txt urls.txt
+```
+
+The main practical difference between CORSy and CORStest is workflow integration. If you're already scripting Python tooling, CORStest's simpler output format is easier to parse and chain downstream.
+
+## Burp Suite's CORS scanner
+
+Burp's active scanner includes CORS checks. The coverage is reasonable for the obvious patterns, but it's not a dedicated CORS tool. What Burp does well here: it's running against the exact requests you've already proxied, so it tests endpoints in their full authenticated context. You don't need to separately pipe credentials in.
+
+The Burp extension `CORS*` (asterisk) is a passive checker that flags CORS responses as you browse. This is genuinely useful during manual testing — you see CORS headers in real-time without needing to run a separate tool.
+
+Burp Scanner's CORS handling handles basic cases. It's not going to catch subdomain reflection patterns or more nuanced origin-parsing bugs without additional configuration. Use it as a first pass, not a comprehensive check.
+
+## Manual curl testing
+
+This is the approach that catches things automated tools miss. Manual testing matters when:
+
+- You're testing POST/PUT endpoints where the tool only checked GET
+- The endpoint has unusual origin-parsing logic (case-insensitive matching, prefix matching, suffix matching)
+- The misconfiguration only triggers on specific paths within a large API
+
+Basic manual approach:
+
+```bash
+# Test reflected origin with credentials
+curl -s -I \
+  -H "Origin: https://attacker.com" \
+  -H "Cookie: session=YOUR_TOKEN" \
+  "https://target.com/api/sensitive" | grep -i "access-control"
+
+# Test null origin
+curl -s -I \
+  -H "Origin: null" \
+  -H "Cookie: session=YOUR_TOKEN" \
+  "https://target.com/api/sensitive" | grep -i "access-control"
+
+# Test subdomain of target
+curl -s -I \
+  -H "Origin: https://evil.target.com" \
+  -H "Cookie: session=YOUR_TOKEN" \
+  "https://target.com/api/sensitive" | grep -i "access-control"
+```
+
+If the response reflects your Origin header back in `Access-Control-Allow-Origin` and includes `Access-Control-Allow-Credentials: true`, you have a finding. Write a PoC that demonstrates actual data exfiltration — screenshots of CORS headers without a working exploit are harder to justify at higher severity.
+
+## ParamSpider for endpoint discovery
+
+Before running any CORS tool, you need a good list of API endpoints. ParamSpider extracts endpoints from JavaScript files and crawled pages, giving you coverage beyond what's visible in a basic crawl.
+
+```bash
+python3 paramspider.py --domain target.com --output endpoints.txt
+```
+
+Pipe the output to CORSy. The combination of endpoint discovery and CORS scanning together finds more than running CORS tools against the homepage URL only.
+
+## Common CORS misconfiguration patterns
+
+**Wildcard with credentials:** `Access-Control-Allow-Origin: *` technically can't be combined with `Access-Control-Allow-Credentials: true` per the spec — browsers reject it. But some server implementations reflect the requester's origin instead of serving `*` when credentials are present, which creates the actual misconfiguration.
+
+**Reflected origin without validation:** The server takes whatever `Origin` header you send and echoes it back. This is a misconfiguration. The server should have an allowlist.
+
+**Null origin with credentials:** Some applications allowlist `null` origin for local development and forget to restrict it in production. An iframe with `sandbox` attribute sends `null` origin, giving attackers a vector.
+
+**Subdomain reflection:** The regex `\.target\.com$` as an origin check is bypassable with `evil.target.com` if you can register or control a subdomain (including via subdomain takeover — two finding types that chain nicely).
+
+## The finding quality question
+
+A CORS misconfiguration without a proof-of-concept demonstrating data exfiltration is a weak report. Write the PoC HTML page that fetches sensitive data from the vulnerable endpoint and displays it. Run it from a different origin. Document what data is exposed. That's what separates a $500 CORS report from a $50 one.

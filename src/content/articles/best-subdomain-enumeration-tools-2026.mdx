@@ -1,0 +1,99 @@
+---
+title: "Best subdomain enumeration tools in 2026"
+description: "Subfinder, Amass, Assetfinder, dnsx — what's actually finding live subdomains on real bug bounty targets in 2026. Practical comparison with real-world considerations."
+date: 2026-06-23
+category: tools
+tags: [subdomain-enumeration, recon, bug-bounty, tools, subfinder, amass]
+---
+
+Subdomain enumeration is the first real decision you make on a bug bounty target. Get it wrong and you miss attack surface. Do it badly and you burn your rate limits before you've found anything worth testing. These tools are not all equal, and the differences matter more than most comparison posts admit.
+
+Here's an honest look at what each one actually does.
+
+## Subfinder
+
+Subfinder is the go-to passive enumeration tool for most serious hunters. It queries dozens of passive sources — Shodan, VirusTotal, Censys, SecurityTrails, and more — and returns subdomains without sending a single packet to the target. That's the key advantage on bug bounty programs: you're not triggering WAFs or generating logs during reconnaissance.
+
+```bash
+subfinder -d example.com -all -o subdomains.txt
+```
+
+The `-all` flag enables all configured sources. Without it, Subfinder only queries free/unauthenticated sources, which misses a lot. Setting up API keys for VirusTotal, Shodan, SecurityTrails, and Censys is not optional if you want good coverage — it doubles or triples results on most targets.
+
+Speed is excellent. A typical run on a mid-sized target completes in under two minutes. The output is clean and deduped.
+
+Where Subfinder falls short: it only finds what passive sources know about. New subdomains that haven't been indexed yet won't appear. For mature programs with well-catalogued infrastructure, coverage is solid. For newer targets or obscure subdomains that haven't been crawled, you'll need to supplement.
+
+## Amass
+
+Amass does more than passive enumeration. It supports active DNS brute-forcing, DNS zone transfers (where permitted), certificate transparency scraping, and network mapping. The tradeoff is complexity and speed — Amass is significantly slower than Subfinder, and its configuration file is intimidating if you're new to it.
+
+```bash
+amass enum -passive -d example.com -o amass-passive.txt
+amass enum -active -d example.com -brute -w /path/to/wordlist.txt -o amass-active.txt
+```
+
+Passive mode is straightforward. Active mode with brute-force is where Amass earns its reputation, but it generates real DNS traffic. On programs that explicitly allow active testing, this finds subdomains that passive tools miss. On programs with strict scope rules, check the policy before running active mode.
+
+The intel and viz subcommands are genuinely useful for understanding how an organization's ASN and IP space relates to its subdomains. Most hunters ignore this and stick to `amass enum`, which is fine, but the broader capabilities are there if you need them.
+
+## Assetfinder
+
+Assetfinder is the simple one. It does passive subdomain discovery from a handful of sources (crt.sh, Facebook's CT logs, HackerTarget, and a few others) and that's it. No config file, no API keys required for basic use.
+
+```bash
+assetfinder --subs-only example.com
+```
+
+I keep coming back to Assetfinder as a quick sanity check at the start of a recon session. It's not going to find everything Subfinder finds, but it runs in seconds and the crt.sh data is often enough to get your bearings. Think of it as a tier-1 pass before you run the heavier tools.
+
+## dnsx
+
+dnsx is not a subdomain discovery tool — it's a DNS toolkit that validates and resolves subdomains you've already found. Once you have a list from Subfinder, Amass, and Assetfinder, you pipe it through dnsx to find out which ones actually resolve.
+
+```bash
+cat all-subdomains.txt | dnsx -resp -a -aaaa -cname -mx -o resolved.txt
+```
+
+This matters because passive sources return dead subdomains constantly. Running against a raw list wastes your time. After dnsx filtering, you typically throw away 30-50% of what passive sources returned.
+
+dnsx also handles wildcard detection and can run DNS queries in bulk at high concurrency without hammering your resolver.
+
+## Findomain
+
+Findomain is fast and has a clean multi-source passive approach similar to Subfinder. The main differentiator used to be speed on large targets, but Subfinder has caught up. Findomain's real advantage is its alerting and monitoring mode: you can set it up to track new subdomains over time and notify you when new attack surface appears. For long-running target monitoring, that's useful.
+
+For one-off enumeration, most hunters pick Subfinder over Findomain. The coverage is comparable when both are configured with API keys.
+
+## Rate limit gotchas on bug bounty programs
+
+This is where a lot of hunters get burned without realizing it. Passive tools don't directly query the target, but they query third-party APIs that themselves might notify or log activity. SecurityTrails logs queries and some companies actually monitor this. It's uncommon but worth knowing.
+
+Active DNS brute-forcing is a different problem. Some programs explicitly prohibit automated scanning or rate-limit DNS queries from their side. If you're running Amass in active mode against a target that resolves through Cloudflare, your requests are hitting Cloudflare's infrastructure. Most programs allow passive recon and active testing within scope, but always read the policy first.
+
+Tool concurrency settings also matter. Running dnsx at `-threads 100` on a program's nameserver is inconsiderate and may get you flagged.
+
+## Recommended workflow for bug bounty
+
+Start passive, validate, then go active if the program allows it.
+
+```bash
+# Step 1: Passive collection
+subfinder -d target.com -all -o subfinder.txt
+assetfinder --subs-only target.com > assetfinder.txt
+amass enum -passive -d target.com -o amass-passive.txt
+
+# Step 2: Merge and deduplicate
+cat subfinder.txt assetfinder.txt amass-passive.txt | sort -u > all-passive.txt
+
+# Step 3: Resolve live hosts
+cat all-passive.txt | dnsx -resp -a -o resolved.txt
+
+# Step 4: Active brute-force (only if program allows)
+amass enum -active -d target.com -brute -w ~/wordlists/subdomains-top1m.txt -o amass-active.txt
+cat amass-active.txt | dnsx -resp -a -o resolved-active.txt
+```
+
+The wordlist choice for active brute-forcing matters. SecLists' `dns/subdomains-top1million-110000.txt` is a solid starting point. For deeper coverage on high-value targets, Daniel Miessler's `n0kovo_subdomains` lists are worth trying.
+
+Don't skip the dnsx step. Passive sources returning 5,000 subdomains where 1,800 actually resolve means you're saving yourself from manually chasing 3,200 dead ends. That time adds up.
