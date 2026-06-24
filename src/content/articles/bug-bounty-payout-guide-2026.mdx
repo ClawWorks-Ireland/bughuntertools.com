@@ -1,6 +1,6 @@
 ---
 title: "Bug bounty payouts in 2026: what actually pays and what doesn't"
-description: "Real payout data from HackerOne, Intigriti, and YesWeHack. Which vulnerability classes pay well, which programs notoriously lowball, and how to target your work."
+description: "Real payout data from HackerOne, Intigriti, and YesWeHack. Which vulnerability classes pay well, which programs lowball, and how to target your work."
 date: 2026-06-23
 category: bug-bounty
 tags: [bug-bounty, payouts, hackerone, intigriti, yeswehack]
@@ -55,6 +55,18 @@ Public VDP (Vulnerability Disclosure Programs) that offer no bounties at all are
 Private programs on HackerOne and Intigriti generally pay better than public programs. The competition is lower, the programs are more mature, and companies tend to open private programs when they're ready to actually pay meaningful amounts. Getting invited to private programs requires reputation on the platform, which means submitting to public programs first.
 
 This is the clearest upside path for hunters: build reputation on public programs even at lower payouts, get invited to private programs, earn better on those.
+
+## When a program disputes your severity
+
+Programs downgrade severity findings regularly. Some of it is legitimate — a CVSS score doesn't always capture context. Some of it is financially motivated. Telling the difference matters before you spend time arguing.
+
+If a finding gets downgraded with a specific technical reason ("this endpoint is not customer-facing", "the affected data is already public"), read the scope definition carefully before pushing back. If the scope actually supports their position, accept it and move on.
+
+If the downgrade comes with no explanation, or with vague language like "we consider this low risk", respond once with a concrete impact chain. Two paragraphs: what the attacker can do with the bug, and what the worst realistic outcome is. Don't argue CVSS math — argue the real-world damage. Triage reviewers respond to damage scenarios, not score calculations.
+
+Intigriti's managed programs have a formal mediation path. HackerOne has a dispute process too, though it's less commonly used. Both are worth invoking if you genuinely believe the downgrade is unjustified — but pick your battles. One well-framed dispute on a strong finding does more for your reputation than several appeals on borderline cases.
+
+For platform-specific details on how disputes are handled, see the [HackerOne vs Intigriti vs YesWeHack comparison](/articles/hackerone-vs-intigriti-vs-yeswehack-bugcrowd-2026/) and the [submission guide for each platform](/articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026/).
 
 ## Targeting tips
 
