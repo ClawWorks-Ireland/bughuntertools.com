@@ -25,4 +25,4 @@ User-agent: Gemini
 Allow: /
 
 # Sitemap location
-Sitemap: https://bughuntertools.com/sitemap.xml
+Sitemap: https://bughuntertools.com/sitemap-index.xml
