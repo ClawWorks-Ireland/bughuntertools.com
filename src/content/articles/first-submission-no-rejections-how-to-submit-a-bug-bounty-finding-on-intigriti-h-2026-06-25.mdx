@@ -1,0 +1,97 @@
+---
+title: "First submission, no rejections: how to submit a bug bounty finding on Intigriti, HackerOne, Bugcrowd, and YesWeHack"
+description: "This is not a \"what is bug bounty\" article. It's a practitioner guide for researchers who already know how to find vulnerabilities but lose bounties to bad submissions."
+date: 2026-06-25
+category: bug-bounty
+tags: ["how to submit bug bounty report", "HackerOne vs Bugcrowd vs Intigriti", "Intigriti submission guide", "bug bounty CVSS scoring", "VRT vulnerability rating taxonomy guide", "YesWeHack submission guide", "bug bounty report rejected informative"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+This is not a "what is bug bounty" article. It's a practitioner guide for researchers who already know how to find vulnerabilities but lose bounties to bad submissions. That's a real and underserved problem.
+
+---
+
+## The Story
+
+Every bug bounty hunter knows the feeling: you've found something real, the writeup is done, and then you hit the submission form — and it eats your report, rejects your severity, or pends in triage for weeks because you picked the wrong vulnerability category.
+
+Platforms are not interchangeable. Intigriti uses a CORS-specific dropdown. HackerOne builds the CVSS calculator into the form. Bugcrowd has the VRT taxonomy that you need to know cold or your P2 ends up triaged as P4. YesWeHack is the EU-native platform most researchers overlook until a big fintech program shows up there exclusively.
+
+This article is a field guide to submitting correctly — the first time — on all four.
+
+---
+
+## Intigriti (Eu-First, Researcher-Friendly)
+
+- **Submission URL pattern:** `https://app.intigriti.com/researcher/submit/{company}/{program}`
+- **Key differentiator:** Programs require `X-Intigriti-User` header during testing — if you didn't send it, you may have violated RoE even if your finding is valid
+- **Severity caveat:** CVSS 7.5 doesn't automatically get you "High" payout — Intigriti triagers re-rate independently; justify your rating in the description
+- **Practical tip:** Draft your SUBMISSION.md before opening the form. The Intigriti form doesn't autosave well
+
+## Hackerone (Us Platform, Enterprise Programs)
+
+- **Submission URL pattern:** `https://hackerone.com/reports/new?type=team&report_type=vulnerability&user_name={handle}`
+- **Key differentiator:** Built-in CVSS 3.1 calculator — use it; manually-typed CVSS vectors in the description without using the calculator get ignored
+- **Severity caveat:** The **Impact** section is weighted heavily. Vague impact = "Informative" even with a valid finding
+- **Practical tip:** HackerOne shows if a report exists for the same asset in the last 30 days — if a duplicate warning appears, read it before deciding whether to submit
+
+## Bugcrowd (Vrt Taxonomy Is Everything)
+
+- **Submission URL pattern:** `https://bugcrowd.com/{program_slug}/report`
+- **Key differentiator:** VRT (Vulnerability Rating Taxonomy) — a hierarchical tree. Wrong category = wrong severity = lost payout. Invest 2 minutes in getting the VRT path right
+- **Severity caveat:** Bugcrowd uses P1–P5 (Priority), not the CVSS bands other platforms use. P3 Medium ≠ $0 on most programs
+- **Practical tip:** Check whether the program is "Points Only" vs "Cash" before spending time on a writeup
+
+## Yeswehack (Eu Focus, Telco/Fintech Stronghold)
+
+- **Submission URL pattern:** `https://yeswehack.com/programs/{program_slug}/report-vulnerability`
+- **Key differentiator:** EU platform with programs not available anywhere else (French telcos, EU financial services, some retail). If a target is in the EU and you can't find it on Intigriti or H1, check YesWeHack
+- **Severity caveat:** CVSS is required (unlike H1 where the calculator auto-computes it). Pre-compute before opening the form
+- **Practical tip:** Some YesWeHack programs have French-speaking triagers — write extra-clearly in English. Short, numbered reproduction steps are highly valued
+
+---
+
+## Supporting Content Ideas
+
+1. **Comparison table** — one row per platform, columns: submission URL pattern, taxonomy used, CVSS required/calculated/optional, avg first triage time, EU/US focus
+2. **"The 5 universal rejection reasons"** sidebar — applies across all platforms; makes the article useful even for readers who only use one platform
+3. **CORS submission example** — walk through submitting a CORS finding on Intigriti step by step (we have a real one from the RIPE NCC research)
+4. **"Anatomy of a good report"** annotated screenshot — recreate with a dummy finding to show what each field should look like
+
+---
+
+## Seo Notes
+
+Target keywords:
+- "how to submit bug bounty report"
+- "HackerOne vs Bugcrowd vs Intigriti"
+- "Intigriti submission guide"
+- "bug bounty CVSS scoring"
+- "VRT vulnerability rating taxonomy guide"
+
+Long-tail angle: "why did my bug bounty report get marked informative" — high intent, underserved by current top results.
+
+---
+
+## Reference Materials
+
+The full technical runbooks are at:
+- `research/submission-runbooks/intigriti.md`
+- `research/submission-runbooks/hackerone.md`
+- `research/submission-runbooks/bugcrowd.md`
+- `research/submission-runbooks/yeswehack.md`
+
+These contain every form field, severity table, URL pattern, and rejection reason for each platform. Use them as source material — the article should be readable/actionable, not a direct dump of the runbooks.
+
+---
+
+## Word Count Target
+
+1,800–2,500 words. Long enough to be genuinely useful, short enough to be a single reading session. Use the comparison table to compress the per-platform details.
+
+## Recommended Reading
+
+- [The Web Application Hacker's Handbook](https://www.amazon.com/dp/B005LVQA9S?tag=bughuntertools-20) ($45)
+- [The Tangled Web](https://www.amazon.com/dp/1593273886?tag=bughuntertools-20) ($35)
+- [Bug Bounty Bootcamp](https://www.amazon.com/dp/1718501544?tag=bughuntertools-20) ($40)
