@@ -1,6 +1,6 @@
 ---
 title: "First submission, no rejections: how to submit a bug bounty finding on Intigriti, HackerOne, Bugcrowd, and YesWeHack"
-description: "This is not a \"what is bug bounty\" article. It's a practitioner guide for researchers who already know how to find vulnerabilities but lose bounties to bad submissions."
+description: "A practitioner guide for researchers who already know how to find vulnerabilities but lose bounties to bad submissions."
 date: 2026-06-25
 category: bug-bounty
 tags: ["how to submit bug bounty report", "HackerOne vs Bugcrowd vs Intigriti", "Intigriti submission guide", "bug bounty CVSS scoring", "VRT vulnerability rating taxonomy guide", "YesWeHack submission guide", "bug bounty report rejected informative"]
@@ -99,6 +99,8 @@ Duplicate submission is the last. Check your own previous reports and the progra
 
 ## Recommended Reading
 
+- [Bug bounty submission guide: Intigriti, HackerOne, Bugcrowd, YesWeHack](/articles/bug-bounty-submission-guide-intigriti-hackerone-bugcrowd-yeswehack-2026) — platform-by-platform breakdown of submission form requirements
+- [HackerOne vs Intigriti vs YesWeHack vs Bugcrowd](/articles/hackerone-vs-intigriti-vs-yeswehack-bugcrowd-2026) — how the four platforms differ for researchers choosing where to submit
 - [The Web Application Hacker's Handbook](https://www.amazon.com/dp/B005LVQA9S?tag=bughuntertools-20) ($45): the foundational text for web application attack techniques
 - [The Tangled Web](https://www.amazon.com/dp/1593273886?tag=bughuntertools-20) ($35): Michal Zalewski's deep-dive into browser security and web application trust models
 - [Bug Bounty Bootcamp](https://www.amazon.com/dp/1718501544?tag=bughuntertools-20) ($40): covers the full submission lifecycle, including how to write reports that get paid
