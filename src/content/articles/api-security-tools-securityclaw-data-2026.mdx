@@ -1,0 +1,37 @@
+---
+title: "API security tools in bug bounty: what SecurityClaw's real campaign data says works"
+description: "Real SecurityClaw campaign data on API security tools: CORS testing, OAuth analysis, and why most of these tools running clean isn't a bug."
+date: 2026-07-12
+category: tools
+tags: [api-security, oauth, cors, idor, bug-bounty, tools, securityclaw]
+---
+
+API security is the group where "found nothing" shows up most often in our campaign logs, and it's worth explaining why before writing off the tools that produced it. We run a fixed set of API-security skills across every SecurityClaw campaign: 15 real bug bounty targets so far, including Visma, Doctolib, WP Engine, Lansweeper, Personio, Telenor, RIPE NCC, and others. One tool in this group produced a documented high-severity finding. The rest mostly came back clean, and that clean result is itself worth reporting.
+
+## CORS Tester — 15 campaigns, 2 confirmed findings (1 HIGH)
+
+This is the skill behind SecurityClaw's RIPE NCC finding: a CORS wildcard on `www.ripe.net`'s `/api/*` namespace, rated HIGH severity because the CORS policy allowlists the `Authorization` header, meaning bearer-token-authenticated endpoints are readable cross-origin. We wrote up the full evidence and remediation in [our CORS misconfiguration roundup](/articles/cors-misconfiguration-eu-bug-bounty-2026/). The automated per-campaign logs across 15 runs show 1 flagged instance (Telenor Sweden, covered separately in [that CORS wildcard writeup](/articles/telenor-sweden-cors-wildcard-api-namespace-2026/)), because the RIPE NCC finding came from a manual follow-up pass against `www.ripe.net` specifically, after the automated campaign against `access.ripe.net` came back clean on this check. Two real findings from two different levels of testing on the same skill: one caught by the automated sweep, one caught by testing a related subdomain the automated pass didn't cover. Run it on every target, and don't assume a clean automated pass means every subdomain is clean too.
+
+## OAuth Security Analyser — 13 campaigns, 0 findings
+
+Checks OAuth 2.0 token leakage, state parameter validation, scope escalation, and implicit-flow misuse. Zero findings across 13 campaigns against real targets is a genuinely useful data point: it suggests most production OAuth implementations in 2026 have the well-known flaws (missing state, overly broad scopes) closed off already. We're not dropping this skill from the rotation. A clean run on 13 targets doesn't mean the 14th will be clean too, and OAuth misconfigurations are exactly the kind of bug that's rare but severe when it does surface.
+
+## API Key Validator — 3 campaigns, 0 findings
+
+Takes API keys discovered during JS bundle analysis or recon and makes live test calls to confirm which ones are still active and what they're scoped to. Zero findings across 3 campaigns (5 runs, across Lansweeper, OneDoc, and Tomorrowland) means the keys our recon skills turned up so far were either already dead or correctly scoped. Three campaigns is a small sample for a validation step that depends entirely on what upstream recon skills hand it. Read this alongside the JS bundle recon numbers in [our recon and OSINT comparison](/articles/recon-osint-tooling-securityclaw-data-2026/), not on its own.
+
+## OAuth Client Enumerator — 1 campaign, 1 finding
+
+Enumerates OAuth client IDs and redirect URI configurations to catch leaky client IDs and redirect URI validation flaws that enable account takeover. One campaign, one finding. That's too small a sample to call a hit rate, but it's a real result from a real target, not a demo. Worth running whenever a target exposes OAuth-based login, and worth watching as the sample size grows.
+
+## Swagger / OpenAPI Probe — 1 campaign, error status
+
+This one needs an honest caveat instead of a number. The skill ran once, against Telenor Sweden, and hit a script error mid-run rather than completing cleanly. We're not citing that as "0 findings," because it didn't finish; a bug in our own tooling, not an absence of exposed Swagger docs on the target. Exposed OpenAPI specs and admin API documentation are one of the highest-value quick wins in bug bounty when this skill does complete, so it stays in the rotation. It just needs a clean successful run before we can say anything real about its hit rate.
+
+## IDOR Scanner and Authenticated API Sweep — implemented, not yet run
+
+Both skills exist in the SecurityClaw pipeline and neither has a completed campaign run behind it yet. IDOR Scanner runs a three-phase check (resource enumeration, cross-user access testing, differential analysis via Bedrock) built specifically to confirm BOLA and IDOR bugs with low false-positive noise. Authenticated API Sweep maps IDOR surface and over-privileged tokens across a target's full authenticated endpoint set, but it needs a valid session token as input, which is why it hasn't run yet: most of our campaigns so far have been unauthenticated recon-and-probe passes. Both are real, callable skills. Neither has produced data we can report on.
+
+## What the clean runs actually mean
+
+Thirteen clean OAuth runs and three clean API-key campaigns aren't a sign these tools don't work. Read against the one CORS HIGH and the one OAuth-client-enum finding, they're evidence that the loud, well-documented API bugs (broken CORS policy, leaky OAuth client IDs) still show up often enough to be worth checking for, while the subtler ones (token leakage, scope escalation) have mostly been engineered out of the targets we've tested so far. If you're prioritizing manual API testing time, spend it on CORS and OAuth client configuration first: that's where SecurityClaw's own data says the findings actually are.
