@@ -1,0 +1,53 @@
+---
+title: "Recon & OSINT tooling in bug bounty: what SecurityClaw's real campaign data says works"
+description: "Real SecurityClaw campaign data on recon and OSINT tools: what finds attack surface (subdomain enum, JS bundle secrets, WAF) and what's still unproven."
+date: 2026-07-12
+category: tools
+tags: [recon, osint, bug-bounty, tools, securityclaw, subfinder, shodan]
+---
+
+Recon is the part of bug bounty everyone claims to take seriously and most people half-ass. You run subfinder once, glance at the subdomain list, and move on to whatever scanner you already trust. That's fine for a first pass. It's not how you find the target's forgotten staging box.
+
+We run a fixed set of recon skills across every SecurityClaw campaign, the same tools in the same order, against 15 real bug bounty targets so far (Visma, Doctolib, WP Engine, Lansweeper, Personio, Telenor, Contentsquare, Withings, RIPE NCC, and others). What follows is what actually turned up something, and what's still running with zero confirmed findings after a dozen-plus tries. If a tool's numbers below don't impress you, that's the point. A lot of recon tooling is table stakes, not a differentiator.
+
+## Certificate Transparency Monitor — 15 campaigns, 112 findings
+
+This is the highest-signal tool in the group by a wide margin. It pulls subdomains straight out of crt.sh's certificate transparency logs, sending zero packets to the target, so nothing to flag and nothing to rate-limit. 112 findings across 15 campaigns works out to roughly 7-8 per target, which sounds modest until you remember each one is a subdomain the programme may not have front-of-mind.
+
+```bash
+subfinder -d example.com -all -o subdomains.txt
+```
+
+Our tools database lists this capability under `subfinder`, and that's deliberate. Subfinder's real-world role in the pipeline has been superseded by a dedicated certificate-transparency skill that does the same job with less noise. If you're doing this manually, Subfinder with all sources enabled gets you most of the way there. The [full CT-logs writeup](/articles/securityclaw-ct-logs-certificate-transparency-passive-recon-2026/) covers the methodology in more depth.
+
+## Tech-Stack CVE Scanner — 15 campaigns, 28 findings
+
+Fingerprints what a target is actually running, then checks NVD for anything applicable. 28 findings over 15 campaigns is a real hit rate, not padding. This is the tool that turns "they're running an old WordPress plugin" into "here's the CVE and here's why it's exploitable in this configuration." Fingerprinting without the CVE correlation step is just trivia. This closes that gap automatically.
+
+## WAF Detection — 15 campaigns, 11 findings
+
+Every single campaign runs this, and it should. It's cheap, and it changes how the rest of the campaign behaves. Detecting Cloudflare, Akamai, or a custom WAF up front means the scan strategy adapts instead of burning requests against a wall that was always going to block them. 11 findings here mostly means "confirmed WAF vendor, adjusted approach," not vulnerabilities in the WAF itself. That's a different, honest kind of signal than a CVE count.
+
+## JS Bundle secrets scanning — two skills, not one
+
+This one needed reconciling before we could publish a real number, and we've now confirmed it: JS Bundle Analyser and JS Bundle Recon are genuinely distinct skills, not two names for the same thing. JS Bundle Analyser is AI-driven (Bedrock Haiku) and focuses on endpoint and auth-flow extraction — 7 campaigns, 0 confirmed findings so far. JS Bundle Recon is regex pattern matching aimed specifically at hardcoded credentials and keys — it runs across all 15 campaigns and has turned up 61 real findings: API keys, internal endpoint references, and OAuth tokens pulled straight out of minified bundles. Different detection method, different target, both real. If you only have budget for one, run the pattern-matching pass — it's the one with the track record. The [JS bundle secrets deep-dive](/articles/js-bundle-secrets-eu-saas-recon-2026/) covers the technique itself in more depth.
+
+Worth flagging separately: Header Analysis turned out to be the same story as Security Header Checker at first glance, and also isn't. Security Header Checker audits OWASP-recommended headers (CSP, X-Frame-Options) — 15 campaigns, 61 findings, already covered above under WAF-adjacent tooling. Header Analysis is a different taxonomy entirely: infrastructure metadata leaks — internal hostnames, IPs, tech fingerprints surfaced in response headers. 15 campaigns, 13 findings of its own. Two real skills, two real numbers, neither one padding for the other.
+
+## Cross-Asset Correlator, Sensitive Service Fingerprint, Next.js Recon — real but thin
+
+Three more skills in this group have run against real targets with zero confirmed findings so far: Cross-Asset Correlator (2 campaigns), Sensitive Service Fingerprint (5 campaigns), and Next.js Recon (1 campaign). We're not going to dress that up. Correlating findings across subdomains for shared auth tokens or CORS relationships is a genuinely useful idea, it just hasn't paid off yet on the targets we've tried it against. Same with fingerprinting internal services for SSRF triggers, and the Next.js-specific route probing. One data point (or two, or five) isn't enough to call any of these dead ends. It's enough to say: don't lead with these numbers in a pitch to a client, and don't expect them to be the tool that finds the big one on your next target.
+
+## Shodan and httpx — the gap in our own data
+
+Shodan shows up in our tools list with `shodan-intel` as its mapped skill, but that skill_id has zero matching entries in the campaign logs we checked. httpx doesn't even have a skill_id mapped. It's `null`, meaning nobody's tracked whether or how often SecurityClaw runs it as a distinct step versus folding it into another skill's execution. Both tools are genuinely useful for bug bounty recon on their own merits, Shodan for exposed-service and banner-grab intelligence, httpx for fast live-host probing and tech fingerprinting, we just can't currently back either one with our own real numbers, and we'd rather say that than fake it.
+
+## Whitelabel Detector — untested, not disproven
+
+Same story: listed in our tools data as `whitelabel_detector`, zero matches in the real campaign logs under that name or the hyphenated variant. Detecting whitelabelled SaaS behind a bug bounty target, finding out the "custom platform" is actually a rebranded vendor product with known CVEs, is a sharp idea when it lands. We just don't have a confirmed hit to point to yet.
+
+## What this means for your recon order
+
+Run the free, zero-noise stuff first: certificate transparency, WAF detection, tech-stack fingerprinting, because the data says that's where the hit rate actually is. JS bundle scanning belongs right alongside them — run the regex pass (JS Bundle Recon) for the confirmed 61-finding track record, and layer the AI-driven endpoint extraction (JS Bundle Analyser) on top rather than treating it as redundant. And don't assume every named tool in a recon pipeline is pulling its weight just because it's in the pipeline. Some of ours clearly aren't yet, on the sample size we have. We'd rather tell you that than pad a page with tools that sound impressive and haven't found anything.
+
+If you're building your own recon stack from scratch, the [subdomain enumeration comparison](/articles/best-subdomain-enumeration-tools-2026/) covers Subfinder, Amass, Assetfinder, and dnsx in more practical depth, including rate-limit gotchas that apply whether you're running these by hand or wiring them into something automated like we did here.

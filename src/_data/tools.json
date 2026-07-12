@@ -447,7 +447,7 @@
       "use_case": "Azure attack surface enumeration, storage account discovery, misconfiguration hunting",
       "tags": ["azure", "cloud", "storage", "enumeration", "misconfiguration"],
       "amazon_query": "azure cloud security testing misconfiguration",
-      "skill_id": "azure_naming_enum",
+      "skill_id": "azure-naming-enum",
       "homepage": null
     },
     {
@@ -489,7 +489,7 @@
       "use_case": "API documentation discovery, admin endpoint exposure, schema analysis",
       "tags": ["swagger", "openapi", "api", "documentation", "admin"],
       "amazon_query": "api security openapi swagger testing",
-      "skill_id": "swagger_admin_probe",
+      "skill_id": "swagger-admin-probe",
       "homepage": null
     },
     {
@@ -559,7 +559,7 @@
       "use_case": "Whitelabel SaaS detection, vendor fingerprinting, inherited vulnerability mapping",
       "tags": ["whitelabel", "saas", "fingerprinting", "vendor", "recon"],
       "amazon_query": "saas security assessment third party risk",
-      "skill_id": "whitelabel_detector",
+      "skill_id": "whitelabel-detector",
       "homepage": null
     },
     {
@@ -587,7 +587,7 @@
       "use_case": "Authenticated endpoint discovery, IDOR surface mapping, over-privileged token detection",
       "tags": ["api", "authenticated", "idor", "endpoints", "sweep"],
       "amazon_query": "authenticated api security testing methodology",
-      "skill_id": "authenticated_api_sweep",
+      "skill_id": "authenticated-api-sweep",
       "homepage": null
     },
     {
@@ -616,6 +616,90 @@
       "tags": ["webmail", "roundcube", "zimbra", "cve", "fingerprinting"],
       "amazon_query": "email server security testing webmail vulnerabilities",
       "skill_id": "webmail-cve-fingerprint",
+      "homepage": null
+    },
+    {
+      "slug": "js-bundle-recon",
+      "name": "JS Bundle Recon (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "recon",
+      "scorecard_category": "web-vuln-scanning",
+      "kind": "skill",
+      "description": "Regex pattern matching against JavaScript bundles for hardcoded credentials, API keys, and secrets. Distinct from JS Bundle Analyser (AI-driven endpoint/auth-flow extraction) — this skill targets credential leaks specifically via pattern matching, not model inference.",
+      "use_case": "Hardcoded secret detection in JS bundles, credential leak scanning",
+      "tags": ["javascript", "secrets", "recon", "regex", "client-side"],
+      "amazon_query": "javascript security analysis secrets detection",
+      "skill_id": "js-bundle-recon",
+      "homepage": null
+    },
+    {
+      "slug": "header-analysis",
+      "name": "Header Analysis (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "recon",
+      "scorecard_category": "network-recon",
+      "kind": "skill",
+      "description": "Infrastructure metadata leak detection via HTTP response headers — internal hostnames, IP disclosures, tech-stack fingerprinting, and WAF-identifying headers. Distinct from Security Header Checker, which audits OWASP-recommended security headers (CSP, X-Frame-Options) rather than infra leaks.",
+      "use_case": "Internal hostname/IP disclosure detection, tech-stack fingerprinting via headers",
+      "tags": ["headers", "recon", "fingerprinting", "infra-leak"],
+      "amazon_query": "http header security analysis",
+      "skill_id": "header-analysis",
+      "homepage": null
+    },
+    {
+      "slug": "api-schema-discovery",
+      "name": "API Schema Discovery (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "api-security",
+      "scorecard_category": "api-security",
+      "kind": "skill",
+      "description": "Probes for exposed Swagger/OpenAPI documentation and analyzes discovered specs for IDOR and admin-path candidates. A distinct capability from the direct probing skills — this one works from published API specs rather than blind endpoint guessing.",
+      "use_case": "Swagger/OpenAPI doc discovery, spec-driven IDOR and admin-path candidate identification",
+      "tags": ["api", "swagger", "openapi", "recon", "idor"],
+      "amazon_query": "api security testing openapi swagger",
+      "skill_id": "api-schema-discovery",
+      "homepage": null
+    },
+    {
+      "slug": "open-redirect-hunter",
+      "name": "Open Redirect Hunter (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "web-testing",
+      "scorecard_category": "web-vuln-scanning",
+      "kind": "skill",
+      "description": "Chain-rule skill that fires after OAuth Security Analysis or API Schema Discovery findings, hunting for open-redirect vectors surfaced by those upstream results. Distinct from Open Redirect Probe, which runs direct parameter-injection testing independent of other findings.",
+      "use_case": "Chain-triggered open redirect discovery from OAuth/API schema findings",
+      "tags": ["open-redirect", "chain-rule", "oauth", "web"],
+      "amazon_query": "open redirect vulnerability testing",
+      "skill_id": "open-redirect-hunter",
+      "homepage": null
+    },
+    {
+      "slug": "ssrf-hypothesis",
+      "name": "SSRF Hypothesis (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "web-testing",
+      "scorecard_category": "web-vuln-scanning",
+      "kind": "skill",
+      "description": "Chain-triggered skill that fires when Header Analysis surfaces an internal hostname leak, testing whether that leaked hostname is reachable via SSRF. Distinct from SSRF Probe, which runs direct payload injection independent of prior findings.",
+      "use_case": "Chain-triggered SSRF testing against internal hostnames leaked by header analysis",
+      "tags": ["ssrf", "chain-rule", "internal-hostname", "web"],
+      "amazon_query": "ssrf vulnerability testing server-side request forgery",
+      "skill_id": "ssrf-hypothesis",
+      "homepage": null
+    },
+    {
+      "slug": "auth-portal-tester",
+      "name": "Auth Portal Tester (SecurityClaw)",
+      "vendor": "SecurityClaw",
+      "category": "web-testing",
+      "scorecard_category": "web-vuln-scanning",
+      "kind": "skill",
+      "description": "Authenticated customer-portal IDOR and takeover tester — cookie-based login flows, sequential-ID IDOR probing, and cross-account IDOR testing against logged-in portal sessions.",
+      "use_case": "Authenticated portal IDOR and account-takeover testing",
+      "tags": ["idor", "authenticated", "account-takeover", "portal"],
+      "amazon_query": "idor vulnerability testing account takeover",
+      "skill_id": "auth-portal-tester",
       "homepage": null
     }
   ]
