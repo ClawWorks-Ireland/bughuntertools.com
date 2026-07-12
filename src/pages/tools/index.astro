@@ -5,9 +5,10 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import toolsData from '../../_data/tools.json';
+import { getToolRedirectDestination } from '../../utils/toolRedirects.js';
 
 const title = 'SecurityClaw Tools Database — Bug Bounty Security Tools 2026 | Bug Hunter Tools';
-const description = 'Complete database of 40+ bug bounty security tools used in SecurityClaw autonomous campaigns. Per-tool guides covering recon, web testing, API security, cloud, and exploitation.';
+const description = 'Complete database of 50+ bug bounty security tools used in SecurityClaw autonomous campaigns, grouped by category with links to real campaign-data comparison pages and demo write-ups.';
 
 const categoryLabels: Record<string, { label: string; icon: string; description: string }> = {
   'recon':           { label: 'Reconnaissance & OSINT',    icon: '🔍', description: 'Passive and active discovery' },
@@ -48,7 +49,8 @@ const kindBadgeColor: Record<string, string> = {
       <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.75rem; color: #1a1a2e;">SecurityClaw Tools Database</h1>
       <p style="font-size: 1.125rem; color: #555; max-width: 680px; margin: 0 auto 1.5rem;">
         {toolsData.tools.length}+ security tools powering SecurityClaw's autonomous bug bounty campaigns.
-        Per-tool pages cover use cases, campaign chain rules, and recommended resources.
+        Each entry links to the deepest real-data write-up we have for it: a category comparison
+        grounded in real campaign findings, or a dedicated demo where one exists.
       </p>
       <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
         <span style="background: #4caf50; color: white; padding: 0.35rem 0.9rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">🛠 External Tools</span>
@@ -69,7 +71,7 @@ const kindBadgeColor: Record<string, string> = {
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
             {tools.map((tool) => (
               <a
-                href={`/tools/${tool.slug}/`}
+                href={getToolRedirectDestination(tool)}
                 style="display: block; background: white; border: 1px solid #e0e0f0; border-radius: 12px; padding: 1.25rem; text-decoration: none; color: inherit; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow 0.2s, border-color 0.2s;"
               >
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
