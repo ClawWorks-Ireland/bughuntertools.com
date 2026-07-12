@@ -1,0 +1,43 @@
+---
+title: "Web app testing tools in bug bounty: what SecurityClaw's real campaign data says works"
+description: "Real SecurityClaw campaign data on web app testing tools: header checks, SRI, session security, and where XSS/SQLi/business-logic scanning still needs more runs."
+date: 2026-07-12
+category: tools
+tags: [web-testing, xss, sqli, ssrf, session-security, bug-bounty, tools, securityclaw]
+---
+
+Web app testing is where most bug bounty hunters spend the bulk of their time, and it's where the gap between "ran a scanner" and "found something" is widest. We run a fixed set of web-testing skills across every SecurityClaw campaign: 15 real bug bounty targets so far, including Visma, Doctolib, WP Engine, Lansweeper, Personio, Telenor, Contentsquare, Withings, and RIPE NCC. A couple of these tools carry the group. Others have run a dozen-plus times and found nothing yet, and that's itself a result worth reporting honestly.
+
+## Security Header Checker — 15 campaigns, 61 findings
+
+The highest-volume finder in this group, by a wide margin. It checks HTTP response headers against a full list of security requirements (CSP, X-Frame-Options, HSTS, Permissions-Policy, COOP, CORP), and 61 findings across 15 campaigns means almost every target is missing at least one. Missing headers rarely make a headline CVE, but they're real, reportable, and cheap to fix, which is exactly the profile bug bounty programmes want documented.
+
+## SRI Checker — 11 campaigns, 19 findings
+
+Checks whether third-party scripts and stylesheets loaded from a CDN have Subresource Integrity hashes attached. 19 findings over 11 campaigns is a solid hit rate for something most sites never think about. A missing SRI hash on a CDN-loaded script is a supply-chain risk: if that CDN is ever compromised, the injected code runs on your target's site with no integrity check to stop it. It's an unglamorous finding that programmes still pay out for.
+
+## Session Security Tester — 14 campaigns, 1 finding
+
+Analyses session token entropy, cookie flags (HttpOnly, Secure, SameSite), fixation vectors, and CSRF token validity. One finding across 14 campaigns is a genuinely low hit rate, and we're not going to spin that into something it isn't. It reads as evidence that most of the targets we've tested have their session cookie hygiene basically right by 2026, which is itself useful information if you're deciding where to spend your next hour of manual testing. Don't skip running it. Just don't expect it to be where your next payout comes from.
+
+## Open Redirect Probe — 12 campaigns, 0 findings
+
+Tests URL parameters and redirect endpoints for unvalidated redirect targets, the kind of bug that chains into phishing or OAuth token theft rather than standing alone. Zero findings across 12 campaigns is real signal, not a broken tool: open redirects are increasingly rare on modern frameworks that default to allowlisted redirect targets. If you're hunting for these manually, our [open redirect false-positives writeup](/articles/open-redirect-scanner-false-positives-bug-bounty-2026/) covers where automated scanners get tripped up chasing a bug that mostly isn't there anymore.
+
+## XSS Probe and SSRF Probe — real, but too few runs to trust yet
+
+XSS Probe has run once, with zero findings. SSRF Probe has run three times, also zero. Both are legitimate, Bedrock-validated detection skills. XSS Probe tests reflected and stored injection vectors; SSRF Probe chains off internal hostname leaks to test server-side request forgery. But a sample size this small tells you almost nothing about real-world hit rate. We're not citing these as "XSS and SSRF barely happen" the way we can for open redirects at 12 campaigns. We're citing them as run too rarely so far to draw a conclusion, which is a different, more honest claim.
+
+## SQLi Probe and Business Logic Scanner — implemented, not yet run
+
+Both skills exist and are callable in the SecurityClaw pipeline. Neither has a completed campaign run behind it yet in our logs. SQLi Probe identifies injection points for human-reviewed sqlmap follow-up rather than exploiting them outright; Business Logic Scanner targets price manipulation, coupon stacking, and workflow-state bypasses. If you want the manual-testing side of SQL injection covered in the meantime, the [sqlmap detection walkthrough](/articles/securityclaw-sqlmap-sql-injection-demo-2026/) covers the follow-up tooling these probes feed into.
+
+## Burp Suite — the manual layer underneath all of this
+
+Burp Suite doesn't have a `skill_id` because it isn't automated inside SecurityClaw's campaign pipeline. It's the manual intercepting proxy layer a human hunter runs alongside the automated skills above, not something we run headlessly and log a findings count for. That's a structural difference worth being upfront about, rather than forcing a number onto a tool that was never meant to produce one in this pipeline.
+
+## What this means for your testing order
+
+Run the cheap, high-hit-rate checks first. Security headers and SRI are the two tools in this group actually finding things at volume, and both are fast, non-destructive checks that carry no risk of breaking anything. Session security is worth running for coverage even though the current hit rate is low. Cookie misconfigurations do happen; we just haven't caught many yet. Treat XSS and SSRF probe results as provisional until we've run them across more targets, and don't assume the zero-finding streak on open redirects means you can skip checking for them entirely. It means the easy, unvalidated-redirect version has mostly been engineered out of modern frameworks, not that redirect abuse as a category is dead.
+
+If you're testing manually rather than relying on automated skills, pair whichever of these tools matches your target with Burp Suite's intercepting proxy. That's still where most non-trivial findings in this group actually get confirmed.
