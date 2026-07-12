@@ -16,9 +16,9 @@ This is the skill behind SecurityClaw's RIPE NCC finding: a CORS wildcard on `ww
 
 Checks OAuth 2.0 token leakage, state parameter validation, scope escalation, and implicit-flow misuse. Zero findings across 13 campaigns against real targets is a genuinely useful data point: it suggests most production OAuth implementations in 2026 have the well-known flaws (missing state, overly broad scopes) closed off already. We're not dropping this skill from the rotation. A clean run on 13 targets doesn't mean the 14th will be clean too, and OAuth misconfigurations are exactly the kind of bug that's rare but severe when it does surface.
 
-## API Key Validator — 5 campaigns, 0 findings
+## API Key Validator — 3 campaigns, 0 findings
 
-Takes API keys discovered during JS bundle analysis or recon and makes live test calls to confirm which ones are still active and what they're scoped to. Zero findings across 5 campaigns means the keys our recon skills turned up so far were either already dead or correctly scoped. Five campaigns is a small sample for a validation step that depends entirely on what upstream recon skills hand it. Read this alongside the JS bundle recon numbers in [our recon and OSINT comparison](/articles/recon-osint-tooling-securityclaw-data-2026/), not on its own.
+Takes API keys discovered during JS bundle analysis or recon and makes live test calls to confirm which ones are still active and what they're scoped to. Zero findings across 3 campaigns (5 runs, across Lansweeper, OneDoc, and Tomorrowland) means the keys our recon skills turned up so far were either already dead or correctly scoped. Three campaigns is a small sample for a validation step that depends entirely on what upstream recon skills hand it. Read this alongside the JS bundle recon numbers in [our recon and OSINT comparison](/articles/recon-osint-tooling-securityclaw-data-2026/), not on its own.
 
 ## OAuth Client Enumerator — 1 campaign, 1 finding
 
@@ -34,4 +34,4 @@ Both skills exist in the SecurityClaw pipeline and neither has a completed campa
 
 ## What the clean runs actually mean
 
-Thirteen clean OAuth runs and five clean API-key runs aren't a sign these tools don't work. Read against the one CORS HIGH and the one OAuth-client-enum finding, they're evidence that the loud, well-documented API bugs (broken CORS policy, leaky OAuth client IDs) still show up often enough to be worth checking for, while the subtler ones (token leakage, scope escalation) have mostly been engineered out of the targets we've tested so far. If you're prioritizing manual API testing time, spend it on CORS and OAuth client configuration first: that's where SecurityClaw's own data says the findings actually are.
+Thirteen clean OAuth runs and three clean API-key campaigns aren't a sign these tools don't work. Read against the one CORS HIGH and the one OAuth-client-enum finding, they're evidence that the loud, well-documented API bugs (broken CORS policy, leaky OAuth client IDs) still show up often enough to be worth checking for, while the subtler ones (token leakage, scope escalation) have mostly been engineered out of the targets we've tested so far. If you're prioritizing manual API testing time, spend it on CORS and OAuth client configuration first: that's where SecurityClaw's own data says the findings actually are.
