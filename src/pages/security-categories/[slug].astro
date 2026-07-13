@@ -7,6 +7,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import scorecardData from '../../_data/scorecard.json';
 import toolsData from '../../_data/tools.json';
+import { getToolRedirectDestination } from '../../utils/toolRedirects.js';
 
 export function getStaticPaths() {
   return Object.entries(scorecardData.categories).map(([slug, category]) => ({
@@ -211,7 +212,7 @@ const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(meta.amazonQu
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
           {relatedTools.map((tool) => (
             <a
-              href={`/tools/${tool.slug}/`}
+              href={getToolRedirectDestination(tool)}
               style="display: block; background: white; border: 1px solid #e0e0f0; border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
             >
               <div style="font-weight: 700; color: #1a1a2e; margin-bottom: 0.25rem;">{tool.name}</div>
