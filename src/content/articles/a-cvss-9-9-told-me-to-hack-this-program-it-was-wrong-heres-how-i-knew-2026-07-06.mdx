@@ -1,0 +1,67 @@
+---
+title: "A CVSS 9.9 Told Me to Hack This Program. It Was Wrong — Here's How I Knew."
+description: "The story of a SecurityClaw campaign that was auto-queued against Intigriti's \"Capture Our Flag\" program because a CVE-scoring pipeline matched it to CVE-2026-57100 — a 9.9 CRITICAL SSRF in Microsoft Entra Provisioning Service — at a \"perfect\"..."
+date: 2026-07-06
+category: tools
+tags: ["CVE bug bounty matching", "false CVE match bug bounty", "how to pick bug bounty targets", "CVSS score misleading", "bug bounty recon SSO gated app", "automated CVE scoring pitfalls"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+The story of a SecurityClaw campaign that was auto-queued against Intigriti's "Capture Our Flag" program because a CVE-scoring pipeline matched it to CVE-2026-57100 — a 9.9 CRITICAL SSRF in Microsoft Entra Provisioning Service — at a "perfect" composite score of 10.0/10. The target had nothing to do with Microsoft Entra. This article is a practical field guide to spotting and skipping these false matches before they waste a campaign, plus what the *real* recon on an SSO-gated target looks like when you do it right.
+
+---
+
+## Key Technical Points
+
+1. **A CVSS score describes severity, not relevance**
+   CVE-2026-57100 (CVSS 9.9) is a genuinely severe SSRF — in Microsoft Entra Provisioning Service, a cloud identity component. Severity has zero bearing on whether that CVE has anything to do with a given bounty program's actual application. Automated pipelines that rank by CVSS × bounty ceiling will happily promote a perfect-score CVE to the top of a queue even when the tech stacks don't overlap at all.
+
+2. **The tell: generic "in-scope likelihood" fallback scores**
+   Look for a match-confidence or "in-scope likelihood" field on any auto-generated target recommendation. A value that looks suspiciously mid-range and repeats across unrelated programs (in this pipeline's case, 0.40) is usually a generic fallback the scorer applies to "broad wildcard scope" targets when it found zero real technology keyword overlap — not a genuine signal. Treat a flat fallback number as a red flag, not reassurance.
+
+3. **60-second relevance check before committing a session**
+   Before running any campaign off an automated CVE match: read the one-line CVE description and ask "does this product/component exist anywhere in the target's actual stack?" If the CVE names a specific vendor product (Entra, SAP NetWeaver, a CMS, a load balancer) that you have no evidence the target runs, stop — don't spend the session chasing it. Pivot to a stack-appropriate assessment instead.
+
+4. **What "stack-appropriate" recon looks like when the CVE doesn't apply**
+   Don't discard the session — just recon what's actually there: WAF/CDN fingerprint, TLS posture, security headers, CT log enumeration for sibling assets, and a CVE scan against the *observed* stack rather than the recommended CVE. In this campaign, that produced a clean stack fingerprint (Fastly/CloudFront) and confirmed there was no real overlap with the Entra CVE — a useful negative result, not a wasted session.
+
+5. **SSO-gated targets have a low unauthenticated ceiling — know it going in**
+   When a target's entire application is behind platform SSO (every path returns the same 403 "no access" response), unauthenticated automated recon can only characterize the edge — CDN/WAF, TLS, response headers — not the actual application logic. That's expected, not a failure of the tooling. The real findings live behind auth. Plan campaigns accordingly: either secure test credentials up front, or scope the session as recon-only from the start.
+
+---
+
+## Impact Narrative
+
+CVE-driven target sourcing is becoming a standard part of bug bounty tooling — subscription CVE alert feeds, in-house pipelines, browser extensions that cross-reference NVD against bounty program scope. All of them share the same failure mode if they don't verify tech-stack overlap: a severe CVE on an unrelated product can look, on paper, like the highest-value opportunity in the queue. The cost of not catching this is a wasted session at best, and a false or irrelevant report filed against a program at worst — which damages a hunter's reputation with that program's triage team.
+
+---
+
+## Why This Matters For Bht Readers
+
+Automated CVE-to-target matching tools (including ones hunters build themselves, or subscription CVE-alert services) commonly score matches by CVSS × bounty-ceiling without verifying the CVE actually applies to the target's tech stack. A high CVSS score creates false urgency. Hunters who chase the CVE instead of the target waste hours on irrelevant PoCs, or — worse — file a "vulnerable" report against unrelated infrastructure and burn credibility with the program.
+
+This is the third time SecurityClaw's own pipeline has produced this exact failure mode (Doctolib in June, CM.com in May, now this). It's common enough to be worth a public writeup: readers using any automated CVE-matching tool need a 60-second sanity check before committing a session to a target.
+
+---
+
+## Concrete "Do This" For Readers
+
+**Before running any CVE-matched campaign, ask:**
+1. Does the CVE name a specific product/vendor component? (yes → step 2, no → lower priority anyway)
+2. Do you have direct evidence the target runs that product? (tech fingerprint, job posting, GitHub repo, changelog — not just "broad scope wildcard")
+3. Is the match-confidence/likelihood field a suspiciously round or repeating number across multiple unrelated targets? → likely a generic fallback, discount it
+
+**If the CVE doesn't check out:**
+- Don't file anything based on the CVE alone
+- Run baseline recon against the real target (WAF/CDN, TLS, headers, CT logs)
+- Scan for CVEs against the *actual* observed stack, not the recommended one
+- Log the mismatch so the pipeline (or your own tooling) can be improved
+
+---
+
+## Recommended Reading
+
+- [Black Hat Python](https://www.amazon.com/dp/1718501129?tag=bughuntertools-20) ($40)
+- [Violent Python](https://www.amazon.com/dp/1597499579?tag=bughuntertools-20) ($35)
+- [Hacking: The Art of Exploitation](https://www.amazon.com/dp/1593271441?tag=bughuntertools-20) ($40)
