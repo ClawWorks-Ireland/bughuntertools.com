@@ -1,0 +1,65 @@
+---
+title: "A CVSS 9.9 Told Me to Hack This Program. It Was Wrong — Here's How I Knew."
+description: "A CVSS 9.9 CVE looked like a perfect match for this bug bounty program. It wasn't. Here's the 60-second check that catches false CVE-to-target matches."
+date: 2026-07-06
+category: research
+tags: ["CVE bug bounty matching", "false CVE match bug bounty", "how to pick bug bounty targets", "CVSS score misleading", "bug bounty recon SSO gated app", "automated CVE scoring pitfalls"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+Our CVE-matching pipeline handed us a 10.0/10 composite score on an Intigriti-hosted program. Perfect match, it said: CVE-2026-57100, a 9.9 CRITICAL SSRF in Microsoft Entra Provisioning Service. We almost queued a full campaign against it.
+
+One problem: the target had nothing to do with Microsoft Entra. It's an internal "Capture the Flag" challenge app. The CVE was real, the score was real, and none of it applied to anything we were about to test. This is a field guide to catching that failure before it burns a session, plus what recon on an SSO-gated target actually looks like once you stop chasing the wrong CVE.
+
+## A CVSS score tells you severity, not relevance
+
+CVE-2026-57100 is a genuinely nasty bug. SSRF in a cloud identity component, 9.9 out of 10. None of that has any bearing on whether the CVE applies to a given program's actual application. A pipeline that ranks by CVSS times bounty ceiling will happily push a perfect-score CVE to the top of the queue even when the tech stacks share nothing.
+
+We built ours to do exactly that math, and it worked exactly as designed. That's the trap: the score isn't wrong, it's just answering a question nobody asked.
+
+## The tell: a fallback confidence score dressed up as a real one
+
+Look for a match-confidence or "in-scope likelihood" field on any auto-generated recommendation. Ours showed 0.40 on this target. Reasonable-looking number. Except 0.40 turned out to be a generic fallback the scorer slaps on any "broad wildcard scope" target when it finds zero real keyword overlap with the CVE. It's not a signal. It's the scorer shrugging.
+
+If that number repeats across programs that have nothing else in common, that's your evidence it's a fallback and not a measurement.
+
+## The 60-second check before you commit a session
+
+Before running a campaign off an automated CVE match, ask one question: does this product or component exist anywhere in the target's actual stack? If the CVE names something specific, a CMS, a load balancer, an identity platform, and you have no evidence the target runs it, stop. Don't spend the session on it. Go recon the stack that's actually there.
+
+That's it. It takes less time than reading this section did.
+
+## What to do instead when the CVE doesn't apply
+
+Don't throw out the session, just point it somewhere useful: WAF and CDN fingerprint, TLS posture, security headers, CT log enumeration for sibling assets, and a CVE scan against the stack you actually observed instead of the one the pipeline recommended. Our [certificate transparency monitoring](/articles/securityclaw-ct-logs-certificate-transparency-passive-recon-2026/) pass and general [recon tooling](/articles/recon-osint-tooling-securityclaw-data-2026/) approach both plug in here directly.
+
+On this campaign, that pivot produced a clean fingerprint (Fastly in front of CloudFront) and confirmed zero overlap with the Entra CVE. Not a wasted session. A negative result, which is still a result.
+
+## SSO-gated targets have a ceiling, know it going in
+
+The entire application sat behind platform SSO. Every path returned the same 403. Unauthenticated recon in that situation can only characterize the edge: CDN, WAF, TLS, response headers. It can't touch application logic, because there's no application logic it can reach.
+
+That's not a tooling failure, it's a scoping decision you need to make before you start. Either get test credentials up front, or plan the session as recon-only from minute one. Deciding that mid-session, after your scanner has already thrown a dozen 403s at you, wastes more time than the SSO wall itself does.
+
+## Why this keeps happening
+
+CVE-driven target sourcing is now normal in bug bounty tooling: alert feeds, in-house pipelines, browser extensions cross-referencing NVD against program scope. Every one of them shares this failure mode if it doesn't verify tech-stack overlap before ranking. A severe CVE on an unrelated product looks, on paper, like the best thing in the queue. The cost of missing that isn't just a wasted session. Filing a report against the wrong infrastructure burns credibility with a program's triage team, and that's a harder thing to earn back than the hour you lost.
+
+This is the third time our own pipeline has done this to us (Doctolib in June, CM.com in May, now this). Third time is enough to write it down.
+
+## The checklist
+
+Before running any CVE-matched campaign:
+
+1. Does the CVE name a specific product or vendor component? If not, it's lower priority anyway.
+2. Do you have direct evidence the target runs that product? A tech fingerprint, a job posting, a GitHub repo, a changelog. Not just "broad scope wildcard."
+3. Is the match-confidence number suspiciously round, or does it repeat across unrelated targets? That's a fallback. Discount it.
+
+If the CVE doesn't check out: don't file anything based on it alone, run baseline recon against the real target, scan for CVEs against the stack you actually observed, and log the mismatch so your tooling gets better next time instead of making the same recommendation again next month.
+
+## Recommended Reading
+
+- [Black Hat Python](https://www.amazon.com/dp/1718501129?tag=bughuntertools-20) ($40)
+- [Violent Python](https://www.amazon.com/dp/1597499579?tag=bughuntertools-20) ($35)
+- [Hacking: The Art of Exploitation](https://www.amazon.com/dp/1593271441?tag=bughuntertools-20) ($40)
