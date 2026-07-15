@@ -1,0 +1,60 @@
+---
+title: "€100,000 Bounty Ceiling. Zero Hostnames Anywhere in Scope. Here's the Two-Minute Check That Caught It."
+description: "The story of a third consecutive SecurityClaw campaign that never fired a single HTTP request — this time against Intel's Intigriti program. Unlike the Arm campaign the same week (which had a *specific* but web-incompatible scope — a named..."
+date: 2026-07-06
+category: tools
+tags: ["bug bounty scope has no domain", "hardware vendor bug bounty programs", "bug bounty product category scope", "automated recon requires hostname", "bug bounty pre-flight checklist", "when scope has no URL"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+The story of a third consecutive SecurityClaw campaign that never fired a single HTTP request — this time against Intel's Intigriti program. Unlike the Arm campaign the same week (which had a *specific* but web-incompatible scope — a named firmware binary and kernel driver), Intel's scope wasn't even that concrete: five broad product categories ("Hardware," "Firmware," "Software," "Services," "IT Infrastructure") with no domain, hostname, IP range, or URL attached to any of them. This piece is about the even-more-basic pre-flight question that comes before "is this scope reachable by my tooling": does the scope name an actual network asset at all?
+
+---
+
+## Key Technical Points
+
+1. **"Broad category" scope is a different failure mode than "wrong skill set" scope**
+   Arm's program (TASK-901, same week) had concrete scope: a named firmware binary (`mali_csffw.bin`) and kernel driver (`mali_kbase.ko`) — specific enough to acquire and test, just requiring binary-exploitation skills instead of web skills. Intel's program has scope entries like "Hardware," "Firmware," "Software," "Services" with **no filename, hostname, IP, or URL anywhere in the structured data**. This is a stricter failure: there's no concrete asset to even attempt to reach, regardless of skill set.
+
+2. **The tell: scope entries with no resolvable `endpoint` field**
+   Before running any tooling, check whether each scope entry in the program's domain/asset list has an actual hostname, URL, IP range, or specific binary/package identifier attached — not just a category label. If every entry is a bare product-family name ("Services," "IT Infrastructure") with prose description but no concrete identifier, there is nothing for HTTP-based tooling (or any automated tooling) to target.
+
+3. **"IT Infrastructure — No Bounty" is worth reading, not skipping past**
+   Intel's scope explicitly listed an "IT Infrastructure" category tagged **No Bounty** — i.e., even the one scope entry that sounds like it might mean "corporate web infrastructure" is explicitly excluded from payout. This is a common pattern for hardware/silicon vendors: their public-facing IT and marketing sites are *not* the bounty target, even though they're the only thing an automated web scanner could actually reach.
+
+4. **RoE prose can independently confirm this pattern**
+   Intel's RoE required testing be run against "a currently supported and publicly available version of the affected product or technology" and stated all testing resources "must be obtained by participating security researchers" — language that assumes the researcher acquires their own hardware/firmware/software copy for testing. That is fundamentally incompatible with blind internet-facing automated scanning, and confirms the scope-shape read independently of the missing-endpoint observation.
+
+5. **Bounty ceiling and CVSS match are still not signals of testability**
+   Same lesson as the Arm and Capture Our Flag briefs this week, from a third angle: €100,000 max bounty and a CVSS 9.9 CVE match told a queue-ranking algorithm this was the week's top opportunity. Neither field said anything about whether there was a testable asset behind the listing at all.
+
+---
+
+## Impact Narrative
+
+Hardware and silicon vendors (Intel, Arm, Qualcomm, NVIDIA, AMD) are increasingly common on bug bounty platforms, and their program structure differs meaningfully from SaaS/web programs in ways that generic CVE-ranking or bounty-ceiling-ranking automation cannot detect. A three-for-three week (Capture Our Flag: CVE-irrelevant but web-reachable; Arm: concrete but binary-only scope; Intel: no concrete scope at all) is a useful real-world taxonomy for any hunter or tool builder relying on automated target sourcing. Recognizing "there is no asset named here" in under two minutes — before writing a single scanner command — is the cheapest possible check in the whole workflow.
+
+---
+
+## Why This Matters For Bht Readers
+
+Most bounty hunters assume every program's scope resolves to something you can point a browser or a scanner at. That assumption fails in two distinct ways, and this week's SecurityClaw queue hit both back-to-back: Arm's scope named a *specific* firmware file and kernel module (concrete, but not web-testable — TASK-901's lesson), while Intel's scope named only *product categories* with no attached endpoint at all (not even specific enough to know what to acquire or test). Readers need to recognize both failure modes, because they require different responses: Arm's scope tells you "go get different tooling"; Intel's scope tells you "there is nothing named here to test — the researcher is expected to source their own hardware/firmware copy before a target even exists."
+
+---
+
+## Concrete "Do This" For Readers
+
+**Before running ANY campaign against an unfamiliar program, check the scope data for a concrete asset — not just a category:**
+1. Does each scope entry have an actual hostname, URL, IP range, or specific artifact identifier (filename, package name, binary)? If every entry is a bare category label ("Hardware," "Services," "Software") with only prose description, there's nothing to point tooling at.
+2. Is any scope entry explicitly tagged "No Bounty" or excluded? Don't assume the one entry that sounds web-adjacent ("IT Infrastructure," "Services") is fair game just because it sounds familiar — read the tag.
+3. Does the RoE prose describe researcher-obtained test resources (buy/acquire hardware, download a specific firmware image)? That's a tell the program expects out-of-band asset acquisition, not internet-facing scanning.
+4. If 1–3 come back empty/negative: document the skip. There is no campaign to run yet — not "wrong tooling," but "no target identified."
+
+---
+
+## Recommended Reading
+
+- [Black Hat Python](https://www.amazon.com/dp/1718501129?tag=bughuntertools-20) ($40)
+- [Violent Python](https://www.amazon.com/dp/1597499579?tag=bughuntertools-20) ($35)
+- [Hacking: The Art of Exploitation](https://www.amazon.com/dp/1593271441?tag=bughuntertools-20) ($40)
