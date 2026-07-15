@@ -1,0 +1,61 @@
+---
+title: "€20,000 Bounty Ceiling. Zero Web Endpoints. Here's Why I Walked Away."
+description: "The story of a SecurityClaw campaign that never launched: the queue said \"Arm, €20,000 max bounty, CVSS 9.9 CVE match\" — everything that usually signals a great target. Two checks in — Rules of Engagement and scope-type — killed the campaign..."
+date: 2026-07-06
+category: tools
+tags: ["bug bounty program scoping mistakes", "hardware bug bounty vs web bug bounty", "automated tooling bug bounty RoE", "safe harbor bug bounty explained", "GPU firmware bug bounty", "when to skip a bug bounty target"]
+---
+
+> **Affiliate Disclosure:** This site contains affiliate links. We earn a commission when you purchase through our links at no additional cost to you.
+
+The story of a SecurityClaw campaign that never launched: the queue said "Arm, €20,000 max bounty, CVSS 9.9 CVE match" — everything that usually signals a great target. Two checks in — Rules of Engagement and scope-type — killed the campaign before a single request was fired. This is a field guide to the pre-flight checks every automated (or manual) bug hunter should run before investing a session, using a real example where a top-ranked opportunity was scoped entirely to GPU firmware and kernel driver code, not a website.
+
+---
+
+## Key Technical Points
+
+1. **Bounty ceiling and CVE score tell you nothing about scope TYPE**
+   A €20,000 max bounty and a CVSS 9.9 CVE match both signal "worth investigating" on paper. Neither field says anything about whether the scope is a website, an API, a mobile app, or — as in this case — a GPU firmware binary (`mali_csffw.bin`) and Linux kernel driver module (`mali_kbase.ko`). Always read the actual scope/domains list before committing tooling or time.
+
+2. **The tell: `requiredSkills` tags and scope `type: "Other"`**
+   Program APIs (Intigriti's included) tag each scope entry with required skill categories. Seeing `hardware_iot_firmware` and `reverse_engineering_binary_exploitation` as the ONLY required-skill tags across 100% of scope entries — with zero `web_application` or `api` tags — is a hard stop for web-focused tooling. If every entry in the scope list is typed "Other" instead of "Web Application," "API," "Mobile," etc., assume it's not reachable with an HTTP client.
+
+3. **`automatedTooling: null` is not the same as `automatedTooling: true`**
+   Some programs (this one included) leave the automated-tooling permission field completely unset rather than explicitly granting or denying it. Treat an unset/`null` field as "not confirmed" — the same caution bar as an explicit prohibition — not as an implicit yes. Compare to a program that explicitly sets the field to a permissive value: that's the real green light.
+
+4. **`safeHarbour: false` plus scoped safe-harbor language in the RoE text is a double signal**
+   This program's structured `safeHarbour` field was `false`, and the RoE prose itself carved out an explicit carve-out ("Arm is not able to grant authority or safe harbor to researchers for any security vulnerability testing of third-party software or systems"). When the structured field and the prose both point toward caution, don't override that instinct with a big bounty number.
+
+5. **Skipping is a valid, documented outcome — not a failure**
+   The right move here wasn't to force a web-scanner at a driver binary and generate noise findings. It was to check RoE + scope type, conclude "this needs kernel/firmware reverse-engineering tooling we don't have," and document why — in under ten minutes. A documented skip protects both the hunter's time and the program's triage queue from irrelevant low-quality reports.
+
+---
+
+## Impact Narrative
+
+As more hardware and silicon vendors run public bug bounty programs (Arm, Qualcomm, Intel, AMD, NVIDIA all have active Intigriti/HackerOne programs), automated and manual bounty hunters alike are going to keep hitting scope that simply isn't reachable with standard web-security tooling. The cost of not catching this early is either a wasted session (best case) or a wave of irrelevant automated-scanner noise against a program that explicitly requires binary exploitation skills (worst case — this actively damages trust between researchers using automation and program triage teams).
+
+---
+
+## Why This Matters For Bht Readers
+
+Most bug bounty tooling — and most hunters' mental model — assumes "bug bounty program" means "website or API to poke at." That assumption breaks down fast once you look at programs from major hardware/silicon vendors (Arm, Qualcomm, Intel, NVIDIA, etc.), which frequently scope their bounty exclusively to firmware binaries, kernel drivers, or physical hardware interfaces. A web-security skill set — the one 90% of bounty hunters (and 100% of most web-focused automation) have — produces zero usable findings against that kind of scope, no matter how good the tooling is. Recognizing this in the first two minutes saves hours.
+
+---
+
+## Concrete "Do This" For Readers
+
+**Before running ANY campaign against an unfamiliar program, in order:**
+1. Pull the full RoE — check the automation permission field explicitly. `null`/unset = not confirmed, treat like "no."
+2. Check the `safeHarbour` field AND read the actual RoE prose for carve-outs, not just the boolean.
+3. Read the full scope/domains list. What TYPE is each entry — web, API, mobile, or "Other" (hardware/firmware/binary)?
+4. Cross-check `requiredSkills` tags against your own tooling's actual skill set. If 100% of scope requires skills you (or your tooling) don't have, stop.
+5. If it fails any of 1–4: document the skip with the specific reason. Don't force irrelevant tooling at incompatible scope.
+
+---
+
+## Recommended Reading
+
+- [Black Hat Python](https://www.amazon.com/dp/1718501129?tag=bughuntertools-20) ($40)
+- [Violent Python](https://www.amazon.com/dp/1597499579?tag=bughuntertools-20) ($35)
+- [Hacking: The Art of Exploitation](https://www.amazon.com/dp/1593271441?tag=bughuntertools-20) ($40)
